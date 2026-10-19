@@ -1,0 +1,3 @@
+[functions.analyze-error-question]
+verify_jwt = true
+entrypoint = "./functions/analyze-error-question/index.ts"

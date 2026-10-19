@@ -1,0 +1,417 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Identidade "Quack" — Papel, Pato, Mente, Bico e Tinta
+   Contorno de 3px em Tinta · sombra dura de 4–6px · cantos 14/22/28 e pílula
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  :root {
+    color-scheme: light;
+
+    --dm-papel: #FFF9EC;
+    --dm-tinta: #17102B;
+    --dm-card: #FFFFFF;
+    --dm-sidebar: #FFFFFF;
+    --dm-muted: #4B4560;
+    --dm-line: #E8E0CC;
+    --dm-pato: #00D64B;
+    --dm-mente: #6F00D6;
+    --dm-bico: #D68200;
+    --dm-faint: #E8E0CC;
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --dm-papel: #17102B;
+    --dm-tinta: #FFF9EC;
+    --dm-card: #1E1738;
+    --dm-sidebar: #120C22;
+    --dm-muted: #C9CEE3;
+    --dm-line: #3A3266;
+    --dm-faint: #3A3266;
+  }
+
+  html, body, #root { height: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--dm-papel);
+    color: var(--dm-tinta);
+    font-family: 'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: #00D64B;
+    color: #17102B;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--dm-tinta);
+    border: 3px solid var(--dm-papel);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--dm-pato); }
+
+  /* Campos nativos herdam a identidade */
+  select option { background: var(--dm-card); color: var(--dm-tinta); }
+  input[type='checkbox'], input[type='radio'] { accent-color: #6F00D6; }
+}
+
+@layer components {
+  /* ── Superfícies ─────────────────────────────────────────────────────── */
+  .card {
+    background: var(--dm-card);
+    border: 3px solid var(--dm-tinta);
+    border-radius: 22px;
+    box-shadow: 4px 4px 0 var(--dm-tinta);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .glass-card {
+    background: var(--dm-card);
+    border: 3px solid var(--dm-tinta);
+    border-radius: 28px;
+    box-shadow: 6px 6px 0 var(--dm-tinta);
+  }
+  .card-hover:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--dm-tinta);
+  }
+  .card-hover:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--dm-tinta);
+  }
+
+  /* ── Botões ──────────────────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    border: 3px solid var(--dm-tinta);
+    border-radius: 9999px;
+    padding: 0.5rem 1.25rem;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+    box-shadow: 4px 4px 0 var(--dm-tinta);
+  }
+  .btn:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--dm-tinta); }
+  .btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--dm-tinta); }
+  .btn:focus-visible { outline: 3px solid #6F00D6; outline-offset: 2px; }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .btn-primary { background: var(--dm-pato); color: #17102B; }
+  .btn-primary:hover { background: #00E052; }
+
+  .btn-secondary { background: var(--dm-card); color: var(--dm-tinta); }
+  .btn-secondary:hover { background: var(--dm-papel); }
+
+  .btn-outline { background: transparent; color: var(--dm-tinta); box-shadow: none; }
+  .btn-outline:hover { background: var(--dm-card); box-shadow: 4px 4px 0 var(--dm-tinta); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--dm-tinta);
+    border-color: transparent;
+    box-shadow: none;
+  }
+  .btn-ghost:hover { background: var(--dm-card); border-color: var(--dm-tinta); box-shadow: 3px 3px 0 var(--dm-tinta); }
+  .btn-ghost:active { box-shadow: none; }
+
+  .btn-danger { background: var(--dm-bico); color: #17102B; }
+  .btn-danger:hover { background: #EF9100; }
+
+  /* ── Formulários ─────────────────────────────────────────────────────── */
+  .input {
+    width: 100%;
+    background: var(--dm-card);
+    color: var(--dm-tinta);
+    border: 3px solid var(--dm-tinta);
+    border-radius: 14px;
+    padding: 11px 14px;
+    font-family: 'Nunito', system-ui, sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.35;
+    transition: box-shadow 0.15s ease, outline-color 0.15s ease;
+  }
+  .input::placeholder { color: var(--dm-muted); opacity: 0.7; font-weight: 600; }
+  .input:focus {
+    outline: 3px solid #6F00D6;
+    outline-offset: 1px;
+    box-shadow: 3px 3px 0 var(--dm-tinta);
+  }
+  .input:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  select.input {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--dm-tinta) 50%),
+                      linear-gradient(135deg, var(--dm-tinta) 50%, transparent 50%);
+    background-position: calc(100% - 20px) calc(50% + 2px), calc(100% - 14px) calc(50% + 2px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 36px;
+  }
+
+  label { color: var(--dm-tinta); }
+
+  /* ── Etiquetas ───────────────────────────────────────────────────────── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border: 2px solid var(--dm-tinta);
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+
+  /* ── Blocos de métrica ───────────────────────────────────────────────── */
+  .stat {
+    background: var(--dm-card);
+    color: var(--dm-tinta);
+    border: 3px solid var(--dm-tinta);
+    border-radius: 22px;
+    box-shadow: 4px 4px 0 var(--dm-tinta);
+    padding: 14px 18px;
+    min-width: 0;
+  }
+  .stat-value {
+    font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 36px;
+    line-height: 1.1;
+    letter-spacing: 0;
+  }
+  .stat-label {
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.25;
+  }
+
+  /* ── Barras de progresso ─────────────────────────────────────────────── */
+  .track {
+    border: 3px solid var(--dm-tinta);
+    border-radius: 9999px;
+    background: var(--dm-papel);
+    overflow: hidden;
+    padding: 0;
+  }
+  .track > * {
+    height: 100%;
+    border-right: 3px solid var(--dm-tinta);
+    transition: width 0.45s ease;
+  }
+  .dark .track { background: #17102B; }
+
+  /* ── Pílulas do cabeçalho / filtros ──────────────────────────────────── */
+  .dm-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border: 3px solid var(--dm-tinta);
+    border-radius: 9999px;
+    padding: 4px 14px;
+    font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.25;
+    white-space: nowrap;
+    background: var(--dm-card);
+    color: var(--dm-tinta);
+  }
+
+  /* Divisor de seção do edital */
+  .dm-rule {
+    flex: 1;
+    border-top: 3px solid var(--dm-tinta);
+    opacity: 0.9;
+  }
+
+  /* ── Navegação lateral ───────────────────────────────────────────────── */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 9px 14px;
+    border: 3px solid transparent;
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 17px;
+    line-height: 1.25;
+    color: var(--dm-tinta);
+    text-align: left;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .nav-item:hover {
+    background: rgba(0, 214, 75, 0.16);
+    border-color: var(--dm-tinta);
+  }
+  .nav-item:active {
+    transform: translate(2px, 2px);
+  }
+  .nav-item-active,
+  .nav-item-active:hover {
+    background: var(--dm-pato);
+    color: #17102B;
+    border-color: #17102B;
+    box-shadow: 3px 3px 0 #17102B;
+  }
+  .dark .nav-item:hover { border-color: var(--dm-papel); }
+  .dark .nav-item-active,
+  .dark .nav-item-active:hover {
+    border-color: var(--dm-papel);
+    box-shadow: 3px 3px 0 var(--dm-papel);
+  }
+
+  /* Item de navegação inferior (mobile) */
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 4px 10px;
+    border: 3px solid transparent;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.2;
+    color: var(--dm-tinta);
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
+  .tab-item-active {
+    background: var(--dm-pato);
+    color: #17102B;
+    border-color: #17102B;
+  }
+  .dark .tab-item-active { border-color: var(--dm-papel); }
+
+  /* Divisória entre grupos da sidebar */
+  .nav-divider {
+    border-top: 3px solid var(--dm-tinta);
+    padding-top: 12px;
+    margin-top: auto;
+  }
+  .dark .nav-divider { border-color: rgba(255, 249, 236, 0.35); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tinta ↔ Papel se invertem no modo escuro.
+   `text-tinta` / `border-tinta` são semânticos: no escuro viram Papel.
+   Superfícies de acento (Pato / Bico) mantêm texto em Tinta nos dois modos.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.dark .text-tinta { color: var(--dm-tinta); }
+.dark .border-tinta { border-color: var(--dm-tinta); }
+
+.dark .bg-pato,
+.dark .bg-bico,
+.dark .card.bg-pato,
+.dark .card.bg-bico,
+.dark .bg-pato .text-tinta,
+.dark .bg-bico .text-tinta,
+.dark .card.bg-pato .text-tinta,
+.dark .card.bg-bico .text-tinta { color: #17102B; }
+
+/* ── Tipografia de marca (fora das camadas para vencer as utilidades) ────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.font-black,
+.font-display {
+  font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.font-mono {
+  font-family: 'Fredoka', 'Nunito', ui-monospace, sans-serif;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Animações
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes bob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-6px); }
+}
+.animate-bob { animation: bob 1.2s ease-in-out infinite alternate; }
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in { animation: scale-in 0.2s ease-out; }
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in { animation: fade-in 0.25s ease-out; }
+
+/* Quack — animações do mascote */
+@keyframes duckBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes duckBobSubtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes duckWing {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+@keyframes duckFlame {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  25% { transform: scale(1.14); opacity: 0.82; }
+  50% { transform: scale(0.96); opacity: 1; }
+  75% { transform: scale(1.10); opacity: 0.88; }
+}
+.duck-bob { animation: duckBob 2.6s ease-in-out infinite; }
+.duck-bob-subtle { animation: duckBobSubtle 2.6s ease-in-out infinite; }
+.duck-wing { animation: duckWing 2.0s ease-in-out infinite; }
+.duck-flame { animation: duckFlame 1.8s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .duck-bob, .duck-bob-subtle, .duck-wing, .duck-flame, .animate-bob { animation: none; }
+}
+
+/* Scrollbar utilitária (mobile & desktop) */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
