@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase, isSecretKeyDetected } from '../lib/supabase';
 import DuckMascot from '../components/DuckMascot';
 import ThemeToggle from '../components/ThemeToggle';
 import AuthBrandPanel from '../components/AuthBrandPanel';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, AlertTriangle } from 'lucide-react';
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -21,7 +21,13 @@ export default function SignupPage() {
     setLoading(true);
     const { data, error: err } = await supabase.auth.signUp({ email, password });
     if (err) {
-      setError(err.message === 'User already registered' ? 'Este email já está cadastrado.' : err.message);
+      if (err.message.includes('Forbidden use of secret API key')) {
+        setError('Chave secreta detectada: O Supabase proíbe o uso de sb_secret_ no navegador. Utilize a chave pública (sb_publishable_ ou anon) no seu painel.');
+      } else if (err.message === 'User already registered') {
+        setError('Este email já está cadastrado.');
+      } else {
+        setError(err.message);
+      }
       setLoading(false); return;
     }
     if (data.user) {
@@ -50,7 +56,22 @@ export default function SignupPage() {
           <h2 className="font-display text-3xl font-bold leading-tight tracking-tight text-tinta dark:text-papel">
             Criar conta
           </h2>
-          <p className="mb-6 text-sm font-semibold text-muted dark:text-papel/60">É grátis. Sem limites.</p>
+          <p className="mb-4 text-sm font-semibold text-muted dark:text-papel/60">É grátis. Sem limites.</p>
+
+          {isSecretKeyDetected && (
+            <div className="mb-4 rounded-[14px] border-[3px] border-tinta bg-amber-100 p-3 text-xs font-semibold text-tinta dark:border-papel dark:bg-amber-950/70 dark:text-amber-200">
+              <p className="mb-1 flex items-center gap-1.5 font-bold text-amber-900 dark:text-amber-300">
+                <AlertTriangle size={15} strokeWidth={2.8} /> Chave Secreta Detectada
+              </p>
+              Foi configurada a chave de servidor (<code className="rounded bg-black/10 px-1 py-0.5 dark:bg-white/10">sb_secret_...</code>). O Supabase bloqueia chaves secretas no navegador.
+              <p className="mt-1">
+                <strong>Solução:</strong> No Supabase, acesse <em>Project Settings &gt; API</em> e copie a chave <strong>Publishable / Anon</strong> (<code className="rounded bg-black/10 px-1 py-0.5 dark:bg-white/10">sb_publishable_...</code>).
+              </p>
+              <p className="mt-1.5 font-bold text-emerald-800 dark:text-emerald-300">
+                ✓ DuckMind ativou o modo local seguro para você navegar e testar normalmente.
+              </p>
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 rounded-[14px] border-[3px] border-tinta bg-bico px-3.5 py-2.5 text-sm font-bold text-tinta dark:border-papel">
@@ -86,21 +107,6 @@ export default function SignupPage() {
 
             <button type="submit" disabled={loading} className="btn mt-2 w-full bg-pato py-3 text-base text-tinta dark:border-papel">
               {loading ? <Loader2 className="animate-spin" size={20} /> : 'Criar conta grátis'}
-            </button>
-
-            <button
-              type="button"
-              disabled={loading}
-              onClick={async () => {
-                setLoading(true);
-                setError('');
-                await supabase.auth.signInWithPassword({ email: 'estudante@duckmind.com', password: 'demo' });
-                navigate('/dashboard');
-                setLoading(false);
-              }}
-              className="btn w-full bg-white py-2.5 text-sm dark:border-papel dark:bg-transparent dark:text-papel"
-            >
-              Entrar como convidado
             </button>
           </form>
 

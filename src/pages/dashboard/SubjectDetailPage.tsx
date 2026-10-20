@@ -4,11 +4,12 @@ import { useApp } from '../../context/AppContext';
 import { ArrowLeft, Plus, Check, Trash2, Pencil, Save, X, AlertTriangle } from 'lucide-react';
 import { cn } from '../../lib/theme';
 import Modal from '../../components/Modal';
+import { getSubjectSimulationQuestions } from '../../lib/simulationUtils';
 
 type Props = { subjectId: string; onBack: () => void };
 
 export default function SubjectDetailPage({ subjectId, onBack }: Props) {
-  const { subjects, topics, sessions, topicCompletions, toggleTopicCompletion, refreshData } = useApp();
+  const { user, subjects, topics, sessions, simulations, topicCompletions, toggleTopicCompletion, refreshData } = useApp();
   const [addOpen, setAddOpen] = useState(false);
   const [newTopicName, setNewTopicName] = useState('');
   const [newTopicDesc, setNewTopicDesc] = useState('');
@@ -38,15 +39,28 @@ export default function SubjectDetailPage({ subjectId, onBack }: Props) {
   const subSessions = sessions.filter(s => s.subject_id === subjectId);
 
   const subjectQuestions = subSessions.filter(s => s.study_type === 'questoes' || s.study_type === 'revisao');
-  const subjectQuestionsCorrect = subjectQuestions.reduce((a, s) => a + s.questions_correct, 0);
-  const subjectQuestionsWrong = subjectQuestions.reduce((a, s) => a + s.questions_wrong, 0);
-  const subjectQuestionsAnswered = subjectQuestionsCorrect + subjectQuestionsWrong;
+  const sessionQuestionsCorrect = subjectQuestions.reduce((a, s) => a + s.questions_correct, 0);
+  const sessionQuestionsWrong = subjectQuestions.reduce((a, s) => a + s.questions_wrong, 0);
+  const sessionQuestionsAnswered = sessionQuestionsCorrect + sessionQuestionsWrong;
+
+  // Questões provenientes de simulados para esta matéria
+  const simSubQuestions = simulations.reduce((acc, sim) => {
+    const q = getSubjectSimulationQuestions(sim, subjectId, subject.name, subject.area);
+    return {
+      total: acc.total + q.total,
+      correct: acc.correct + q.correct,
+    };
+  }, { total: 0, correct: 0 });
+
+  const subjectQuestionsCorrect = sessionQuestionsCorrect + simSubQuestions.correct;
+  const subjectQuestionsAnswered = sessionQuestionsAnswered + simSubQuestions.total;
   const subjectAccuracy = subjectQuestionsAnswered > 0 ? Math.round((subjectQuestionsCorrect / subjectQuestionsAnswered) * 100) : null;
 
   const handleAddTopic = async () => {
     if (!newTopicName.trim()) return;
     setSaving(true);
     await supabase.from('topics').insert({
+      ...(user?.id ? { user_id: user.id } : {}),
       subject_id: subjectId,
       name: newTopicName.trim(),
       order_index: subTopics.length,

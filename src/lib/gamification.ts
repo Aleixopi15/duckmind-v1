@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { StudySession, Simulation, Essay, TopicCompletion, UserProfile } from './supabase';
 import { useApp } from '../context/AppContext';
+import { getSimulationQuestions } from './simulationUtils';
 
 export interface DuckLevel {
   level: number;
@@ -409,10 +410,16 @@ export function calculateGamification(
   topicCompletions: TopicCompletion[],
   profile: UserProfile | null
 ): GamificationState {
-  // 1. Gather raw statistics
+  // 1. Gather raw statistics (including study sessions and simulations)
   const totalMinutes = sessions.reduce((sum, s) => sum + (s.duration_minutes || 0), 0);
-  const totalQuestions = sessions.reduce((sum, s) => sum + (s.questions_correct || 0) + (s.questions_wrong || 0), 0);
-  const totalCorrect = sessions.reduce((sum, s) => sum + (s.questions_correct || 0), 0);
+  const sessionQuestions = sessions.reduce((sum, s) => sum + (s.questions_correct || 0) + (s.questions_wrong || 0), 0);
+  const sessionCorrect = sessions.reduce((sum, s) => sum + (s.questions_correct || 0), 0);
+
+  const simQuestions = simulations.reduce((sum, s) => sum + getSimulationQuestions(s).total, 0);
+  const simCorrect = simulations.reduce((sum, s) => sum + getSimulationQuestions(s).correct, 0);
+
+  const totalQuestions = sessionQuestions + simQuestions;
+  const totalCorrect = sessionCorrect + simCorrect;
 
   const totalSimulations = simulations.length;
   const bestSimulationTri = simulations.reduce<number | null>((best, s) => {

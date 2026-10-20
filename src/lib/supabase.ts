@@ -10,16 +10,50 @@ const supabaseAnonKey =
   (import.meta.env.SUPABASE_ANON_KEY as string) ||
   '';
 
-const isRealSupabaseConfigured = Boolean(
+export function isSecretKey(key: string): boolean {
+  if (!key) return false;
+  const trimmed = key.trim();
+  if (trimmed.startsWith('sb_secret_') || trimmed.startsWith('sbp_')) return true;
+  try {
+    const parts = trimmed.split('.');
+    if (parts.length === 3) {
+      const payload = JSON.parse(atob(parts[1]));
+      return payload?.role === 'service_role';
+    }
+  } catch {
+    // ignore
+  }
+  return false;
+}
+
+export const isSecretKeyDetected = isSecretKey(supabaseAnonKey);
+
+export const isRealSupabaseConfigured = Boolean(
   supabaseUrl &&
   supabaseAnonKey &&
   supabaseUrl.startsWith('http') &&
-  !supabaseUrl.includes('placeholder')
+  !supabaseUrl.includes('placeholder') &&
+  !isSecretKeyDetected
 );
 
-export const supabase: SupabaseClient = (false && isRealSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : createMockSupabaseClient()) as unknown as SupabaseClient;
+function initSupabase(): SupabaseClient {
+  if (isRealSupabaseConfigured) {
+    try {
+      return createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+        },
+      });
+    } catch (err) {
+      console.error('[Supabase] Falha ao inicializar cliente real do Supabase:', err);
+      return createMockSupabaseClient() as unknown as SupabaseClient;
+    }
+  }
+  return createMockSupabaseClient() as unknown as SupabaseClient;
+}
+
+export const supabase: SupabaseClient = initSupabase();
 
 export type Subject = {
   id: string;
@@ -58,6 +92,13 @@ export type StudySession = {
 
 export type SimulationType = 'completo' | 'dia_1' | 'dia_2' | 'area_unica' | 'personalizado';
 export type SimulationTargetArea = 'languages' | 'humanities' | 'natural_sciences' | 'math' | 'essay';
+
+export type SimulationSubjectBreakdown = {
+  subject_id: string;
+  subject_name: string;
+  questions_total: number;
+  questions_correct: number;
+};
 
 export type Simulation = {
   id: string;

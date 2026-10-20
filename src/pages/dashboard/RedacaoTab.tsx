@@ -224,7 +224,7 @@ export default function RedacaoTab() {
         }
         await supabase.from('essays').update(updatePayload).eq('id', editingId);
       } else {
-        await supabase.from('essays').insert({ ...payload, file_path: filePath, file_type: fileType });
+        await supabase.from('essays').insert({ user_id: user.id, ...payload, file_path: filePath, file_type: fileType });
       }
 
       setDialogOpen(false);

@@ -9,7 +9,7 @@ import { Check, Save, Trophy, Sparkles, ChevronRight } from 'lucide-react';
 const EMOJIS = ['🦆', '🎓', '📚', '🔥', '⭐', '🚀', '💡', '🎯', '🏆', '🌱'];
 
 export default function ProfileTab() {
-  const { profile, updateProfile, sessions } = useApp();
+  const { profile, updateProfile, sessions, simulations } = useApp();
   const gamification = useGamification();
   const [achievementsOpen, setAchievementsOpen] = useState(false);
   const [displayName, setDisplayName] = useState(profile?.display_name ?? '');
@@ -20,8 +20,14 @@ export default function ProfileTab() {
   const [saved, setSaved] = useState(false);
 
   const totalMinutes = sessions.reduce((a, s) => a + s.duration_minutes, 0);
-  const totalCorrect = sessions.reduce((a, s) => a + s.questions_correct, 0);
-  const totalQuestions = sessions.reduce((a, s) => a + s.questions_correct + s.questions_wrong, 0);
+  const sessionCorrect = sessions.reduce((a, s) => a + s.questions_correct, 0);
+  const sessionQuestions = sessions.reduce((a, s) => a + s.questions_correct + s.questions_wrong, 0);
+
+  const simQuestionsTotal = simulations.reduce((a, s) => a + (s.questions_total ?? 0), 0);
+  const simCorrectTotal = simulations.reduce((a, s) => a + (s.questions_correct ?? 0), 0);
+
+  const totalCorrect = sessionCorrect + simCorrectTotal;
+  const totalQuestions = sessionQuestions + simQuestionsTotal;
   const acc = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
 
   const handleSave = async () => {

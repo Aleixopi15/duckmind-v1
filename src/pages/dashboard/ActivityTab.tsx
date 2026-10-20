@@ -6,6 +6,7 @@ import { formatDuration, hmsToMinutes, minutesToHMS, studyTypeLabel, studyTypeEm
 import { cn } from '../../lib/theme';
 import type { StudySession, StudyType } from '../../lib/supabase';
 import { Search, Edit2, Trash2, History, Filter } from 'lucide-react';
+import { getSimulationQuestions, getSubjectSimulationQuestions } from '../../lib/simulationUtils';
 
 type EditForm = {
   id: string; subject_id: string; topic_id: string; study_type: StudyType;
@@ -21,7 +22,7 @@ const PERIODS = [
 ];
 
 export default function ActivityTab() {
-  const { sessions, subjects, topics, refreshData } = useApp();
+  const { sessions, simulations, subjects, topics, refreshData } = useApp();
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState<EditForm | null>(null);
   const [filterSubject, setFilterSubject] = useState('');
@@ -50,8 +51,35 @@ export default function ActivityTab() {
   }, [sessions, subjects, topics, filterSubject, filterPeriod, searchText]);
 
   const totalMinutes = filteredSessions.reduce((a, s) => a + s.duration_minutes, 0);
-  const totalCorrect = filteredSessions.reduce((a, s) => a + s.questions_correct, 0);
-  const totalWrong = filteredSessions.reduce((a, s) => a + s.questions_wrong, 0);
+  const sessionCorrect = filteredSessions.reduce((a, s) => a + s.questions_correct, 0);
+  const sessionWrong = filteredSessions.reduce((a, s) => a + s.questions_wrong, 0);
+
+  // Considera questões de simulados correspondentes aos filtros
+  const simStats = useMemo(() => {
+    let sList = [...simulations];
+    if (filterPeriod !== 'all') {
+      const ranges: Record<string, number> = { '7d': 7 * 86400000, '30d': 30 * 86400000, '90d': 90 * 86400000 };
+      const cutoff = new Date(Date.now() - (ranges[filterPeriod] ?? 0)).toISOString().split('T')[0];
+      sList = sList.filter(s => (s.simulation_date || '').split('T')[0] >= cutoff);
+    }
+    if (!filterSubject) {
+      return sList.reduce((acc, s) => {
+        const q = getSimulationQuestions(s);
+        return { total: acc.total + q.total, correct: acc.correct + q.correct };
+      }, { total: 0, correct: 0 });
+    } else {
+      const sub = subjects.find(sb => sb.id === filterSubject);
+      return sList.reduce((acc, s) => {
+        const q = getSubjectSimulationQuestions(s, filterSubject, sub?.name || '', sub?.area);
+        return { total: acc.total + q.total, correct: acc.correct + q.correct };
+      }, { total: 0, correct: 0 });
+    }
+  }, [simulations, filterPeriod, filterSubject, subjects]);
+
+  const simWrong = Math.max(0, simStats.total - simStats.correct);
+  const totalCorrect = sessionCorrect + simStats.correct;
+  const totalWrong = sessionWrong + simWrong;
+  const totalQuestions = totalCorrect + totalWrong;
 
   const handleEdit = (s: StudySession) => {
     const hms = minutesToHMS(s.duration_minutes);
@@ -92,8 +120,8 @@ export default function ActivityTab() {
   const stats = [
     { value: String(filteredSessions.length), label: 'Sessões', accent: true },
     { value: `${Math.floor(totalMinutes / 60)}h${totalMinutes % 60}m`, label: 'Tempo total', accent: false },
-    { value: String(totalCorrect), label: 'Acertos', accent: false },
-    { value: String(totalWrong), label: 'Erros', accent: 'bico' as const },
+    { value: `${totalCorrect} (${totalQuestions}q)`, label: 'Acertos Totais', accent: false },
+    { value: String(totalWrong), label: 'Erros Totais', accent: 'bico' as const },
   ];
 
   return (

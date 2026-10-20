@@ -71,7 +71,7 @@ export function formatDuration(totalMinutes: number) {
 type Props = { open: boolean; onClose: () => void; initialMinutes?: number };
 
 export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Props) {
-  const { subjects, topics, refreshData, updateStreak } = useApp();
+  const { subjects, topics, refreshData, updateStreak, user } = useApp();
   const [form, setForm] = useState<SessionForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -102,6 +102,7 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
     setEarnedXp(calculatedXp);
 
     const { error: err } = await supabase.from('study_sessions').insert({
+      ...(user?.id ? { user_id: user.id } : {}),
       subject_id: form.subject_id, topic_id: form.topic_id || null,
       duration_minutes: totalMins,
       study_type: form.study_type,

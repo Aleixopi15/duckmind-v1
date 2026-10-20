@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, isRealSupabaseConfigured, isSecretKeyDetected } from '../../lib/supabase';
 import { useApp } from '../../context/AppContext';
 import { useTheme, cn } from '../../lib/theme';
-import { Bell, Moon, Sun, Check, AlertTriangle, Target, Clock, HelpCircle } from 'lucide-react';
+import { Bell, Moon, Sun, Check, AlertTriangle, Target, Clock, HelpCircle, Database } from 'lucide-react';
 
 export default function SettingsTab() {
   const { profile, updateProfile } = useApp();
@@ -247,6 +247,29 @@ export default function SettingsTab() {
         </button>
       </section>
 
+      {/* Status da Conexão Supabase */}
+      <section className="card mb-4 p-5">
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Database size={18} strokeWidth={2.8} className="text-mente dark:text-pato" />
+            <h2 className="font-display text-xl font-bold text-tinta dark:text-papel">Integração Supabase</h2>
+          </div>
+          <span className={cn(
+            'chip text-xs font-bold',
+            isRealSupabaseConfigured ? 'bg-pato text-tinta dark:border-papel' : isSecretKeyDetected ? 'bg-amber-300 text-tinta dark:border-papel' : 'bg-bico text-tinta dark:border-papel'
+          )}>
+            {isRealSupabaseConfigured ? '● Conectado à Nuvem' : isSecretKeyDetected ? '▲ Chave Secreta Detectada' : '○ Modo Local / Demonstração'}
+          </span>
+        </div>
+        <p className="mt-1 text-sm font-semibold text-muted dark:text-papel/60">
+          {isRealSupabaseConfigured
+            ? 'A aplicação está conectada ao seu projeto do Supabase em nuvem. Suas sessões, simulados, redações e edital estão sincronizados com PostgreSQL.'
+            : isSecretKeyDetected
+            ? 'Atenção: A variável VITE_SUPABASE_ANON_KEY está configurada com uma chave de servidor/secreta (sb_secret_...). O Supabase bloqueia requisições com chave secreta disparadas pelo navegador por segurança. Para sincronizar na nuvem, acesse o painel do Supabase > Project Settings > API e copie a chave Publishable / Anon (sb_publishable_... ou anon public). O DuckMind está funcionando com segurança em modo local para que você possa utilizar e testar todos os recursos.'
+            : 'As variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não foram fornecidas no ambiente. A aplicação está em modo local com banco de dados em memória e armazenamento seguro no navegador (localStorage), funcionando 100% de forma autônoma.'}
+        </p>
+      </section>
+
       {/* Zona de perigo */}
       <section className="card border-bico p-5 dark:border-papel">
         <div className="mb-3 flex items-center gap-2">
@@ -262,9 +285,14 @@ export default function SettingsTab() {
               onClick={async () => {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
-                  await supabase.from('study_sessions').delete().eq('user_id', user.id);
-                  await supabase.from('simulations').delete().eq('user_id', user.id);
-                  await supabase.from('topics').delete().eq('user_id', user.id);
+                  await Promise.all([
+                    supabase.from('study_sessions').delete().eq('user_id', user.id),
+                    supabase.from('simulations').delete().eq('user_id', user.id),
+                    supabase.from('essays').delete().eq('user_id', user.id),
+                    supabase.from('topic_completions').delete().eq('user_id', user.id),
+                    supabase.from('error_notebook_entries').delete().eq('user_id', user.id),
+                    supabase.from('topics').delete().eq('user_id', user.id),
+                  ]);
                   window.location.reload();
                 }
               }}

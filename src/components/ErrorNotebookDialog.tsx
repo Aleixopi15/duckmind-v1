@@ -16,7 +16,7 @@ type Props = {
 const ANSWER_OPTIONS = ['A', 'B', 'C', 'D', 'E'] as const;
 
 export default function ErrorNotebookDialog({ open, onClose, initialSubjectId, initialTopicId, onSaved }: Props) {
-  const { subjects, topics, refreshData } = useApp();
+  const { subjects, topics, refreshData, user } = useApp();
   const [imageData, setImageData] = useState<string>('');
   const [studentAnswer, setStudentAnswer] = useState('');
   const [correctAnswer, setCorrectAnswer] = useState('');
@@ -99,6 +99,7 @@ export default function ErrorNotebookDialog({ open, onClose, initialSubjectId, i
 
     try {
       const { data, error: insertError } = await supabase.from('error_notebook_entries').insert({
+        ...(user?.id ? { user_id: user.id } : {}),
         image_data: imageData,
         student_answer: studentAnswer,
         correct_answer: correctAnswer,

@@ -4,6 +4,7 @@ import { cn } from '../../lib/theme';
 import { formatDuration } from '../../components/LogStudyDialog';
 import EnemCountdown from '../../components/EnemCountdown';
 import { Plus, ChevronRight, Pause, Play, RotateCcw } from 'lucide-react';
+import { getSimulationQuestions } from '../../lib/simulationUtils';
 
 type Props = {
   onNavigate: (tab: string) => void;
@@ -29,7 +30,7 @@ function Track({ pct, color, height = 14 }: { pct: number; color: string; height
 }
 
 export default function OverviewTab({ onNavigate, onLogStudy, onOpenStreak }: Props) {
-  const { profile, sessions, subjects, topics, topicCompletions } = useApp();
+  const { profile, sessions, simulations, subjects, topics, topicCompletions } = useApp();
   const [stopwatchRunning, setStopwatchRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [showAllSubjects, setShowAllSubjects] = useState(false);
@@ -50,7 +51,15 @@ export default function OverviewTab({ onNavigate, onLogStudy, onOpenStreak }: Pr
   })();
   const weekSessions = sessions.filter(s => s.studied_at.split('T')[0] >= weekStart);
   const weekMinutes = weekSessions.reduce((acc, s) => acc + s.duration_minutes, 0);
-  const weekQuestions = weekSessions.reduce((acc, s) => acc + s.questions_correct + s.questions_wrong, 0);
+
+  // Questões das sessões na semana
+  const weekSessionQuestions = weekSessions.reduce((acc, s) => acc + s.questions_correct + s.questions_wrong, 0);
+
+  // Questões dos simulados na semana
+  const weekSims = simulations.filter(s => getSimulationQuestions(s).date >= weekStart);
+  const weekSimQuestions = weekSims.reduce((acc, s) => acc + getSimulationQuestions(s).total, 0);
+  const weekQuestions = weekSessionQuestions + weekSimQuestions;
+
   const weekMinutesPct = weeklyMinutesGoal > 0 ? Math.min(100, Math.round((weekMinutes / weeklyMinutesGoal) * 100)) : 0;
   const weekQuestionsPct = weeklyQuestionsGoal > 0 ? Math.min(100, Math.round((weekQuestions / weeklyQuestionsGoal) * 100)) : 0;
 
@@ -59,8 +68,15 @@ export default function OverviewTab({ onNavigate, onLogStudy, onOpenStreak }: Pr
     .filter(s => s.studied_at.split('T')[0] === today)
     .reduce((acc, s) => acc + s.duration_minutes, 0);
 
-  const totalQuestions = sessions.reduce((acc, s) => acc + s.questions_correct + s.questions_wrong, 0);
-  const totalCorrect = sessions.reduce((acc, s) => acc + s.questions_correct, 0);
+  // Questões gerais: Sessões + Simulados
+  const sessionQuestionsTotal = sessions.reduce((acc, s) => acc + s.questions_correct + s.questions_wrong, 0);
+  const sessionCorrectTotal = sessions.reduce((acc, s) => acc + s.questions_correct, 0);
+
+  const simQuestionsTotal = simulations.reduce((acc, s) => acc + getSimulationQuestions(s).total, 0);
+  const simCorrectTotal = simulations.reduce((acc, s) => acc + getSimulationQuestions(s).correct, 0);
+
+  const totalQuestions = sessionQuestionsTotal + simQuestionsTotal;
+  const totalCorrect = sessionCorrectTotal + simCorrectTotal;
   const accuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
 
   const goalProgress = dailyGoal > 0 ? Math.min(100, Math.round((todayMinutes / dailyGoal) * 100)) : 0;

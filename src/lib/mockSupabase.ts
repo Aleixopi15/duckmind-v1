@@ -28,6 +28,32 @@ type StoredData = {
 
 const STORAGE_KEY = 'duckmind_mock_db_v1';
 const SESSION_KEY = 'duckmind_mock_session_v1';
+const ACCOUNTS_KEY = 'duckmind_mock_accounts_v1';
+
+type MockAccount = {
+  id: string;
+  email: string;
+  password: string;
+  created_at: string;
+};
+
+function loadAccounts(): MockAccount[] {
+  try {
+    const raw = localStorage.getItem(ACCOUNTS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
+function saveAccounts(accounts: MockAccount[]) {
+  try {
+    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+  } catch {
+    // ignore
+  }
+}
 
 function loadDB(): StoredData {
   try {
@@ -297,21 +323,80 @@ export function createMockSupabaseClient() {
         };
       },
 
-      async signInWithPassword({ email, password: _password }: { email: string; password?: string }) {
-        const cleanEmail = email.trim().toLowerCase();
+      async signInWithPassword({ email, password }: { email: string; password?: string }) {
+        const cleanEmail = email?.trim().toLowerCase() || '';
+        const cleanPass = password || '';
+        if (!cleanEmail || !cleanPass) {
+          return { data: { user: null, session: null }, error: { message: 'Email e senha são obrigatórios.' } };
+        }
+
+        const accounts = loadAccounts();
+        const account = accounts.find(a => a.email === cleanEmail);
+        if (!account || account.password !== cleanPass) {
+          return { data: { user: null, session: null }, error: { message: 'Email ou senha incorretos.' } };
+        }
+
+        const session = {
+          access_token: 'mock_jwt_token',
+          token_type: 'bearer',
+          user: {
+            id: account.id,
+            email: account.email,
+            created_at: account.created_at,
+          },
+        };
+        setStoredSession(session);
+
+        // Ensure user has edital topics initialized
+        const db = loadDB();
+        const userTopics = db.topics.filter(t => t.user_id === account.id);
+        if (userTopics.length === 0) {
+          const newTopics = createInitialTopics(account.id);
+          db.topics.push(...newTopics);
+          saveDB(db);
+        }
+
+        authListeners.forEach(listener => listener('SIGNED_IN', session));
+        return { data: { user: session.user, session }, error: null };
+      },
+
+      async signUp({ email, password }: { email: string; password?: string }) {
+        const cleanEmail = email?.trim().toLowerCase() || '';
+        const cleanPass = password || '';
+        if (!cleanEmail) {
+          return { data: { user: null, session: null }, error: { message: 'Informe um email válido.' } };
+        }
+        if (cleanPass.length < 6) {
+          return { data: { user: null, session: null }, error: { message: 'A senha deve ter pelo menos 6 caracteres.' } };
+        }
+
+        const accounts = loadAccounts();
+        const existing = accounts.find(a => a.email === cleanEmail);
+        if (existing) {
+          return { data: { user: null, session: null }, error: { message: 'Este email já está cadastrado.' } };
+        }
+
         const userId = 'usr_' + cleanEmail.replace(/[^a-z0-9]/g, '_');
+        const newAccount: MockAccount = {
+          id: userId,
+          email: cleanEmail,
+          password: cleanPass,
+          created_at: new Date().toISOString(),
+        };
+        accounts.push(newAccount);
+        saveAccounts(accounts);
+
         const session = {
           access_token: 'mock_jwt_token',
           token_type: 'bearer',
           user: {
             id: userId,
             email: cleanEmail,
-            created_at: new Date().toISOString(),
+            created_at: newAccount.created_at,
           },
         };
         setStoredSession(session);
 
-        // Ensure user has edital topics initialized
         const db = loadDB();
         const userTopics = db.topics.filter(t => t.user_id === userId);
         if (userTopics.length === 0) {
@@ -322,10 +407,6 @@ export function createMockSupabaseClient() {
 
         authListeners.forEach(listener => listener('SIGNED_IN', session));
         return { data: { user: session.user, session }, error: null };
-      },
-
-      async signUp({ email, password }: { email: string; password?: string }) {
-        return this.signInWithPassword({ email, password });
       },
 
       async signOut() {

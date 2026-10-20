@@ -16,6 +16,8 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  BookOpen,
+  Check,
 } from 'lucide-react';
 
 export interface EnemAreaConfig {
@@ -201,6 +203,13 @@ function parseSimulationData(s: Simulation): {
   return { cleanNotes, meta };
 }
 
+export interface FormSubjectEntry {
+  subject_id: string;
+  subject_name: string;
+  questions_total: string;
+  questions_correct: string;
+}
+
 interface FormState {
   id: string;
   title: string;
@@ -213,6 +222,8 @@ interface FormState {
   perceived_difficulty: 'facil' | 'medio' | 'dificil' | 'muito_dificil' | '';
   error_reasons: string[];
   notes: string;
+  // Matérias individuais para Simulado Personalizado
+  custom_subjects: FormSubjectEntry[];
   // Area values (questions correct count for objectives, points for essay)
   score_languages: string;
   score_humanities: string;
@@ -247,6 +258,7 @@ const emptyForm: FormState = {
   perceived_difficulty: 'medio',
   error_reasons: [],
   notes: '',
+  custom_subjects: [],
   score_languages: '',
   score_humanities: '',
   score_natural_sciences: '',
@@ -277,13 +289,70 @@ const ERROR_TAGS = [
 ];
 
 export default function SimuladosTab() {
-  const { simulations, refreshData } = useApp();
+  const { simulations, refreshData, user, subjects } = useApp();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | SimulationType>('all');
   const [selectedDetail, setSelectedDetail] = useState<Simulation | null>(null);
+  const [newSubjectInput, setNewSubjectInput] = useState('');
+
+  const handleAddCustomSubject = (subjectId?: string, subjectName?: string) => {
+    const name = (subjectName || newSubjectInput).trim();
+    if (!name) return;
+    if (form.custom_subjects.some(cs => cs.subject_name.toLowerCase() === name.toLowerCase())) {
+      setNewSubjectInput('');
+      return;
+    }
+    const matchingSubject = subjects.find(s => s.name.toLowerCase() === name.toLowerCase());
+    setForm(prev => ({
+      ...prev,
+      custom_subjects: [
+        ...prev.custom_subjects,
+        {
+          subject_id: subjectId || matchingSubject?.id || '',
+          subject_name: matchingSubject?.name || name,
+          questions_total: '15',
+          questions_correct: '0',
+        },
+      ],
+    }));
+    setNewSubjectInput('');
+  };
+
+  const handleAddAllSubjects = () => {
+    setForm(prev => {
+      const existingNames = new Set(prev.custom_subjects.map(cs => cs.subject_name.toLowerCase()));
+      const toAdd = subjects
+        .filter(s => !existingNames.has(s.name.toLowerCase()))
+        .map(s => ({
+          subject_id: s.id,
+          subject_name: s.name,
+          questions_total: '15',
+          questions_correct: '0',
+        }));
+      return {
+        ...prev,
+        custom_subjects: [...prev.custom_subjects, ...toAdd],
+      };
+    });
+  };
+
+  const handleUpdateCustomSubject = (index: number, field: keyof FormSubjectEntry, value: string) => {
+    setForm(prev => {
+      const updated = [...prev.custom_subjects];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, custom_subjects: updated };
+    });
+  };
+
+  const handleRemoveCustomSubject = (index: number) => {
+    setForm(prev => ({
+      ...prev,
+      custom_subjects: prev.custom_subjects.filter((_, i) => i !== index),
+    }));
+  };
 
   useEffect(() => {
     if (open && !form.id) {
@@ -373,8 +442,16 @@ export default function SimuladosTab() {
         else if (form.target_area === 'math') c = m;
         totalCorrect = c;
       }
+    } else if (form.simulation_type === 'personalizado') {
+      if (form.custom_subjects.length > 0) {
+        totalQuestions = form.custom_subjects.reduce((sum, s) => sum + (parseInt(s.questions_total) || 0), 0);
+        totalCorrect = form.custom_subjects.reduce((sum, s) => sum + (parseInt(s.questions_correct) || 0), 0);
+      } else {
+        totalQuestions = 0;
+        totalCorrect = 0;
+      }
     } else {
-      // completo ou personalizado
+      // completo
       totalQuestions = 180;
       totalCorrect =
         (form.score_languages ? l : 0) +
@@ -442,6 +519,22 @@ export default function SimuladosTab() {
     if (form.tri_natural_sciences.trim()) areaTriMap.natural_sciences = parseFloat(form.tri_natural_sciences);
     if (form.tri_math.trim()) areaTriMap.math = parseFloat(form.tri_math);
 
+    let subjectsBreakdown: SimulationSubjectBreakdown[] | undefined = undefined;
+    if (form.simulation_type === 'personalizado') {
+      subjectsBreakdown = form.custom_subjects
+        .filter(cs => cs.subject_name.trim() && (parseInt(cs.questions_total) || 0) > 0)
+        .map(cs => {
+          const tot = Math.max(1, parseInt(cs.questions_total) || 0);
+          const cor = Math.min(tot, Math.max(0, parseInt(cs.questions_correct) || 0));
+          return {
+            subject_id: cs.subject_id,
+            subject_name: cs.subject_name.trim(),
+            questions_total: tot,
+            questions_correct: cor,
+          };
+        });
+    }
+
     // Build embedded metadata tag for backward compatibility & rich details
     const metaPayload: SimulationMeta = {
       type: form.simulation_type,
@@ -457,6 +550,7 @@ export default function SimuladosTab() {
       essay_competencies: form.show_essay_details
         ? [form.comp1, form.comp2, form.comp3, form.comp4, form.comp5]
         : undefined,
+      subjects_breakdown: subjectsBreakdown,
     };
 
     const notesWithMeta = `${form.notes.trim()}\n\n<!-- ENEM_META:${JSON.stringify(metaPayload)} -->`.trim();
@@ -505,10 +599,12 @@ export default function SimuladosTab() {
         }
       } else {
         // Try insert with full payload
-        const res = await supabase.from('simulations').insert(fullPayload);
+        const insertFull = { ...(user?.id ? { user_id: user.id } : {}), ...fullPayload };
+        const insertBase = { ...(user?.id ? { user_id: user.id } : {}), ...basePayload };
+        const res = await supabase.from('simulations').insert(insertFull);
         if (res.error) {
           console.warn('Insert failed with new columns, retrying with base schema fallback:', res.error);
-          const fallbackRes = await supabase.from('simulations').insert(basePayload);
+          const fallbackRes = await supabase.from('simulations').insert(insertBase);
           if (fallbackRes.error) throw fallbackRes.error;
         }
       }
@@ -563,6 +659,12 @@ export default function SimuladosTab() {
       tri_humanities: areaTri.humanities?.toString() ?? '',
       tri_natural_sciences: areaTri.natural_sciences?.toString() ?? '',
       tri_math: areaTri.math?.toString() ?? '',
+      custom_subjects: (meta.subjects_breakdown || []).map(b => ({
+        subject_id: b.subject_id,
+        subject_name: b.subject_name,
+        questions_total: b.questions_total.toString(),
+        questions_correct: b.questions_correct.toString(),
+      })),
     });
     setOpen(true);
   };
@@ -681,6 +783,7 @@ export default function SimuladosTab() {
           { id: 'dia_1', label: '1º dia', icon: '📘' },
           { id: 'dia_2', label: '2º dia', icon: '🧪' },
           { id: 'area_unica', label: 'Área única', icon: '🎯' },
+          { id: 'personalizado', label: 'Personalizado', icon: '⚙️' },
         ] as const).map(f => (
           <button
             key={f.id}
@@ -837,7 +940,46 @@ export default function SimuladosTab() {
                 </div>
 
                 {/* Subject Bars Breakdown */}
-                {simType === 'area_unica' && targetAreaConfig ? (
+                {simType === 'personalizado' && meta.subjects_breakdown && meta.subjects_breakdown.length > 0 ? (
+                  <div className="mt-3.5 border-t-[3px] border-tinta/15 pt-3 dark:border-papel/15">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted dark:text-papel/60">
+                        Matérias do Simulado ({meta.subjects_breakdown.length})
+                      </span>
+                      {totalQ > 0 && (
+                        <span className="chip bg-pato text-tinta text-xs font-bold">
+                          {correctQ}/{totalQ} ({Math.round((correctQ / totalQ) * 100)}%)
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                      {meta.subjects_breakdown.map((sb, sbIdx) => {
+                        const sbPct = sb.questions_total > 0 ? Math.round((sb.questions_correct / sb.questions_total) * 100) : 0;
+                        return (
+                          <div
+                            key={sbIdx}
+                            className="flex flex-col justify-between rounded-[14px] border-[3px] border-tinta bg-papel p-2.5 dark:border-papel/40 dark:bg-transparent"
+                          >
+                            <div className="truncate text-xs font-bold text-tinta dark:text-papel">
+                              {sb.subject_name}
+                            </div>
+                            <div className="mt-1 flex items-baseline justify-between font-mono">
+                              <span className="text-sm font-bold text-tinta dark:text-papel">
+                                {sb.questions_correct}/{sb.questions_total}
+                              </span>
+                              <span className={cn('text-xs font-bold', sbPct >= 70 ? 'text-emerald-600 dark:text-pato' : sbPct >= 50 ? 'text-amber-600' : 'text-red-500')}>
+                                {sbPct}%
+                              </span>
+                            </div>
+                            <div className="track mt-1.5 w-full" style={{ height: 10 }}>
+                              <div style={{ width: `${sbPct}%`, background: sbPct >= 70 ? '#00D64B' : sbPct >= 50 ? '#D68200' : '#EF4444' }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : simType === 'area_unica' && targetAreaConfig ? (
                   <div className="mt-3.5 border-t-[3px] border-tinta/15 pt-3 dark:border-papel/15">
                     {(() => {
                       const a = targetAreaConfig;

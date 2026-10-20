@@ -6,6 +6,7 @@ import {
   Target, Award, TrendingUp, BookOpen, BarChart3,
   Calendar, HelpCircle, Timer, Filter, X,
 } from 'lucide-react';
+import { getSimulationQuestions, getSubjectSimulationQuestions } from '../../lib/simulationUtils';
 
 const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -64,8 +65,32 @@ export default function StatsTab() {
   }, [sessions, filterTopicId]);
 
   const totalMinutes = filterTopicSessions.reduce((a, s) => a + s.duration_minutes, 0);
-  const totalCorrect = filterTopicSessions.reduce((a, s) => a + s.questions_correct, 0);
-  const totalWrong = filterTopicSessions.reduce((a, s) => a + s.questions_wrong, 0);
+
+  // Considera simulados se não houver filtro de tópico específico
+  const simQuestionsTotal = !filterTopicId
+    ? (!filterSubjectId
+        ? simulations.reduce((a, s) => a + getSimulationQuestions(s).total, 0)
+        : simulations.reduce((a, s) => {
+            const sub = subjects.find(sb => sb.id === filterSubjectId);
+            return a + getSubjectSimulationQuestions(s, filterSubjectId, sub?.name || '', sub?.area).total;
+          }, 0)
+      )
+    : 0;
+
+  const simCorrectTotal = !filterTopicId
+    ? (!filterSubjectId
+        ? simulations.reduce((a, s) => a + getSimulationQuestions(s).correct, 0)
+        : simulations.reduce((a, s) => {
+            const sub = subjects.find(sb => sb.id === filterSubjectId);
+            return a + getSubjectSimulationQuestions(s, filterSubjectId, sub?.name || '', sub?.area).correct;
+          }, 0)
+      )
+    : 0;
+
+  const simWrongTotal = Math.max(0, simQuestionsTotal - simCorrectTotal);
+
+  const totalCorrect = filterTopicSessions.reduce((a, s) => a + s.questions_correct, 0) + simCorrectTotal;
+  const totalWrong = filterTopicSessions.reduce((a, s) => a + s.questions_wrong, 0) + simWrongTotal;
   const totalQuestions = totalCorrect + totalWrong;
   const accuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
   const avgSimScore = simulations.length > 0
@@ -77,8 +102,21 @@ export default function StatsTab() {
 
   const weekSessions = filterTopicSessions.filter(s => s.studied_at.split('T')[0] >= weekStartIso);
   const weekMinutes = weekSessions.reduce((a, s) => a + s.duration_minutes, 0);
-  const weekQuestions = weekSessions.reduce((a, s) => a + s.questions_correct + s.questions_wrong, 0);
-  const weekCorrect = weekSessions.reduce((a, s) => a + s.questions_correct, 0);
+
+  const weekSims = !filterTopicId ? simulations.filter(s => getSimulationQuestions(s).date >= weekStartIso) : [];
+  const weekSimQuestions = weekSims.reduce((a, s) => {
+    if (!filterSubjectId) return a + getSimulationQuestions(s).total;
+    const sub = subjects.find(sb => sb.id === filterSubjectId);
+    return a + getSubjectSimulationQuestions(s, filterSubjectId, sub?.name || '', sub?.area).total;
+  }, 0);
+  const weekSimCorrect = weekSims.reduce((a, s) => {
+    if (!filterSubjectId) return a + getSimulationQuestions(s).correct;
+    const sub = subjects.find(sb => sb.id === filterSubjectId);
+    return a + getSubjectSimulationQuestions(s, filterSubjectId, sub?.name || '', sub?.area).correct;
+  }, 0);
+
+  const weekQuestions = weekSessions.reduce((a, s) => a + s.questions_correct + s.questions_wrong, 0) + weekSimQuestions;
+  const weekCorrect = weekSessions.reduce((a, s) => a + s.questions_correct, 0) + weekSimCorrect;
   const weekAccuracy = weekQuestions > 0 ? Math.round((weekCorrect / weekQuestions) * 100) : 0;
 
   const weekMinutesPct = weeklyMinutesGoal > 0 ? Math.min(100, Math.round((weekMinutes / weeklyMinutesGoal) * 100)) : 0;
@@ -92,26 +130,60 @@ export default function StatsTab() {
       const iso = d.toISOString().split('T')[0];
       const daySessions = filterTopicSessions.filter(s => s.studied_at.split('T')[0] === iso);
       const minutes = daySessions.reduce((a, s) => a + s.duration_minutes, 0);
-      const questions = daySessions.reduce((a, s) => a + s.questions_correct + s.questions_wrong, 0);
-      days.push({ label: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'][d.getDay()], minutes, questions, date: iso });
+      const sessionQuestions = daySessions.reduce((a, s) => a + s.questions_correct + s.questions_wrong, 0);
+
+      // Simulados do dia
+      const daySims = !filterTopicId ? simulations.filter(s => getSimulationQuestions(s).date === iso) : [];
+      const simQuestions = daySims.reduce((a, s) => {
+        if (!filterSubjectId) return a + getSimulationQuestions(s).total;
+        const sub = subjects.find(sb => sb.id === filterSubjectId);
+        return a + getSubjectSimulationQuestions(s, filterSubjectId, sub?.name || '', sub?.area).total;
+      }, 0);
+
+      days.push({
+        label: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'][d.getDay()],
+        minutes,
+        questions: sessionQuestions + simQuestions,
+        date: iso,
+      });
     }
     return days;
-  }, [filterTopicSessions]);
+  }, [filterTopicSessions, filterTopicId, filterSubjectId, simulations, subjects]);
 
   const maxDayMinutes = Math.max(...last7Days.map(d => d.minutes), 60);
 
   const subjectStats = subjects.map(sub => {
     const subSessions = filterTopicSessions.filter(s => s.subject_id === sub.id);
     const minutes = subSessions.reduce((a, s) => a + s.duration_minutes, 0);
-    const correct = subSessions.reduce((a, s) => a + s.questions_correct, 0);
-    const wrong = subSessions.reduce((a, s) => a + s.questions_wrong, 0);
+    const sessionCorrect = subSessions.reduce((a, s) => a + s.questions_correct, 0);
+    const sessionWrong = subSessions.reduce((a, s) => a + s.questions_wrong, 0);
+
+    // Contabiliza questões de simulados para esta matéria
+    const simSubQ = !filterTopicId ? simulations.reduce((acc, sim) => {
+      const q = getSubjectSimulationQuestions(sim, sub.id, sub.name, sub.area);
+      return { total: acc.total + q.total, correct: acc.correct + q.correct };
+    }, { total: 0, correct: 0 }) : { total: 0, correct: 0 };
+
+    const correct = sessionCorrect + simSubQ.correct;
+    const wrong = sessionWrong + Math.max(0, simSubQ.total - simSubQ.correct);
     const total = correct + wrong;
     const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
     const subTopics = topics.filter(t => t.subject_id === sub.id);
     const completedCount = topicCompletions.filter(tc => subTopics.some(t => t.id === tc.topic_id)).length;
     const topicProgress = subTopics.length > 0 ? Math.round((completedCount / subTopics.length) * 100) : 0;
-    return { ...sub, minutes, sessions: subSessions.length, acc, correct, wrong, questions: total, topicProgress, completedCount, topicTotal: subTopics.length };
-  }).filter(s => s.sessions > 0 || s.completedCount > 0).sort((a, b) => b.minutes - a.minutes);
+    return {
+      ...sub,
+      minutes,
+      sessions: subSessions.length + (simSubQ.total > 0 ? 1 : 0),
+      acc,
+      correct,
+      wrong,
+      questions: total,
+      topicProgress,
+      completedCount,
+      topicTotal: subTopics.length,
+    };
+  }).filter(s => s.sessions > 0 || s.completedCount > 0 || s.questions > 0).sort((a, b) => b.questions - a.questions || b.minutes - a.minutes);
 
   const maxSubjectMinutes = Math.max(...subjectStats.map(s => s.minutes), 60);
 
