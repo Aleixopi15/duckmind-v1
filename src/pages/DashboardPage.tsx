@@ -18,7 +18,22 @@ import RedacaoTab from './dashboard/RedacaoTab';
 import ErrorNotebookTab from './dashboard/ErrorNotebookTab';
 import SubjectDetailPage from './dashboard/SubjectDetailPage';
 import { cn } from '../lib/theme';
-import { LayoutDashboard, BookOpen, History, ClipboardList, PenLine, AlertCircle, BarChart3, User, Settings, Menu, X, Plus } from 'lucide-react';
+import {
+  LayoutDashboard,
+  BookOpen,
+  History,
+  ClipboardList,
+  PenLine,
+  AlertCircle,
+  BarChart3,
+  User,
+  Settings,
+  Menu,
+  X,
+  Plus,
+  Flame,
+  LogOut,
+} from 'lucide-react';
 
 const TABS = [
   { id: 'overview', label: 'Início', icon: LayoutDashboard },
@@ -35,13 +50,28 @@ const BOTTOM_TABS = [
   { id: 'settings', label: 'Configurações', icon: Settings },
 ];
 
-const DRAWER_WIDTH = 240;
-
-type NavTab = { id: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> };
+type NavTab = { id: string; label: string; icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }> };
 
 function NavButton({ tab, active, onClick }: { tab: NavTab; active: boolean; onClick: () => void }) {
+  const Icon = tab.icon;
   return (
-    <button onClick={onClick} className={cn('nav-item', active && 'nav-item-active')}>
+    <button
+      onClick={onClick}
+      className={cn(
+        'group flex w-full items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-left',
+        active
+          ? 'bg-[#00D64B]/15 text-[#008E32] dark:text-[#19E85F] font-bold shadow-xs'
+          : 'text-muted hover:text-tinta hover:bg-gray-100/70 dark:text-gray-400 dark:hover:text-texto dark:hover:bg-white/5'
+      )}
+    >
+      <Icon
+        size={18}
+        strokeWidth={active ? 2.6 : 2}
+        className={cn(
+          'shrink-0 transition-colors',
+          active ? 'text-[#008E32] dark:text-[#19E85F]' : 'text-muted/80 group-hover:text-tinta dark:text-gray-400 dark:group-hover:text-texto'
+        )}
+      />
       <span className="truncate">{tab.label}</span>
     </button>
   );
@@ -64,8 +94,7 @@ export default function DashboardPage() {
 
   const handleLogout = async () => { await supabase.auth.signOut(); navigate('/'); };
   const streak = profile?.current_streak ?? 0;
-  const avatarEmoji = profile?.avatar_emoji ?? '🦆';
-  const initial = (profile?.display_name ?? 'Você').trim().charAt(0).toUpperCase() || 'D';
+  const initial = (profile?.display_name ?? 'Pedro').trim().charAt(0).toUpperCase() || 'P';
 
   const handleTimerComplete = (minutes: number) => {
     setTimerOpen(false); setPendingMinutes(minutes); setLogOpen(true);
@@ -76,18 +105,18 @@ export default function DashboardPage() {
   const go = (id: string) => { setSelectedSubjectId(null); setActiveTab(id); setDrawerOpen(false); };
 
   const sidebarInner = (
-    <div className="flex h-full select-none flex-col overflow-hidden bg-white px-4 pb-4 pt-6 dark:bg-[#120C22]">
-      {/* Marca */}
-      <div className="flex shrink-0 items-center justify-between gap-2 px-2 pb-[18px]">
-        <Logo size="md" />
+    <div className="flex h-full select-none flex-col justify-between overflow-hidden">
+      {/* Marca DuckMind com Mascote em Telas Grandes */}
+      <div className="flex shrink-0 items-center justify-between gap-2 px-1 pb-6">
+        <Logo size="md" showMascot />
         {drawerOpen && (
           <button
             type="button"
             aria-label="Fechar menu"
             onClick={() => setDrawerOpen(false)}
-            className="flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-tinta text-tinta dark:border-papel dark:text-papel md:hidden"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-gray-100 dark:hover:bg-white/10 md:hidden"
           >
-            <X size={16} strokeWidth={2.6} />
+            <X size={18} strokeWidth={2.4} />
           </button>
         )}
       </div>
@@ -100,20 +129,21 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        <div className="nav-divider flex shrink-0 flex-col gap-1.5">
+        <div className="border-t border-gray-100 dark:border-white/5 pt-3 flex shrink-0 flex-col gap-1.5">
           {BOTTOM_TABS.map(t => (
             <NavButton key={t.id} tab={t} active={activeTab === t.id && !selectedSubjectId} onClick={() => go(t.id)} />
           ))}
 
           <button
             onClick={handleLogout}
-            className="dm-pill w-full justify-center border-[3px] border-tinta bg-bico py-2.5 text-[17px] font-bold text-tinta shadow-brutal-sm transition-transform hover:bg-[#EF9100] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none dark:border-papel"
+            className="group flex w-full items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-red-600/80 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all text-left"
           >
-            Sair
+            <LogOut size={18} strokeWidth={2} className="shrink-0" />
+            <span>Sair</span>
           </button>
 
-          <div className="mt-2 flex items-center justify-between px-2">
-            <span className="text-sm font-bold text-muted dark:text-papel/60">Tema</span>
+          <div className="mt-2 flex items-center justify-between px-3.5 py-1 text-xs text-muted">
+            <span className="font-medium">Modo escuro</span>
             <ThemeToggle size={16} />
           </div>
         </div>
@@ -122,11 +152,20 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="min-h-screen bg-papel text-tinta transition-colors duration-300 dark:bg-surface-dark dark:text-papel">
-      {/* Sidebar desktop */}
+    <div className="relative min-h-screen bg-[#F6F5FB] text-[#14102A] transition-colors duration-300 dark:bg-[#0B0819] dark:text-[#F3F1FF]">
+      {/* Background Ambient Glow (Fiel ao design DuckMind 2.0 das imagens) */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        {/* Top purple ambient glow */}
+        <div className="absolute -top-32 right-[-5%] h-[550px] w-[550px] rounded-full bg-[#6F00D6]/12 blur-[120px] dark:bg-[#6F00D6]/30" />
+        {/* Bottom emerald ambient glow */}
+        <div className="absolute top-[35%] -left-32 h-[480px] w-[480px] rounded-full bg-[#00D64B]/8 blur-[130px] dark:bg-[#00D64B]/14" />
+        {/* Center-bottom violet glow */}
+        <div className="absolute -bottom-36 right-[25%] h-[500px] w-[500px] rounded-full bg-[#6F00D6]/8 blur-[140px] dark:bg-[#6F00D6]/20" />
+      </div>
+
+      {/* Sidebar desktop: Menu lateral flutuante conforme V2 · Web Início (escuro) */}
       <aside
-        className="fixed left-0 top-0 z-40 hidden h-screen flex-col border-r-[3px] border-tinta bg-white dark:border-papel/40 dark:bg-[#120C22] md:flex"
-        style={{ width: DRAWER_WIDTH }}
+        className="fixed left-4 top-4 bottom-4 z-40 hidden w-[240px] flex-col rounded-[28px] border border-slate-200/80 bg-white/95 p-5 shadow-2xl backdrop-blur-md dark:border-white/5 dark:bg-[#131024]/90 md:flex"
       >
         {sidebarInner}
       </aside>
@@ -137,94 +176,85 @@ export default function DashboardPage() {
           <button
             type="button"
             aria-label="Fechar menu"
-            className="absolute inset-0 h-full w-full cursor-default bg-tinta/60"
+            className="absolute inset-0 h-full w-full cursor-default bg-black/50 backdrop-blur-xs"
             onClick={() => setDrawerOpen(false)}
           />
           <aside
-            className="absolute left-0 top-0 z-10 flex h-full w-64 max-w-[85vw] flex-col border-r-[3px] border-tinta bg-white shadow-[8px_8px_0_#00D64B] dark:border-papel/40 dark:bg-[#120C22]"
+            className="absolute left-0 top-0 z-10 flex h-full w-64 max-w-[85vw] flex-col border-r border-slate-200/80 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-[#0D0A1F]"
           >
             {sidebarInner}
           </aside>
         </div>
       )}
 
-      {/* Área principal */}
-      <div className="flex min-h-screen min-w-0 max-w-full flex-col overflow-x-hidden pb-24 md:ml-[240px] md:pb-0">
-        {/* Cabeçalho */}
-        <header className="sticky top-0 z-30 flex h-[72px] shrink-0 items-center justify-between gap-3 border-b-[3px] border-tinta bg-white px-4 transition-colors duration-300 dark:border-papel/40 dark:bg-[#120C22] md:px-8">
-          {/* Mobile: marca */}
+      {/* Área principal integrada */}
+      <div className="relative z-10 flex min-h-screen min-w-0 max-w-full flex-col overflow-x-hidden pb-28 md:ml-[264px] md:pb-8">
+        {/* Cabeçalho sem limitações/separadores rígidos: Totalmente integrado ao fundo */}
+        <header className="flex h-[72px] shrink-0 items-center justify-between gap-3 px-4 pt-3 pb-2 md:px-8 md:pt-6 md:pb-4 transition-colors">
+          {/* Mobile: Apenas Logo DuckMind à esquerda (sem menu aqui) */}
           <div className="flex min-w-0 items-center gap-2 md:hidden">
-            <Logo size="sm" />
+            <Logo size="md" />
           </div>
 
-          {/* Desktop: trilha */}
-          <div className="hidden min-w-0 items-center gap-2.5 md:flex">
-            <span className="rounded-[16px] border-[3px] border-tinta bg-pato px-3 py-0.5 text-sm font-bold text-tinta dark:border-papel">
+          {/* Desktop: Trilha / Breadcrumb */}
+          <div className="hidden min-w-0 items-center gap-2 md:flex">
+            <span className="rounded-full bg-[#00D64B]/15 px-3.5 py-1 font-display text-xs font-bold text-[#008E32] dark:text-[#19E85F]">
               ENEM 2026
             </span>
-            <span className="font-display text-lg font-bold text-muted dark:text-papel/50">/</span>
-            <span className="truncate font-display text-lg font-bold text-tinta dark:text-papel">{pageLabel}</span>
+            <span className="text-slate-300 dark:text-white/20 font-display">/</span>
+            <span className="truncate font-display text-sm font-bold text-[#14102A] dark:text-white">
+              {pageLabel}
+            </span>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2 md:gap-3">
-            {/* Ofensiva */}
+          {/* Ações da Direita */}
+          <div className="flex shrink-0 items-center gap-2 sm:gap-2.5 md:gap-3">
+            {/* Ofensiva: Pílula moderna de ofensivas */}
             <button
               onClick={() => setStreakOpen(true)}
-              className={cn(
-                'dm-pill border-[3px] transition-transform hover:-translate-y-px active:translate-x-[2px] active:translate-y-[2px] active:shadow-none',
-                streak > 0
-                  ? 'border-tinta bg-bico text-tinta shadow-brutal-sm dark:border-papel'
-                  : 'border-tinta bg-white text-tinta dark:border-papel dark:bg-transparent dark:text-papel',
-              )}
-              style={{ fontSize: 15, padding: '2px 12px' }}
+              aria-label="Ver ofensiva"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 text-[#D68200] dark:text-[#FFB84D] hover:bg-amber-500/20 text-xs font-bold transition-all hover:scale-102"
             >
-              {streak} {streak === 1 ? 'dia' : 'dias'}
+              <Flame size={14} strokeWidth={2.6} className="text-[#D68200] dark:text-[#FFB84D] hidden xs:inline-block" />
+              <span>{streak} {streak === 1 ? 'dia' : 'dias'}</span>
             </button>
 
-            {/* Cronômetro */}
+            {/* Botão Cronômetro */}
             <button
               onClick={() => setTimerOpen(true)}
               aria-label="Abrir cronômetro"
-              className="dm-pill hidden border-[3px] border-tinta bg-white text-tinta hover:bg-papel dark:border-papel dark:bg-transparent dark:text-papel sm:inline-flex"
-              style={{ fontSize: 16 }}
+              className="hidden sm:inline-flex items-center px-4 py-2 rounded-full bg-slate-200/70 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-[#14102A] dark:text-white text-xs font-bold transition-colors"
             >
               Cronômetro
             </button>
 
-            {/* Registrar estudo */}
+            {/* Registrar Estudo */}
             <button
               onClick={() => { setPendingMinutes(0); setLogOpen(true); }}
               aria-label="Registrar estudo"
-              className="dm-pill hidden border-[3px] border-tinta bg-pato text-tinta shadow-brutal-sm transition-transform hover:-translate-y-px active:translate-x-[2px] active:translate-y-[2px] active:shadow-none dark:border-papel sm:inline-flex"
-              style={{ fontSize: 16, padding: '6px 18px' }}
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#00D64B] hover:bg-[#19E85F] text-[#14102A] text-xs font-bold shadow-[0_4px_16px_rgba(25,232,95,0.3)] transition-all active:scale-[0.98] dark:bg-[#19E85F] dark:hover:bg-[#25f46c]"
             >
-              <Plus size={16} strokeWidth={3} />
-              <span className="hidden md:inline">Registrar Estudo</span>
-              <span className="md:hidden">Registrar</span>
+              <Plus size={15} strokeWidth={3} />
+              <span>Registrar Estudo</span>
             </button>
 
-            {/* Menu (mobile) */}
-            <button
-              onClick={() => setDrawerOpen(true)}
-              aria-label="Abrir menu"
-              className="flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-tinta bg-white text-tinta transition-transform active:translate-x-[2px] active:translate-y-[2px] dark:border-papel dark:bg-transparent dark:text-papel md:hidden"
-            >
-              <Menu size={18} strokeWidth={2.6} />
-            </button>
+            {/* Alternador de tema */}
+            <ThemeToggle />
 
-            {/* Avatar */}
+            {/* Avatar circular moderno: CLIQUE ABRE O PERFIL */}
             <button
               onClick={() => go('profile')}
               aria-label="Meu perfil"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-[3px] border-tinta bg-mente text-base font-bold text-papel transition-transform hover:-translate-y-px active:translate-x-[2px] active:translate-y-[2px] dark:border-papel"
+              title="Acessar Perfil"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#6F00D6] dark:bg-[#7D12EC] text-white font-display text-sm font-bold shadow-xs hover:opacity-90 transition-opacity active:scale-95"
             >
-              {avatarEmoji || initial}
+              {initial}
             </button>
           </div>
         </header>
 
         {/* Conteúdo */}
-        <main className="min-w-0 max-w-full flex-1 px-4 py-6 sm:px-6 md:px-8 md:py-7">
+        <main className="min-w-0 max-w-full flex-1 px-4 py-4 sm:px-6 md:px-8 md:py-5">
           {selectedSubjectId ? (
             <SubjectDetailPage subjectId={selectedSubjectId} onBack={() => setSelectedSubjectId(null)} />
           ) : (
@@ -265,45 +295,61 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      {/* Navegação inferior (mobile) */}
+      {/* Menu flutuante na parte inferior da tela (Mobile conforme V2 · Mobile Início) */}
       <nav
         aria-label="Navegação móvel"
-        className="fixed inset-x-0 bottom-0 z-40 flex h-[76px] items-center justify-around border-t-[3px] border-tinta bg-white px-2 dark:border-papel/40 dark:bg-[#120C22] md:hidden"
+        className="fixed bottom-4 inset-x-4 max-w-[420px] mx-auto z-40 flex h-[66px] items-center justify-around rounded-[32px] bg-white/90 backdrop-blur-xl border border-slate-200/80 shadow-[0_12px_36px_rgba(20,16,42,0.18)] dark:border-white/10 dark:bg-[#14102A]/90 dark:shadow-[0_12px_36px_rgba(0,0,0,0.5)] px-2 md:hidden"
       >
-        {[
-          { id: 'overview', label: 'Início' },
-          { id: 'edital', label: 'Edital' },
-        ].map(t => (
-          <button
-            key={t.id}
-            onClick={() => go(t.id)}
-            className={cn('tab-item', activeTab === t.id && !selectedSubjectId && 'tab-item-active')}
-          >
-            {t.label}
-          </button>
-        ))}
-
-        {/* Ação central */}
+        {/* 1: Início */}
         <button
-          onClick={() => { setPendingMinutes(0); setLogOpen(true); }}
-          aria-label="Registrar estudo"
-          className="flex h-[58px] w-[58px] -translate-y-[30px] items-center justify-center rounded-full border-[3px] border-tinta bg-pato text-tinta shadow-brutal-sm transition-transform active:translate-y-[-28px] dark:border-papel"
+          onClick={() => go('overview')}
+          className={cn('tab-item flex-1', activeTab === 'overview' && !selectedSubjectId && 'tab-item-active')}
         >
-          <Plus size={30} strokeWidth={3} />
+          <LayoutDashboard size={20} strokeWidth={activeTab === 'overview' ? 2.6 : 2} />
+          <span>Início</span>
         </button>
 
-        {[
-          { id: 'activity', label: 'Atividade' },
-          { id: 'profile', label: 'Perfil' },
-        ].map(t => (
+        {/* 2: Edital */}
+        <button
+          onClick={() => go('edital')}
+          className={cn('tab-item flex-1', activeTab === 'edital' && !selectedSubjectId && 'tab-item-active')}
+        >
+          <BookOpen size={20} strokeWidth={activeTab === 'edital' ? 2.6 : 2} />
+          <span>Edital</span>
+        </button>
+
+        {/* 3: Botão de ação flutuante elevado no centro com glow verde */}
+        <div className="flex-1 flex justify-center">
           <button
-            key={t.id}
-            onClick={() => go(t.id)}
-            className={cn('tab-item', activeTab === t.id && !selectedSubjectId && 'tab-item-active')}
+            onClick={() => { setPendingMinutes(0); setLogOpen(true); }}
+            aria-label="Registrar estudo"
+            className="flex h-14 w-14 -translate-y-5 items-center justify-center rounded-full bg-[#00D64B] text-[#14102A] shadow-[0_10px_28px_rgba(25,232,95,0.5)] transition-all active:scale-95 hover:scale-105 dark:bg-[#19E85F]"
           >
-            {t.label}
+            <Plus size={30} strokeWidth={2.8} />
           </button>
-        ))}
+        </div>
+
+        {/* 4: Atividade */}
+        <button
+          onClick={() => go('activity')}
+          className={cn('tab-item flex-1', activeTab === 'activity' && !selectedSubjectId && 'tab-item-active')}
+        >
+          <History size={20} strokeWidth={activeTab === 'activity' ? 2.6 : 2} />
+          <span>Atividade</span>
+        </button>
+
+        {/* 5: Menu de três barras substituindo o perfil */}
+        <button
+          onClick={() => setDrawerOpen(true)}
+          aria-label="Abrir menu de navegação"
+          className={cn(
+            'tab-item flex-1',
+            drawerOpen && 'tab-item-active'
+          )}
+        >
+          <Menu size={22} strokeWidth={2.4} />
+          <span>Menu</span>
+        </button>
       </nav>
 
       <LogStudyDialog open={logOpen} onClose={() => { setLogOpen(false); setPendingMinutes(0); }} initialMinutes={pendingMinutes} />

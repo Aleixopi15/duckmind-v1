@@ -3,6 +3,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { UserProfile, Subject, Topic, StudySession, Simulation, Essay, TopicCompletion, ErrorNotebookEntry } from '../lib/supabase';
 import { INITIAL_TOPIC_TEMPLATES } from '../lib/mockData';
+import { getSimulationDate } from '../lib/simulationUtils';
 
 type ProfileUpdate = Partial<Pick<UserProfile, 'display_name' | 'avatar_emoji' | 'bio' | 'goal_daily_minutes' | 'goal_weekly_minutes' | 'goal_weekly_questions' | 'notifications_enabled'>>;
 
@@ -73,26 +74,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const targetUserId = userId ?? currentUser()?.id;
     if (!targetUserId) return;
 
-    const [sessionsRes, profileRes] = await Promise.all([
+    const [sessionsRes, simulationsRes, profileRes] = await Promise.all([
       supabase.from('study_sessions').select('studied_at').eq('user_id', targetUserId),
+      supabase.from('simulations').select('simulation_date, created_at, notes').eq('user_id', targetUserId),
       supabase.from('user_profiles').select('current_streak, longest_streak').eq('id', targetUserId).maybeSingle(),
     ]);
 
     const studiedDays = new Set<string>();
     (sessionsRes.data || []).forEach(s => {
-      studiedDays.add(s.studied_at.split('T')[0]);
+      if (s.studied_at) studiedDays.add(s.studied_at.split('T')[0]);
     });
+    (simulationsRes.data || []).forEach(sim => {
+      const d = getSimulationDate(sim as any);
+      if (d) studiedDays.add(d);
+    });
+
+    const formatLocalDate = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
 
     let currentStreak = 0;
     const cursor = new Date();
     cursor.setHours(0, 0, 0, 0);
 
-    const todayKey = cursor.toISOString().split('T')[0];
+    const todayKey = formatLocalDate(cursor);
     if (!studiedDays.has(todayKey)) {
       cursor.setDate(cursor.getDate() - 1);
     }
 
-    while (studiedDays.has(cursor.toISOString().split('T')[0])) {
+    while (studiedDays.has(formatLocalDate(cursor))) {
       currentStreak++;
       cursor.setDate(cursor.getDate() - 1);
     }

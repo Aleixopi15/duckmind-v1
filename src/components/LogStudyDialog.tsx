@@ -30,11 +30,11 @@ const emptyForm: SessionForm = {
   questions_correct: '', questions_wrong: '', notes: '',
 };
 
-export const STUDY_TYPES: { value: StudyType; label: string; emoji: string; color: string }[] = [
-  { value: 'teoria', label: 'Teoria', emoji: '📖', color: 'bg-pato text-tinta' },
-  { value: 'questoes', label: 'Questões', emoji: '✏️', color: 'bg-bico text-tinta' },
-  { value: 'revisao', label: 'Revisão', emoji: '🔄', color: 'bg-mente text-papel' },
-  { value: 'flashcards', label: 'Flashcards', emoji: '🗂️', color: 'bg-tinta text-papel' },
+export const STUDY_TYPES: { value: StudyType; label: string; emoji: string }[] = [
+  { value: 'teoria', label: 'Teoria', emoji: '📖' },
+  { value: 'questoes', label: 'Questões', emoji: '✏️' },
+  { value: 'revisao', label: 'Revisão', emoji: '🔄' },
+  { value: 'flashcards', label: 'Flashcards', emoji: '🗂️' },
 ];
 
 export function studyTypeLabel(type: StudyType): string {
@@ -46,7 +46,13 @@ export function studyTypeEmoji(type: StudyType): string {
 }
 
 export function studyTypeColor(type: StudyType): string {
-  return STUDY_TYPES.find(t => t.value === type)?.color ?? 'bg-mente text-papel';
+  switch (type) {
+    case 'teoria': return 'bg-[#00D64B]/15 text-[#008E32] dark:text-[#19E85F]';
+    case 'questoes': return 'bg-amber-500/15 text-[#D68200] dark:text-[#FFB84D]';
+    case 'revisao': return 'bg-[#6F00D6]/15 text-[#6F00D6] dark:text-[#9B3DFF]';
+    case 'flashcards': return 'bg-gray-100 text-tinta dark:bg-white/10 dark:text-texto';
+    default: return 'bg-gray-100 text-tinta dark:bg-white/10 dark:text-texto';
+  }
 }
 
 export function minutesToHMS(totalMinutes: number) {
@@ -98,42 +104,48 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
 
     const qCorrect = parseInt(form.questions_correct) || 0;
     const qWrong = parseInt(form.questions_wrong) || 0;
-    const calculatedXp = (totalMins * 2) + ((qCorrect + qWrong) * 10) + (qCorrect * 5);
-    setEarnedXp(calculatedXp);
 
-    const { error: err } = await supabase.from('study_sessions').insert({
+    const payload = {
       ...(user?.id ? { user_id: user.id } : {}),
-      subject_id: form.subject_id, topic_id: form.topic_id || null,
-      duration_minutes: totalMins,
+      subject_id: form.subject_id,
+      topic_id: form.topic_id || null,
       study_type: form.study_type,
+      duration_minutes: totalMins,
       questions_correct: qCorrect,
       questions_wrong: qWrong,
-      flashcards_count: form.study_type === 'flashcards' ? parseInt(form.flashcards_count) || 0 : 0,
-      notes: form.notes,
+      flashcards_count: form.study_type === 'flashcards' ? (parseInt(form.flashcards_count) || 0) : 0,
+      notes: form.notes.trim() || null,
       studied_at: `${form.studied_at}T12:00:00`,
-    });
-    if (err) setError('Erro ao salvar sessão.');
-    else {
-      setSuccess(true); setForm(emptyForm);
-      await refreshData(); await updateStreak();
-      setTimeout(() => { setSuccess(false); onClose(); }, 1500);
+    };
+
+    const { error: insertErr } = await supabase.from('study_sessions').insert(payload);
+    if (insertErr) {
+      setError(insertErr.message); setSaving(false); return;
     }
+
+    const xp = Math.round(totalMins * 1.5 + qCorrect * 5 + (form.study_type === 'flashcards' ? (parseInt(form.flashcards_count) || 0) * 0.5 : 0));
+    setEarnedXp(xp);
+    setSuccess(true);
     setSaving(false);
+    await refreshData();
+    await updateStreak();
+    setTimeout(() => { setSuccess(false); onClose(); }, 1400);
   };
 
   const totalMinsDisplay = hmsToMinutes(form.duration_hours, form.duration_minutes, form.duration_seconds);
 
   if (success) {
     return (
-      <Modal open={open} onClose={onClose} size="sm">
-        <div className="flex flex-col items-center gap-3 py-7 text-center">
-          <DuckMascot size={84} mood="celebrating" animate showAccessoryBadge />
-          <div className="flex items-center gap-2 font-display text-xl font-bold text-tinta dark:text-papel">
-            <CheckCircle2 size={20} strokeWidth={2.8} className="text-pato" /> Sessão registrada!
+      <Modal open={open} onClose={() => {}} size="sm">
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <DuckMascot size={80} mood="celebrating" animate showAccessoryBadge />
+          <div className="flex items-center gap-2 font-display text-xl font-bold text-tinta dark:text-texto">
+            <CheckCircle2 size={20} strokeWidth={2.8} className="text-[#00D64B] dark:text-[#19E85F]" />
+            Sessão registrada!
           </div>
           {earnedXp > 0 && (
-            <div className="inline-flex animate-scale-in items-center gap-1.5 rounded-full border-[3px] border-tinta bg-bico px-3 py-1 font-display text-sm font-bold text-tinta dark:border-papel">
-              <Zap size={15} strokeWidth={2.8} /> +{earnedXp} XP ganhos!
+            <div className="inline-flex animate-scale-in items-center gap-1.5 rounded-full bg-amber-500/15 px-3.5 py-1 font-display text-xs font-bold text-[#D68200] dark:text-[#FFB84D]">
+              <Zap size={14} strokeWidth={2.8} /> +{earnedXp} XP ganhos!
             </div>
           )}
         </div>
@@ -145,28 +157,41 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
     <Modal
       open={open}
       onClose={onClose}
+      headerLeft={<DuckMascot size={26} mood="happy" />}
       title="Registrar Estudo"
       size="md"
       footer={
-        <>
-          <button onClick={onClose} className="btn bg-white px-4 py-2 text-sm dark:border-papel dark:bg-transparent dark:text-papel">
+        <div className="flex w-full items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full bg-slate-100 hover:bg-slate-200 text-[#14102A] dark:bg-[#1E1B2E] dark:text-white dark:hover:bg-[#28243D] px-7 py-2.5 text-sm font-bold transition-all"
+          >
             Cancelar
           </button>
-          <button onClick={handleSave} disabled={saving} className="btn bg-pato px-5 py-2 text-sm text-tinta dark:border-papel">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-full bg-[#00D64B] hover:bg-[#19E85F] text-[#14102A] font-bold px-7 py-2.5 text-sm shadow-[0_4px_16px_rgba(0,214,75,0.35)] transition-all active:scale-[0.98] disabled:opacity-50"
+          >
             {saving ? 'Salvando…' : 'Salvar sessão'}
           </button>
-        </>
+        </div>
       }
     >
       <div className="flex flex-col gap-4">
         {error && (
-          <div className="rounded-[14px] border-[3px] border-tinta bg-bico px-3.5 py-2.5 text-sm font-bold text-tinta dark:border-papel">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
             {error}
           </div>
         )}
 
+        {/* Tipo de Estudo (pílulas fiéis aos anexos: sem emoji, estilo cápsula moderna) */}
         <div>
-          <label className="mb-1.5 block text-sm font-bold">Tipo de estudo *</label>
+          <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+            Tipo de estudo *
+          </label>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {STUDY_TYPES.map(t => {
               const active = form.study_type === t.value;
@@ -176,13 +201,12 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
                   type="button"
                   onClick={() => setForm(f => ({ ...f, study_type: t.value }))}
                   className={cn(
-                    'flex flex-col items-center gap-1 rounded-[14px] border-[3px] border-tinta py-2 font-display text-sm font-bold transition-transform',
+                    'rounded-2xl py-2.5 px-3 font-display text-xs sm:text-sm font-bold transition-all text-center',
                     active
-                      ? 'bg-pato text-tinta shadow-brutal-sm dark:border-papel'
-                      : 'bg-white text-tinta hover:-translate-y-px dark:border-papel dark:bg-transparent dark:text-papel',
+                      ? 'bg-[#00D64B] text-[#14102A] shadow-[0_4px_14px_rgba(0,214,75,0.3)]'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200/80 dark:bg-[#1E1B2E] dark:text-slate-200 dark:hover:bg-[#28243D]'
                   )}
                 >
-                  <span className="text-lg">{t.emoji}</span>
                   {t.label}
                 </button>
               );
@@ -190,26 +214,31 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
           </div>
         </div>
 
-        <div>
-          <label htmlFor="log-data" className="mb-1.5 block text-sm font-bold">Data do estudo *</label>
-          <input
-            id="log-data"
-            type="date"
-            value={form.studied_at}
-            max={new Date().toISOString().split('T')[0]}
-            onChange={e => setForm(f => ({ ...f, studied_at: e.target.value }))}
-            className="input"
-          />
-        </div>
-
+        {/* Data e Matéria */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
-            <label htmlFor="log-materia" className="mb-1.5 block text-sm font-bold">Matéria *</label>
+            <label htmlFor="log-data" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Data do estudo *
+            </label>
+            <input
+              id="log-data"
+              type="date"
+              value={form.studied_at}
+              max={new Date().toISOString().split('T')[0]}
+              onChange={e => setForm(f => ({ ...f, studied_at: e.target.value }))}
+              className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm font-medium text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="log-materia" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Matéria *
+            </label>
             <select
               id="log-materia"
               value={form.subject_id}
               onChange={e => setForm(f => ({ ...f, subject_id: e.target.value, topic_id: '' }))}
-              className="input"
+              className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm font-medium text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white"
             >
               <option value="">Selecione…</option>
               {subjects.map(s => (
@@ -217,92 +246,125 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
               ))}
             </select>
           </div>
-          <div>
-            <label htmlFor="log-topico" className="mb-1.5 block text-sm font-bold">
-              Tópico <span className="font-semibold text-muted dark:text-papel/50">(opcional)</span>
-            </label>
-            <select
-              id="log-topico"
-              value={form.topic_id}
-              onChange={e => setForm(f => ({ ...f, topic_id: e.target.value }))}
-              disabled={!form.subject_id}
-              className="input"
-            >
-              <option value="">Nenhum</option>
-              {filteredTopics.map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          </div>
         </div>
 
+        {/* Tópico (opcional) */}
+        <div>
+          <label htmlFor="log-topico" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+            Tópico <span className="font-normal opacity-70">(opcional)</span>
+          </label>
+          <select
+            id="log-topico"
+            value={form.topic_id}
+            onChange={e => setForm(f => ({ ...f, topic_id: e.target.value }))}
+            disabled={!form.subject_id}
+            className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm font-medium text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white disabled:opacity-50"
+          >
+            <option value="">Nenhum</option>
+            {filteredTopics.map(t => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Tempo de Estudo */}
         <div>
           <div className="mb-1.5 flex items-center justify-between gap-2">
-            <label className="text-sm font-bold">Tempo de estudo *</label>
-            <span className="rounded-[12px] border-[3px] border-tinta bg-mente px-2.5 py-0.5 font-display text-sm font-bold text-papel dark:border-papel">
+            <label className="text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Tempo de estudo *
+            </label>
+            <span className="rounded-full bg-[#6F00D6]/15 dark:bg-[#6F00D6]/30 px-3 py-0.5 font-display text-xs font-bold text-[#6F00D6] dark:text-[#B26BFF]">
               {formatDuration(totalMinsDisplay)}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-3 gap-2.5">
             <input
-              type="number" min={0} max={99} placeholder="HH" value={form.duration_hours} aria-label="Horas"
+              type="number"
+              min={0}
+              max={99}
+              placeholder="HH"
+              value={form.duration_hours}
+              aria-label="Horas"
               onChange={e => setForm(f => ({ ...f, duration_hours: e.target.value }))}
-              className="input min-w-0 flex-1 text-center font-display text-xl font-bold"
+              className="rounded-2xl border border-slate-200/80 bg-slate-50/70 py-3 text-center font-display text-base font-bold text-[#14102A] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white"
             />
-            <span className="font-display text-xl font-bold text-muted dark:text-papel/50">:</span>
             <input
-              type="number" min={0} max={59} placeholder="MM" value={form.duration_minutes} aria-label="Minutos"
+              type="number"
+              min={0}
+              max={59}
+              placeholder="MM"
+              value={form.duration_minutes}
+              aria-label="Minutos"
               onChange={e => setForm(f => ({ ...f, duration_minutes: e.target.value }))}
-              className="input min-w-0 flex-1 text-center font-display text-xl font-bold"
+              className="rounded-2xl border border-slate-200/80 bg-slate-50/70 py-3 text-center font-display text-base font-bold text-[#14102A] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white"
             />
-            <span className="font-display text-xl font-bold text-muted dark:text-papel/50">:</span>
             <input
-              type="number" min={0} max={59} placeholder="SS" value={form.duration_seconds} aria-label="Segundos"
+              type="number"
+              min={0}
+              max={59}
+              placeholder="SS"
+              value={form.duration_seconds}
+              aria-label="Segundos"
               onChange={e => setForm(f => ({ ...f, duration_seconds: e.target.value }))}
-              className="input min-w-0 flex-1 text-center font-display text-xl font-bold"
+              className="rounded-2xl border border-slate-200/80 bg-slate-50/70 py-3 text-center font-display text-base font-bold text-[#14102A] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white"
             />
           </div>
         </div>
 
         {form.study_type === 'flashcards' ? (
           <div>
-            <label htmlFor="log-cards" className="mb-1.5 block text-sm font-bold">Flashcards estudados *</label>
+            <label htmlFor="log-cards" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Flashcards estudados *
+            </label>
             <input
               id="log-cards"
-              type="number" min={1} value={form.flashcards_count}
+              type="number"
+              min={1}
+              value={form.flashcards_count}
               onChange={e => setForm(f => ({ ...f, flashcards_count: e.target.value }))}
-              placeholder="Ex: 40" className="input"
+              placeholder="Ex: 40"
+              className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm font-medium text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white"
             />
-            <p className="mt-1 text-xs font-semibold text-muted dark:text-papel/55">
+            <p className="mt-1 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
               Informe quantos cartões você revisou nesta sessão.
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="log-certas" className="mb-1.5 block text-sm font-bold">Questões certas</label>
+              <label htmlFor="log-certas" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+                Questões certas
+              </label>
               <input
                 id="log-certas"
-                type="number" min={0} value={form.questions_correct}
+                type="number"
+                min={0}
+                value={form.questions_correct}
                 onChange={e => setForm(f => ({ ...f, questions_correct: e.target.value }))}
-                className="input shadow-[3px_3px_0_#00D64B] dark:shadow-none"
+                placeholder="0"
+                className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm font-medium text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white"
               />
             </div>
             <div>
-              <label htmlFor="log-erradas" className="mb-1.5 block text-sm font-bold">Questões erradas</label>
+              <label htmlFor="log-erradas" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+                Questões erradas
+              </label>
               <input
                 id="log-erradas"
-                type="number" min={0} value={form.questions_wrong}
+                type="number"
+                min={0}
+                value={form.questions_wrong}
                 onChange={e => setForm(f => ({ ...f, questions_wrong: e.target.value }))}
-                className="input shadow-[3px_3px_0_#D68200] dark:shadow-none"
+                placeholder="0"
+                className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm font-medium text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white"
               />
             </div>
           </div>
         )}
 
         <div>
-          <label htmlFor="log-obs" className="mb-1.5 block text-sm font-bold">
-            Observações <span className="font-semibold text-muted dark:text-papel/50">(opcional)</span>
+          <label htmlFor="log-obs" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+            Observações <span className="font-normal opacity-70">(opcional)</span>
           </label>
           <textarea
             id="log-obs"
@@ -310,7 +372,7 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
             onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
             rows={2}
             placeholder="Ex: Revisar lei de Faraday"
-            className="input resize-none"
+            className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 text-sm font-medium text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white resize-none"
           />
         </div>
       </div>

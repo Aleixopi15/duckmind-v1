@@ -84,77 +84,106 @@ export default function StudyTimerDialog({ open, onClose, onComplete }: Props) {
     <Modal
       open={open}
       onClose={running ? () => {} : onClose}
-      title="Cronômetro"
+      title="Cronômetro de Estudo"
       size="sm"
       footer={
         <>
-          <button onClick={onClose} disabled={running} className="btn bg-white px-4 py-2 text-sm dark:border-papel dark:bg-transparent dark:text-papel">
+          <button
+            onClick={onClose}
+            disabled={running}
+            className="btn btn-secondary px-4 py-2 text-xs"
+          >
             Fechar
           </button>
-          <button onClick={finish} disabled={!canFinish} className="btn bg-pato px-4 py-2 text-sm text-tinta dark:border-papel">
-            <Square size={15} strokeWidth={2.8} /> Finalizar
+          <button
+            onClick={finish}
+            disabled={!canFinish}
+            className="btn btn-primary px-4 py-2 text-xs"
+          >
+            <Square size={14} strokeWidth={2.6} /> Finalizar
           </button>
         </>
       }
     >
-      <div className="flex flex-col items-center gap-4">
-        <div className="flex gap-2">
+      <div className="flex flex-col items-center gap-5 py-2">
+        {/* Segmented Mode Selector */}
+        <div className="flex p-1 bg-gray-100 dark:bg-white/10 rounded-full">
           {(['stopwatch', 'pomodoro'] as const).map(m => (
             <button
               key={m}
               onClick={() => { if (!running) { reset(); setMode(m); } }}
               disabled={running}
               className={cn(
-                'rounded-[14px] border-[3px] border-tinta px-4 py-1.5 font-display text-sm font-bold transition-transform dark:border-papel',
+                'px-4 py-1.5 rounded-full font-display text-xs font-bold transition-all',
                 mode === m
-                  ? 'bg-pato text-tinta shadow-brutal-sm'
-                  : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                  ? 'bg-white text-tinta dark:bg-[#14102A] dark:text-texto shadow-xs'
+                  : 'text-muted hover:text-tinta dark:text-gray-400 dark:hover:text-white'
               )}
             >
-              {m === 'stopwatch' ? 'Cronômetro' : 'Pomodoro'}
+              {m === 'stopwatch' ? 'Livre' : 'Pomodoro (25/5)'}
             </button>
           ))}
         </div>
 
         {mode === 'pomodoro' && (
-          <span className={cn('chip', pomoPhase === 'work' ? 'bg-mente text-papel' : 'bg-bico text-tinta')}>
+          <span
+            className={cn(
+              'px-3 py-1 rounded-full font-display text-xs font-bold',
+              pomoPhase === 'work'
+                ? 'bg-[#6F00D6]/15 text-[#6F00D6] dark:text-[#9B3DFF]'
+                : 'bg-amber-500/15 text-[#D68200] dark:text-[#FFB84D]'
+            )}
+          >
             {pomoPhase === 'work' ? '🎯 Foco' : '☕ Pausa'}
           </span>
         )}
 
-        <div className="relative mt-1">
+        {/* Circular Dial */}
+        <div className="relative">
           <div
-            className="flex h-48 w-48 items-center justify-center rounded-full border-[3px] border-tinta dark:border-papel"
+            className="flex h-48 w-48 items-center justify-center rounded-full transition-all"
             style={{
               background: mode === 'pomodoro'
-                ? `conic-gradient(#6F00D6 ${progress * 3.6}deg, #FFF9EC 0deg)`
-                : '#FFF9EC',
-              transition: 'background 0.3s linear',
+                ? `conic-gradient(#6F00D6 ${progress * 3.6}deg, rgba(20, 16, 42, 0.06) 0deg)`
+                : 'transparent',
             }}
           >
-            <div className="flex h-40 w-40 flex-col items-center justify-center rounded-full border-[3px] border-tinta bg-white dark:border-papel dark:bg-surface-dark-card">
-              <div className="font-display text-[1.85rem] font-bold leading-none text-tinta dark:text-papel">{displayTime}</div>
-              <div className="mt-1 text-xs font-bold text-muted dark:text-papel/60">
-                {mode === 'stopwatch' ? 'Cronômetro' : pomoPhase === 'work' ? '25 min foco' : '5 min pausa'}
+            <div className="flex h-44 w-44 flex-col items-center justify-center rounded-full bg-white dark:bg-[#14102A] shadow-soft border border-gray-100 dark:border-white/10">
+              <div className="font-display text-[2rem] font-bold leading-none tracking-tight text-tinta dark:text-texto">
+                {displayTime}
+              </div>
+              <div className="mt-1.5 text-xs font-semibold text-muted dark:text-gray-400">
+                {mode === 'stopwatch' ? 'Tempo corrido' : pomoPhase === 'work' ? '25m foco' : '5m pausa'}
               </div>
             </div>
           </div>
         </div>
 
-        <DuckMascot size={52} mood={running ? 'studying' : 'happy'} animate={running} />
+        <DuckMascot size={48} mood={running ? 'studying' : 'happy'} animate={running} />
 
-        <div className="flex flex-wrap justify-center gap-2">
+        {/* Control Buttons */}
+        <div className="flex flex-wrap justify-center gap-2.5">
           {!running ? (
-            <button onClick={start} className="btn bg-pato px-4 py-2 text-sm text-tinta dark:border-papel">
-              <Play size={16} strokeWidth={2.8} /> {elapsed > 0 || (mode === 'pomodoro' && pomoRemaining < POMODORO_WORK) ? 'Continuar' : 'Iniciar'}
+            <button
+              onClick={start}
+              className="btn btn-primary px-5 py-2.5 text-xs font-bold"
+            >
+              <Play size={15} strokeWidth={2.8} /> {elapsed > 0 || (mode === 'pomodoro' && pomoRemaining < POMODORO_WORK) ? 'Continuar' : 'Iniciar'}
             </button>
           ) : (
-            <button onClick={pause} className="btn bg-mente px-4 py-2 text-sm text-papel dark:border-papel">
-              <Pause size={16} strokeWidth={2.8} /> Pausar
+            <button
+              onClick={pause}
+              className="btn bg-[#6F00D6] hover:bg-[#7D12EC] text-white px-5 py-2.5 text-xs font-bold"
+            >
+              <Pause size={15} strokeWidth={2.8} /> Pausar
             </button>
           )}
-          <button onClick={reset} disabled={running} className="btn bg-white px-4 py-2 text-sm dark:border-papel dark:bg-transparent dark:text-papel">
-            <RefreshCw size={16} strokeWidth={2.8} /> Resetar
+          <button
+            onClick={reset}
+            disabled={running || (elapsed === 0 && pomoRemaining === POMODORO_WORK)}
+            className="btn btn-secondary px-4 py-2.5 text-xs font-bold"
+          >
+            <RefreshCw size={14} strokeWidth={2.4} /> Resetar
           </button>
         </div>
       </div>

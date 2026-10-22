@@ -1,36 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 
-// ─── Identidade "Quack" ───────────────────────────────────────────────────────
-const PAPEL = '#FFF9EC';
-const TINTA = '#17102B';
-
-// Primária — Pato
-const PATO = {
-  50: '#E6FFF0', 100: '#C2FFD9', 200: '#8CFFBB', 300: '#4DF79A', 400: '#12E66F',
-  500: '#00D64B', 600: '#00B23E', 700: '#008E32', 800: '#006B26', 900: '#004719', 950: '#002D10',
-};
-// Secundária — Mente
-const MENTE = {
-  50: '#F5EDFF', 100: '#EADBFF', 200: '#D5B8FF', 300: '#BC8DFF', 400: '#9857F2',
-  500: '#6F00D6', 600: '#5D00B4', 700: '#4A0090', 800: '#38006D', 900: '#25004A', 950: '#17002E',
-};
-// Terciária — Bico
-const BICO = {
-  50: '#FFF6E6', 100: '#FFEAC2', 200: '#FFD48C', 300: '#FFBC4D', 400: '#F09F12',
-  500: '#D68200', 600: '#B26C00', 700: '#8E5600', 800: '#6B4000', 900: '#472B00', 950: '#2C1A00',
-};
-// Neutros quentes — nunca cinzas frios
-const NEUTRAL = {
-  50: '#FFF9EC', 100: '#F7F0DF', 200: '#E8E0CC', 300: '#C4BBC9', 400: '#837B99',
-  500: '#6B6480', 600: '#4B4560', 700: '#38314D', 800: '#262038', 900: '#17102B', 950: '#0D0819',
-};
-
-const HARD = {
-  sm: `3px 3px 0 ${TINTA}`,
-  base: `4px 4px 0 ${TINTA}`,
-  lg: `6px 6px 0 ${TINTA}`,
-  xl: `8px 8px 0 ${TINTA}`,
-};
+// ─── DuckMind 2.0 Sistema de Marca ───────────────────────────────────────────
+// Mistura da Direção moderna (claro) com a Opção B (escuro).
+// Fontes Space Grotesk e Inter em todo o site.
 
 module.exports = {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
@@ -38,76 +10,75 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Nunito', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
-        display: ['Fredoka', 'Nunito', 'system-ui', 'sans-serif'],
-        mono: ['Fredoka', 'ui-monospace', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        display: ['"Space Grotesk"', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['"Space Grotesk"', 'ui-monospace', 'monospace'],
       },
       colors: {
-        // Nomes canônicos da marca — `bg-pato`, `bg-mente`, `bg-bico` usam o DEFAULT
-        papel: PAPEL,
-        tinta: TINTA,
-        pato: { DEFAULT: '#00D64B', ...PATO },
-        mente: { DEFAULT: '#6F00D6', ...MENTE },
-        bico: { DEFAULT: '#D68200', ...BICO },
-        muted: '#4B4560',
+        // Paleta Claro
+        nevoa: '#F6F5FB',
+        papel: '#F6F5FB',
+        tinta: '#14102A',
 
-        // Aliases semânticos: toda a base antiga passa a renderizar na nova identidade
-        brand: { DEFAULT: '#00D64B', ...PATO },
-        bio: { DEFAULT: '#6F00D6', ...MENTE },
-        streak: { DEFAULT: '#D68200', ...BICO },
-        emerald: { DEFAULT: '#00D64B', ...PATO },
-        green: { DEFAULT: '#00D64B', ...PATO },
-        lime: { DEFAULT: '#00D64B', ...PATO },
-        teal: { DEFAULT: '#00D64B', ...PATO },
-        amber: { DEFAULT: '#D68200', ...BICO },
-        orange: { DEFAULT: '#D68200', ...BICO },
-        yellow: { DEFAULT: '#D68200', ...BICO },
-        red: { DEFAULT: '#D68200', ...BICO },
-        rose: { DEFAULT: '#D68200', ...BICO },
-        purple: { DEFAULT: '#6F00D6', ...MENTE },
-        violet: { DEFAULT: '#6F00D6', ...MENTE },
-        pink: { DEFAULT: '#6F00D6', ...MENTE },
-        fuchsia: { DEFAULT: '#6F00D6', ...MENTE },
-        sky: { DEFAULT: '#6F00D6', ...MENTE },
-        blue: { DEFAULT: '#6F00D6', ...MENTE },
-        indigo: { DEFAULT: '#6F00D6', ...MENTE },
-        cyan: { DEFAULT: '#6F00D6', ...MENTE },
-        slate: NEUTRAL,
+        // Paleta Escuro
+        noite: '#0D0A1F',
+        texto: '#F3F1FF',
 
-        // Superfícies escuras ("Sobre Tinta")
-        'surface-dark': TINTA,
-        'surface-dark-card': '#1E1738',
-        'surface-dark-subtle': '#2A2350',
-        'surface-dark-muted': '#3A3266',
-      },
-      borderWidth: {
-        3: '3px',
+        // Cores da Marca
+        pato: {
+          DEFAULT: '#00D64B',
+          glow: '#19E85F',
+          50: '#E6FFF0',
+          100: '#C2FFD9',
+          400: '#19E85F',
+          500: '#00D64B',
+          600: '#00B83E',
+        },
+        mente: {
+          DEFAULT: '#6F00D6',
+          glow: '#9B3DFF',
+          50: '#F5EDFF',
+          100: '#EADBFF',
+          400: '#9B3DFF',
+          500: '#6F00D6',
+          600: '#5D00B4',
+        },
+        bico: {
+          DEFAULT: '#D68200',
+          glow: '#FFB84D',
+          50: '#FFF6E6',
+          100: '#FFEAC2',
+          400: '#FFB84D',
+          500: '#D68200',
+          600: '#B26C00',
+        },
+        muted: '#645F78',
+
+        // Superfícies escuras
+        'surface-dark': '#0D0A1F',
+        'surface-dark-card': '#14102A',
+        'surface-dark-subtle': '#1B1538',
+        'surface-dark-muted': '#282052',
       },
       borderRadius: {
-        md: '8px',
-        lg: '12px',
-        xl: '16px',
+        md: '10px',
+        lg: '14px',
+        xl: '18px',
         '2xl': '22px',
-        '3xl': '28px',
+        '3xl': '26px',
+        '4xl': '32px',
+        card: '26px',
       },
       boxShadow: {
-        // Sombra dura substitui todas as sombras difusas
-        sm: HARD.sm,
-        DEFAULT: HARD.base,
-        md: HARD.base,
-        lg: HARD.lg,
-        xl: HARD.xl,
-        '2xl': HARD.xl,
-        card: HARD.base,
-        'card-hover': HARD.lg,
-        'glow-emerald': HARD.base,
-        'glow-mint': HARD.base,
-        'glow-sm': HARD.sm,
-        glass: HARD.lg,
-        brutal: HARD.base,
-        'brutal-sm': HARD.sm,
-        'brutal-lg': HARD.lg,
-        'brutal-xl': HARD.xl,
+        card: '0 4px 20px -2px rgba(20, 16, 42, 0.05), 0 2px 6px -1px rgba(20, 16, 42, 0.02)',
+        'card-hover': '0 8px 30px -4px rgba(20, 16, 42, 0.08), 0 4px 10px -2px rgba(20, 16, 42, 0.03)',
+        'glow-pato': '0 0 24px rgba(25, 232, 95, 0.35)',
+        'glow-mente': '0 0 24px rgba(155, 61, 255, 0.35)',
+        'glow-bico': '0 0 24px rgba(255, 184, 77, 0.35)',
+        glass: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+        brutal: '0 4px 20px -2px rgba(20, 16, 42, 0.06)',
+        'brutal-sm': '0 2px 8px rgba(20, 16, 42, 0.05)',
+        'brutal-lg': '0 10px 30px rgba(20, 16, 42, 0.08)',
       },
       spacing: {
         4.5: '1.125rem',

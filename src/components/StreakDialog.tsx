@@ -9,26 +9,43 @@ type Props = { open: boolean; onClose: () => void };
 const WEEKDAY_LABELS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
 export default function StreakDialog({ open, onClose }: Props) {
-  const { profile, sessions } = useApp();
+  const { profile, sessions, simulations } = useApp();
   const streak = profile?.current_streak ?? 0;
   const longest = profile?.longest_streak ?? 0;
 
+  const formatLocalDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
   const studiedDates = useMemo(() => {
     const set = new Set<string>();
-    sessions.forEach(s => set.add(s.studied_at.split('T')[0]));
+    sessions.forEach(s => {
+      if (s.studied_at) set.add(s.studied_at.split('T')[0]);
+    });
+    simulations.forEach(sim => {
+      const d = sim.simulation_date
+        ? sim.simulation_date.split('T')[0]
+        : (sim.created_at ? sim.created_at.split('T')[0] : null);
+      if (d) set.add(d);
+    });
     return set;
-  }, [sessions]);
+  }, [sessions, simulations]);
 
   const computedStreak = useMemo(() => {
     if (studiedDates.size === 0) return 0;
     let count = 0;
     const today = new Date();
-    for (let i = 0; i < 366; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      const key = d.toISOString().split('T')[0];
-      if (studiedDates.has(key)) count++;
-      else if (i > 0) break;
+    const todayKey = formatLocalDate(today);
+    const cursor = new Date(today);
+    if (!studiedDates.has(todayKey)) {
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    while (studiedDates.has(formatLocalDate(cursor))) {
+      count++;
+      cursor.setDate(cursor.getDate() - 1);
     }
     return count;
   }, [studiedDates]);
@@ -44,7 +61,7 @@ export default function StreakDialog({ open, onClose }: Props) {
     const cursor = new Date(start);
     while (cursor <= today || week.length > 0) {
       if (cursor > today && week.length === 0) break;
-      week.push({ date: new Date(cursor), iso: cursor.toISOString().split('T')[0] });
+      week.push({ date: new Date(cursor), iso: formatLocalDate(cursor) });
       if (week.length === 7) { weeks.push(week); week = []; }
       cursor.setDate(cursor.getDate() + 1);
       if (cursor > today) {
@@ -61,16 +78,31 @@ export default function StreakDialog({ open, onClose }: Props) {
   const totalStudyDays = studiedDates.size;
   const last30Dates = Array.from({ length: 30 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - i);
-    return d.toISOString().split('T')[0];
+    return formatLocalDate(d);
   });
   const studiedLast30 = last30Dates.filter(d => studiedDates.has(d)).length;
-  const today = new Date().toISOString().split('T')[0];
+  const today = formatLocalDate(new Date());
   const studiedToday = studiedDates.has(today);
 
   const stats = [
-    { icon: <Flame size={18} strokeWidth={2.8} />, value: computedStreak || streak, label: 'Dias seguidos', accent: true },
-    { icon: <Trophy size={18} strokeWidth={2.8} />, value: longest, label: 'Recorde', accent: 'bico' as const },
-    { icon: <Calendar size={18} strokeWidth={2.8} />, value: totalStudyDays, label: 'Dias estudados', accent: false },
+    {
+      icon: <Flame size={18} strokeWidth={2.4} />,
+      value: computedStreak || streak,
+      label: 'Dias seguidos',
+      className: 'bg-[#00D64B]/10 text-[#008E32] dark:text-[#19E85F] border border-[#00D64B]/20',
+    },
+    {
+      icon: <Trophy size={18} strokeWidth={2.4} />,
+      value: longest,
+      label: 'Recorde',
+      className: 'bg-amber-500/10 text-[#D68200] dark:text-[#FFB84D] border border-amber-500/20',
+    },
+    {
+      icon: <Calendar size={18} strokeWidth={2.4} />,
+      value: totalStudyDays,
+      label: 'Dias estudados',
+      className: 'bg-gray-100/70 text-tinta dark:bg-white/5 dark:text-texto border border-gray-200/50 dark:border-white/10',
+    },
   ];
 
   return (
@@ -78,57 +110,75 @@ export default function StreakDialog({ open, onClose }: Props) {
       open={open}
       onClose={onClose}
       size="md"
-      footer={<button onClick={onClose} className="btn bg-pato px-5 py-2 text-sm text-tinta dark:border-papel">Fechar</button>}
+      footer={
+        <button
+          onClick={onClose}
+          className="btn btn-primary px-6 py-2 text-sm"
+        >
+          Fechar
+        </button>
+      }
     >
-      <div className="mb-5 flex items-center gap-3">
-        <span className="flex h-11 w-11 items-center justify-center rounded-[14px] border-[3px] border-tinta bg-bico text-tinta dark:border-papel">
-          <Flame size={22} strokeWidth={2.8} />
+      <div className="mb-5 flex items-center gap-3.5">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-[#D68200] dark:text-[#FFB84D]">
+          <Flame size={24} strokeWidth={2.6} />
         </span>
         <div>
-          <h2 className="font-display text-xl font-bold leading-tight text-tinta dark:text-papel">Ofensiva de estudos</h2>
-          <p className="text-sm font-semibold text-muted dark:text-papel/60">Seu progresso diário</p>
+          <h2 className="font-display text-xl font-bold leading-tight text-tinta dark:text-texto">
+            Ofensiva de estudos
+          </h2>
+          <p className="text-xs font-medium text-muted dark:text-gray-400">
+            Mantenha a chama acesa estudando todos os dias
+          </p>
         </div>
       </div>
 
-      <div className="mb-5 grid grid-cols-3 gap-2.5">
+      <div className="mb-5 grid grid-cols-3 gap-3">
         {stats.map(s => (
           <div
             key={s.label}
-            className={cn(
-              'rounded-[18px] border-[3px] border-tinta p-3 text-center dark:border-papel',
-              s.accent === true && 'bg-pato text-tinta',
-              s.accent === 'bico' && 'bg-bico text-tinta',
-              s.accent === false && 'bg-white text-tinta dark:bg-transparent dark:text-papel',
-            )}
+            className={cn('rounded-2xl p-3 text-center transition-all', s.className)}
           >
-            <div className="mb-1 flex justify-center">{s.icon}</div>
+            <div className="mb-1 flex justify-center opacity-85">{s.icon}</div>
             <div className="font-display text-2xl font-bold leading-none">{s.value}</div>
-            <div className="mt-1 text-[11px] font-bold">{s.label}</div>
+            <div className="mt-1 text-[11px] font-semibold opacity-90">{s.label}</div>
           </div>
         ))}
       </div>
 
-      <div className="mb-5 flex flex-wrap items-center gap-2">
-        <span className={cn('chip', studiedToday ? 'bg-pato text-tinta' : 'bg-bico text-tinta')}>
-          <Flame size={12} strokeWidth={3} /> {studiedToday ? 'Estudou hoje!' : 'Ainda não estudou hoje'}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-gray-50 dark:bg-white/[0.03] p-3 border border-gray-100 dark:border-white/5">
+        <span
+          className={cn(
+            'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold',
+            studiedToday
+              ? 'bg-[#00D64B]/15 text-[#008E32] dark:text-[#19E85F]'
+              : 'bg-amber-500/15 text-[#D68200] dark:text-[#FFB84D]'
+          )}
+        >
+          <Flame size={13} strokeWidth={2.6} />
+          {studiedToday ? 'Estudou hoje!' : 'Ainda não estudou hoje'}
         </span>
-        <span className="text-sm font-semibold text-muted dark:text-papel/60">{studiedLast30} de 30 dias</span>
+        <span className="text-xs font-semibold text-muted dark:text-gray-400">
+          {studiedLast30} de 30 dias ativos
+        </span>
       </div>
 
       <div>
-        <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.09em] text-muted dark:text-papel/50">
+        <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-muted dark:text-gray-400">
           Calendário · últimos 3 meses
         </p>
-        <div className="mb-1 grid grid-cols-7 gap-[3px]">
+        <div className="mb-1.5 grid grid-cols-7 gap-1">
           {WEEKDAY_LABELS.map((d, i) => (
-            <div key={i} className="text-center text-[11px] font-bold text-muted dark:text-papel/40">{d}</div>
+            <div key={i} className="text-center text-[11px] font-semibold text-muted dark:text-gray-500">
+              {d}
+            </div>
           ))}
         </div>
-        <div className="flex flex-col gap-[3px]">
+        <div className="flex flex-col gap-1">
           {calendarWeeks.map((week, wi) => (
-            <div key={wi} className="grid grid-cols-7 gap-[3px]">
+            <div key={wi} className="grid grid-cols-7 gap-1">
               {week.map((cell, di) => {
-                if (!cell.iso) return <div key={di} className="aspect-square rounded-[5px]" />;
+                if (!cell.iso) return <div key={di} className="aspect-square rounded-md" />;
                 const tdayIso = new Date().toISOString().split('T')[0];
                 const isFuture = cell.iso > tdayIso;
                 const isStudied = studiedDates.has(cell.iso);
@@ -138,10 +188,10 @@ export default function StreakDialog({ open, onClose }: Props) {
                     key={di}
                     title={cell.iso}
                     className={cn(
-                      'aspect-square rounded-[5px] border-2 border-tinta transition dark:border-papel/50',
-                      isFuture && 'border-transparent bg-transparent dark:border-transparent',
-                      !isFuture && (isStudied ? 'bg-pato' : 'bg-[#E8E0CC] dark:bg-surface-dark-subtle'),
-                      isToday && 'ring-[3px] ring-mente ring-offset-1 dark:ring-pato',
+                      'aspect-square rounded-md transition-all',
+                      isFuture && 'bg-transparent',
+                      !isFuture && (isStudied ? 'bg-[#00D64B] dark:bg-[#19E85F] shadow-2xs' : 'bg-gray-100 dark:bg-white/5'),
+                      isToday && 'ring-2 ring-[#6F00D6] dark:ring-[#9B3DFF] ring-offset-1 dark:ring-offset-[#14102A]'
                     )}
                   />
                 );
@@ -149,14 +199,14 @@ export default function StreakDialog({ open, onClose }: Props) {
             </div>
           ))}
         </div>
-        <div className="mt-3 flex gap-4">
+        <div className="mt-3.5 flex gap-4 text-xs font-medium text-muted dark:text-gray-400">
           <div className="flex items-center gap-1.5">
-            <div className="h-3.5 w-3.5 rounded-[4px] border-2 border-tinta bg-pato dark:border-papel/50" />
-            <span className="text-xs font-bold text-muted dark:text-papel/60">Estudou</span>
+            <div className="h-3 w-3 rounded-xs bg-[#00D64B] dark:bg-[#19E85F]" />
+            <span>Estudou</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="h-3.5 w-3.5 rounded-[4px] border-2 border-tinta bg-[#E8E0CC] dark:border-papel/50 dark:bg-surface-dark-subtle" />
-            <span className="text-xs font-bold text-muted dark:text-papel/60">Não estudou</span>
+            <div className="h-3 w-3 rounded-xs bg-gray-100 dark:bg-white/5" />
+            <span>Não estudou</span>
           </div>
         </div>
       </div>

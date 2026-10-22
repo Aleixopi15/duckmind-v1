@@ -58,14 +58,14 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
   return (
     <div className="animate-fade-in w-full max-w-full min-w-0 space-y-5">
       {/* Hero Level Banner */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-brand-600 via-brand-700 to-indigo-800 text-white p-4 sm:p-6 md:p-8 overflow-hidden shadow-lg">
-        <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-        <div className="absolute right-1/4 -bottom-10 w-40 h-40 rounded-full bg-amber-400/10 blur-xl pointer-events-none" />
+      <div className="relative overflow-hidden rounded-[26px] border border-slate-200/80 bg-gradient-to-br from-[#151826] via-[#1a1c2b] to-[#14102A] p-5 text-white shadow-md sm:p-6 md:p-7 dark:border-white/10">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-[#00D64B]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-10 right-1/4 h-40 w-40 rounded-full bg-[#6F00D6]/20 blur-2xl" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div className="relative z-10 flex flex-col justify-between gap-5 md:flex-row md:items-center">
           {/* Mascot & Title */}
-          <div className="flex items-center gap-3.5 sm:gap-5 min-w-0">
-            <div className="relative p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-inner shrink-0">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="relative shrink-0 rounded-2xl bg-white/10 p-2.5 shadow-inner backdrop-blur-md border border-white/10">
               <DuckMascot
                 size={70}
                 level={currentLevel.level}
@@ -76,57 +76,57 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider bg-amber-400 text-amber-950 shadow-sm flex items-center gap-1">
-                  <Sparkles size={11} /> Nível {currentLevel.level}
+              <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                <span className="flex items-center gap-1 rounded-full bg-[#00D64B] px-3 py-0.5 text-xs font-bold text-[#14102A] shadow-xs">
+                  <Sparkles size={11} strokeWidth={2.6} /> Nível {currentLevel.level}
                 </span>
-                <span className="text-xs font-bold text-brand-100 truncate">
+                <span className="text-xs font-bold text-slate-300 truncate">
                   {currentLevel.accessory} {currentLevel.title}
                 </span>
               </div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white leading-tight">
+              <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white leading-tight">
                 Sala de Troféus DuckMind
               </h1>
-              <p className="text-xs sm:text-sm text-brand-100/90 mt-1 max-w-xl line-clamp-2">
+              <p className="mt-1 max-w-xl text-xs font-medium text-slate-300/80 line-clamp-2">
                 {currentLevel.description}
               </p>
             </div>
           </div>
 
           {/* XP & Stats Box */}
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3.5 sm:px-5 sm:py-3.5 flex md:flex-col items-center md:items-end justify-between shrink-0">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-brand-200 flex items-center gap-1">
-              <Zap size={14} className="text-amber-300" /> XP Acumulado
+          <div className="flex shrink-0 items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md md:flex-col md:items-end">
+            <div className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-300">
+              <Zap size={14} className="text-[#00D64B]" /> XP Acumulado
             </div>
-            <div className="text-2xl sm:text-3xl font-black font-mono text-white tracking-tight">
-              {totalXp.toLocaleString('pt-BR')} <span className="text-xs font-bold text-amber-300">XP</span>
+            <div className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              {totalXp.toLocaleString('pt-BR')} <span className="text-xs font-bold text-[#00D64B]">XP</span>
             </div>
-            <div className="text-[11px] text-brand-100 font-medium">
+            <div className="text-[11px] font-medium text-slate-300">
               {unlockedCount} de {totalCount} medalhas conquistadas
             </div>
           </div>
         </div>
 
         {/* Progress bar to next tier */}
-        <div className="relative z-10 mt-5 pt-4 border-t border-white/15">
-          <div className="flex items-center justify-between text-xs font-bold text-brand-100 mb-1.5 flex-wrap gap-1">
+        <div className="relative z-10 mt-5 border-t border-white/10 pt-4">
+          <div className="mb-1.5 flex flex-wrap items-center justify-between gap-1 text-xs font-bold text-slate-300">
             <span>Progresso para Nível {nextLevel ? nextLevel.level : 8}</span>
             {nextLevel ? (
-              <span className="font-mono text-amber-300">
+              <span className="font-display text-[#00D64B]">
                 {progressInLevelXp.toLocaleString('pt-BR')} / {neededForNextLevelXp.toLocaleString('pt-BR')} XP ({levelProgressPct}%)
               </span>
             ) : (
-              <span className="text-amber-300 font-extrabold">Patente Máxima Alcançada! 🎓</span>
+              <span className="font-bold text-[#00D64B]">Patente Máxima Alcançada! 🎓</span>
             )}
           </div>
-          <div className="w-full h-2.5 sm:h-3 bg-black/25 rounded-full overflow-hidden p-0.5 border border-white/10">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-black/40">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-amber-400 via-amber-300 to-emerald-400 transition-all duration-500 shadow-sm"
+              className="h-full rounded-full bg-gradient-to-r from-[#00D64B] to-[#19E85F] transition-all duration-500 shadow-sm"
               style={{ width: `${levelProgressPct}%` }}
             />
           </div>
           {nextLevel && (
-            <p className="text-[11px] text-brand-200 mt-1.5 font-medium truncate">
+            <p className="mt-1.5 text-[11px] font-medium text-slate-400 truncate">
               Faltam {(neededForNextLevelXp - progressInLevelXp).toLocaleString('pt-BR')} XP para se tornar <strong>{nextLevel.title}</strong>
             </p>
           )}
@@ -134,43 +134,43 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
       </div>
 
       {/* Sub-tabs Navigation */}
-      <div className="flex items-center gap-1.5 border-b border-slate-200 dark:border-white/10 pb-3 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
         <button
           onClick={() => setActiveSubTab('medalhas')}
           className={cn(
-            'px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0',
+            'flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all',
             activeSubTab === 'medalhas'
-              ? 'bg-brand-600 text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
+              ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+              : 'border border-slate-200/80 bg-white text-[#645F78] hover:bg-slate-50 dark:border-white/5 dark:bg-[#151826] dark:text-[#9D96B8] dark:hover:bg-white/5'
           )}
         >
-          <Trophy size={16} />
+          <Trophy size={14} strokeWidth={2.4} />
           <span>Medalhas ({unlockedCount}/{totalCount})</span>
         </button>
 
         <button
           onClick={() => setActiveSubTab('patentes')}
           className={cn(
-            'px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0',
+            'flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all',
             activeSubTab === 'patentes'
-              ? 'bg-brand-600 text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
+              ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+              : 'border border-slate-200/80 bg-white text-[#645F78] hover:bg-slate-50 dark:border-white/5 dark:bg-[#151826] dark:text-[#9D96B8] dark:hover:bg-white/5'
           )}
         >
-          <Award size={16} />
+          <Award size={14} strokeWidth={2.4} />
           <span>Evolução do Mascote</span>
         </button>
 
         <button
           onClick={() => setActiveSubTab('regras')}
           className={cn(
-            'px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0',
+            'flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all',
             activeSubTab === 'regras'
-              ? 'bg-brand-600 text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
+              ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+              : 'border border-slate-200/80 bg-white text-[#645F78] hover:bg-slate-50 dark:border-white/5 dark:bg-[#151826] dark:text-[#9D96B8] dark:hover:bg-white/5'
           )}
         >
-          <Zap size={16} />
+          <Zap size={14} strokeWidth={2.4} />
           <span>Como Ganhar XP</span>
         </button>
       </div>
@@ -179,8 +179,8 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
       {activeSubTab === 'medalhas' && (
         <div className="space-y-4">
           {/* Category & Status Filters */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
               {CATEGORY_FILTERS.map(cat => {
                 const isSelected = selectedCategory === cat.id;
                 return (
@@ -188,10 +188,10 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
                     className={cn(
-                      'px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap border shrink-0',
+                      'flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all',
                       isSelected
-                        ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 border-brand-300 dark:border-brand-700 shadow-sm'
-                        : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                        ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                        : 'border border-slate-200/80 bg-white text-[#645F78] hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-[#9D96B8] dark:hover:bg-white/10'
                     )}
                   >
                     <span>{cat.icon}</span>
@@ -201,14 +201,14 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
               })}
             </div>
 
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 p-1 rounded-xl self-start sm:self-auto shrink-0 border border-slate-200 dark:border-white/5">
+            <div className="flex shrink-0 items-center gap-1 rounded-full border border-slate-200/80 bg-white p-1 self-start sm:self-auto dark:border-white/10 dark:bg-white/5">
               <button
                 onClick={() => setFilterStatus('all')}
                 className={cn(
-                  'px-2.5 py-1 text-xs font-bold rounded-lg transition',
+                  'rounded-full px-3 py-1 text-xs font-bold transition-all',
                   filterStatus === 'all'
-                    ? 'bg-white dark:bg-surface-card text-slate-900 dark:text-slate-100 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                    : 'text-[#645F78] hover:text-[#14102A] dark:text-[#9D96B8] dark:hover:text-white'
                 )}
               >
                 Todas
@@ -216,10 +216,10 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
               <button
                 onClick={() => setFilterStatus('unlocked')}
                 className={cn(
-                  'px-2.5 py-1 text-xs font-bold rounded-lg transition',
+                  'rounded-full px-3 py-1 text-xs font-bold transition-all',
                   filterStatus === 'unlocked'
-                    ? 'bg-white dark:bg-surface-card text-emerald-600 dark:text-emerald-400 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                    : 'text-[#645F78] hover:text-[#14102A] dark:text-[#9D96B8] dark:hover:text-white'
                 )}
               >
                 Conquistadas
@@ -227,10 +227,10 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
               <button
                 onClick={() => setFilterStatus('locked')}
                 className={cn(
-                  'px-2.5 py-1 text-xs font-bold rounded-lg transition',
+                  'rounded-full px-3 py-1 text-xs font-bold transition-all',
                   filterStatus === 'locked'
-                    ? 'bg-white dark:bg-surface-card text-amber-600 dark:text-amber-400 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                    : 'text-[#645F78] hover:text-[#14102A] dark:text-[#9D96B8] dark:hover:text-white'
                 )}
               >
                 A Conquistar
@@ -239,7 +239,7 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
           </div>
 
           {/* Achievement Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
             {filteredAchievements.map(ach => {
               const isUnlocked = ach.unlocked;
 
@@ -247,66 +247,66 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
                 <div
                   key={ach.id}
                   className={cn(
-                    'p-4 rounded-2xl border transition-all relative overflow-hidden flex flex-col justify-between gap-3',
+                    'flex flex-col justify-between gap-3.5 rounded-[22px] border p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md',
                     isUnlocked
-                      ? 'bg-gradient-to-br from-emerald-500/5 via-white to-amber-500/5 dark:from-emerald-500/10 dark:via-surface-card dark:to-amber-500/10 border-emerald-300/80 dark:border-emerald-500/30 shadow-sm'
-                      : 'bg-white dark:bg-surface-card border-slate-200 dark:border-white/10 opacity-80 hover:opacity-100'
+                      ? 'border-emerald-500/20 bg-white dark:border-emerald-500/15 dark:bg-[#151826]'
+                      : 'border-slate-200/70 bg-white/70 dark:border-white/5 dark:bg-[#151826]/60 opacity-80 hover:opacity-100'
                   )}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3.5">
                     <div
                       className={cn(
-                        'w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-inner border',
+                        'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl shadow-inner',
                         isUnlocked
-                          ? 'bg-amber-100 dark:bg-amber-400/20 border-amber-300 dark:border-amber-400/40 text-amber-900 dark:text-amber-100'
-                          : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 grayscale opacity-60'
+                          ? 'bg-[#00D64B]/15 text-[#008E32] dark:text-[#19E85F]'
+                          : 'bg-slate-100 text-slate-400 grayscale dark:bg-white/5 dark:text-white/30'
                       )}
                     >
                       {ach.icon}
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1.5 mb-0.5">
-                        <h3 className={cn('text-sm font-extrabold truncate', isUnlocked ? 'text-slate-900 dark:text-slate-100' : 'text-slate-700 dark:text-slate-300')}>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center justify-between gap-1.5">
+                        <h3 className="truncate font-display text-sm font-bold text-[#14102A] dark:text-white">
                           {ach.title}
                         </h3>
                         <span className={cn(
-                          'px-2 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 font-mono',
+                          'rounded-full px-2.5 py-0.5 font-display text-[11px] font-bold shrink-0',
                           isUnlocked
-                            ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
-                            : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400'
+                            ? 'bg-[#00D64B]/15 text-[#008E32] dark:text-[#19E85F]'
+                            : 'bg-slate-100 text-[#645F78] dark:bg-white/5 dark:text-white/40'
                         )}>
                           +{ach.xpReward} XP
                         </span>
                       </div>
 
-                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-snug">
+                      <p className="text-xs font-medium text-[#645F78] dark:text-[#9D96B8] line-clamp-2">
                         {ach.description}
                       </p>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 dark:border-white/5">
-                    <div className="flex items-center justify-between text-[11px] mb-1 font-semibold">
+                  <div className="border-t border-slate-100 pt-3 dark:border-white/5">
+                    <div className="mb-1.5 flex items-center justify-between text-xs font-semibold">
                       {isUnlocked ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-bold">
-                          <CheckCircle2 size={13} /> Conquistada!
+                        <span className="flex items-center gap-1 font-bold text-[#008E32] dark:text-[#19E85F]">
+                          <CheckCircle2 size={13} strokeWidth={2.4} /> Conquistada!
                         </span>
                       ) : (
-                        <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                          <Lock size={12} /> Progresso:
+                        <span className="flex items-center gap-1 text-[#645F78] dark:text-[#9D96B8]">
+                          <Lock size={12} strokeWidth={2.4} /> Progresso:
                         </span>
                       )}
-                      <span className="font-mono text-slate-600 dark:text-slate-300">
+                      <span className="font-display text-[11px] font-bold text-[#14102A] dark:text-white">
                         {ach.currentValue.toLocaleString('pt-BR')} / {ach.target.toLocaleString('pt-BR')} {ach.unit}
                       </span>
                     </div>
 
-                    <div className="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
                       <div
                         className={cn(
                           'h-full rounded-full transition-all duration-300',
-                          isUnlocked ? 'bg-emerald-500' : 'bg-brand-500'
+                          isUnlocked ? 'bg-[#00D64B]' : 'bg-[#6F00D6]'
                         )}
                         style={{ width: `${ach.progressPct}%` }}
                       />
@@ -318,8 +318,8 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
           </div>
 
           {filteredAchievements.length === 0 && (
-            <div className="p-10 text-center bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10">
-              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+            <div className="rounded-[22px] border border-slate-200/80 bg-white p-10 text-center shadow-xs dark:border-white/5 dark:bg-[#151826]">
+              <p className="text-xs font-semibold text-[#645F78] dark:text-[#9D96B8]">
                 Nenhuma conquista encontrada para este filtro.
               </p>
             </div>
@@ -330,8 +330,8 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
       {/* Subtab 2: Patentes e Níveis */}
       {activeSubTab === 'patentes' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-2xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-xs text-brand-900 dark:text-brand-200 flex items-start gap-3">
-            <Info size={18} className="text-brand-600 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 rounded-2xl border border-[#6F00D6]/20 bg-[#6F00D6]/5 p-4 text-xs font-medium text-[#14102A] dark:border-[#6F00D6]/30 dark:bg-[#6F00D6]/10 dark:text-white">
+            <Info size={18} strokeWidth={2.4} className="text-[#6F00D6] dark:text-[#B379FF] shrink-0 mt-0.5" />
             <div>
               <strong>Jornada de Evolução do DuckMind:</strong> Conforme você avança nos estudos, seu mascote evolui por 8 patentes, desbloqueando novos adereços visuais exclusivos até o patamar supremo de aprovação no ENEM!
             </div>
@@ -347,12 +347,12 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
                 <div
                   key={lvl.level}
                   className={cn(
-                    'p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden',
+                    'relative flex flex-col justify-between gap-4 overflow-hidden rounded-[22px] border p-4.5 sm:flex-row sm:items-center transition-all',
                     isCurrent
-                      ? 'bg-amber-500/10 border-amber-400 dark:border-amber-500/50 ring-2 ring-amber-400/30'
+                      ? 'border-[#00D64B] bg-[#00D64B]/5 ring-2 ring-[#00D64B]/30 dark:bg-[#00D64B]/10'
                       : isPast
-                      ? 'bg-white dark:bg-surface-card border-slate-200 dark:border-white/10 opacity-90'
-                      : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 opacity-60'
+                      ? 'border-slate-200/80 bg-white dark:border-white/5 dark:bg-[#151826]'
+                      : 'border-slate-200/60 bg-slate-50/70 dark:border-white/5 dark:bg-white/[0.02] opacity-60'
                   )}
                 >
                   <div className="flex items-center gap-3.5">
@@ -365,33 +365,33 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
                     </div>
 
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
                         <span
-                          className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider text-white"
+                          className="rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white shadow-xs"
                           style={{ backgroundColor: lvl.accentColor }}
                         >
                           Nível {lvl.level}
                         </span>
-                        <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                        <h3 className="font-display text-sm font-bold text-[#14102A] dark:text-white">
                           {lvl.title}
                         </h3>
                         {isCurrent && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-amber-950 uppercase animate-pulse">
+                          <span className="rounded-full bg-[#00D64B] px-2.5 py-0.5 text-[10px] font-bold text-[#14102A] uppercase shadow-xs">
                             Sua Patente Atual
                           </span>
                         )}
                         {isNext && !isCurrent && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300 uppercase">
+                          <span className="rounded-full bg-[#6F00D6]/15 px-2.5 py-0.5 text-[10px] font-bold text-[#6F00D6] dark:text-[#B379FF] uppercase">
                             Próxima Patente
                           </span>
                         )}
                       </div>
 
-                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-lg">
+                      <p className="max-w-lg text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
                         {lvl.description}
                       </p>
 
-                      <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 flex-wrap">
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#645F78] dark:text-white/60">
                         <span>Adereço: {lvl.accessory}</span>
                         <span>•</span>
                         <span>XP Necessário: {lvl.minXp.toLocaleString('pt-BR')} XP</span>
@@ -399,21 +399,21 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
                     </div>
                   </div>
 
-                  <div className="shrink-0 flex items-center gap-2 self-end sm:self-auto">
+                  <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
                     {isCurrent ? (
                       <div className="text-right">
-                        <div className="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono">
+                        <div className="font-display text-xs font-bold text-[#008E32] dark:text-[#19E85F]">
                           {progressInLevelXp.toLocaleString('pt-BR')} / {neededForNextLevelXp.toLocaleString('pt-BR')} XP
                         </div>
-                        <div className="text-[10px] text-slate-400 font-semibold">{levelProgressPct}% completo</div>
+                        <div className="text-[10px] font-semibold text-[#645F78] dark:text-[#9D96B8]">{levelProgressPct}% completo</div>
                       </div>
                     ) : isPast ? (
-                      <span className="px-3 py-1 rounded-xl text-xs font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
-                        <CheckCircle2 size={14} /> Conquistado
+                      <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-[#008E32] dark:text-[#19E85F]">
+                        <CheckCircle2 size={13} strokeWidth={2.4} /> Conquistado
                       </span>
                     ) : (
-                      <span className="px-3 py-1 rounded-xl text-xs font-bold bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                        <Lock size={12} /> Bloqueado
+                      <span className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-[#645F78] dark:bg-white/5 dark:text-white/40">
+                        <Lock size={11} strokeWidth={2.4} /> Bloqueado
                       </span>
                     )}
                   </div>
@@ -428,82 +428,82 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
       {activeSubTab === 'regras' && (
         <div className="space-y-5">
           <div>
-            <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-3">
+            <h3 className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
               Tabela de Recompensas de XP
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-surface-card flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-500/10 text-sky-600 flex items-center justify-center shrink-0">
-                  <HelpCircle size={20} />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="flex items-start gap-3 rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400">
+                  <HelpCircle size={18} strokeWidth={2.4} />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">Questões Resolvidas</div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="font-display text-xs font-bold text-[#14102A] dark:text-white">Questões Resolvidas</div>
+                  <div className="mt-0.5 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
                     <strong>+10 XP</strong> por questão feita<br />
-                    <strong>+5 XP</strong> bônus por questão acertada
+                    <strong>+5 XP</strong> bônus por acerto
                   </div>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-surface-card flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 flex items-center justify-center shrink-0">
-                  <Clock size={20} />
+              <div className="flex items-start gap-3 rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6F00D6]/15 text-[#6F00D6] dark:text-[#B379FF]">
+                  <Clock size={18} strokeWidth={2.4} />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">Tempo de Foco</div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="font-display text-xs font-bold text-[#14102A] dark:text-white">Tempo de Foco</div>
+                  <div className="mt-0.5 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
                     <strong>+2 XP</strong> por minuto líquido estudado (1h = 120 XP)
                   </div>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-surface-card flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
-                  <BookOpen size={20} />
+              <div className="flex items-start gap-3 rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400">
+                  <BookOpen size={18} strokeWidth={2.4} />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">Simulados do ENEM</div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="font-display text-xs font-bold text-[#14102A] dark:text-white">Simulados do ENEM</div>
+                  <div className="mt-0.5 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
                     <strong>+200 XP</strong> Área Única (45q)<br />
-                    <strong>+350 XP</strong> Dia 1 ou Dia 2 (90q)<br />
+                    <strong>+350 XP</strong> Dia 1 ou 2 (90q)<br />
                     <strong>+600 XP</strong> Simulado Completo
                   </div>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-surface-card flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-pink-50 dark:bg-pink-500/10 text-pink-600 flex items-center justify-center shrink-0">
-                  <PenLine size={20} />
+              <div className="flex items-start gap-3 rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-pink-500/15 text-pink-600 dark:text-pink-400">
+                  <PenLine size={18} strokeWidth={2.4} />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">Redações ENEM</div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="font-display text-xs font-bold text-[#14102A] dark:text-white">Redações ENEM</div>
+                  <div className="mt-0.5 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
                     <strong>+150 XP</strong> por redação concluída<br />
                     <strong>+100 XP</strong> bônus se nota &ge; 900
                   </div>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-surface-card flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-                  <CheckCircle2 size={20} />
+              <div className="flex items-start gap-3 rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-[#008E32] dark:text-[#19E85F]">
+                  <CheckCircle2 size={18} strokeWidth={2.4} />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">Tópicos do Edital</div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="font-display text-xs font-bold text-[#14102A] dark:text-white">Tópicos do Edital</div>
+                  <div className="mt-0.5 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
                     <strong>+40 XP</strong> por tópico concluído no cronograma
                   </div>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-surface-card flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
-                  <Flame size={20} />
+              <div className="flex items-start gap-3 rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-[#D68200] dark:text-[#FFB84D]">
+                  <Flame size={18} strokeWidth={2.4} />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">Ofensiva (Streak)</div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                    <strong>+25 XP</strong> por dia consecutivo na sua sequência
+                  <div className="font-display text-xs font-bold text-[#14102A] dark:text-white">Ofensiva (Streak)</div>
+                  <div className="mt-0.5 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
+                    <strong>+25 XP</strong> por dia consecutivo estudado
                   </div>
                 </div>
               </div>
@@ -511,49 +511,49 @@ export default function ConquistasTab({ onNavigate: _onNavigate }: Props) {
           </div>
 
           {/* User XP Breakdown */}
-          <div className="p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/5">
-            <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-3">
+          <div className="rounded-[24px] border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+            <h3 className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
               De onde veio o seu XP?
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-slate-200/80 dark:border-white/5">
-                <div className="text-[11px] text-slate-500 font-bold">Questões Feitas</div>
-                <div className="text-base sm:text-lg font-black font-mono text-sky-600 dark:text-sky-400">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200/60 bg-slate-50/70 p-3.5 dark:border-white/5 dark:bg-white/[0.03]">
+                <div className="text-[11px] font-bold text-[#645F78] dark:text-[#9D96B8]">Questões Feitas</div>
+                <div className="mt-1 font-display text-base sm:text-lg font-bold text-sky-600 dark:text-sky-400">
                   +{xpBreakdown.questionsXp.toLocaleString('pt-BR')} XP
                 </div>
               </div>
 
-              <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-slate-200/80 dark:border-white/5">
-                <div className="text-[11px] text-slate-500 font-bold">Horas de Estudo</div>
-                <div className="text-base sm:text-lg font-black font-mono text-brand-600 dark:text-brand-400">
+              <div className="rounded-2xl border border-slate-200/60 bg-slate-50/70 p-3.5 dark:border-white/5 dark:bg-white/[0.03]">
+                <div className="text-[11px] font-bold text-[#645F78] dark:text-[#9D96B8]">Horas de Estudo</div>
+                <div className="mt-1 font-display text-base sm:text-lg font-bold text-[#6F00D6] dark:text-[#B379FF]">
                   +{xpBreakdown.studyTimeXp.toLocaleString('pt-BR')} XP
                 </div>
               </div>
 
-              <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-slate-200/80 dark:border-white/5">
-                <div className="text-[11px] text-slate-500 font-bold">Simulados Realizados</div>
-                <div className="text-base sm:text-lg font-black font-mono text-purple-600 dark:text-purple-400">
+              <div className="rounded-2xl border border-slate-200/60 bg-slate-50/70 p-3.5 dark:border-white/5 dark:bg-white/[0.03]">
+                <div className="text-[11px] font-bold text-[#645F78] dark:text-[#9D96B8]">Simulados Realizados</div>
+                <div className="mt-1 font-display text-base sm:text-lg font-bold text-purple-600 dark:text-purple-400">
                   +{xpBreakdown.simulationsXp.toLocaleString('pt-BR')} XP
                 </div>
               </div>
 
-              <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-slate-200/80 dark:border-white/5">
-                <div className="text-[11px] text-slate-500 font-bold">Redações Escritas</div>
-                <div className="text-base sm:text-lg font-black font-mono text-pink-600 dark:text-pink-400">
+              <div className="rounded-2xl border border-slate-200/60 bg-slate-50/70 p-3.5 dark:border-white/5 dark:bg-white/[0.03]">
+                <div className="text-[11px] font-bold text-[#645F78] dark:text-[#9D96B8]">Redações Escritas</div>
+                <div className="mt-1 font-display text-base sm:text-lg font-bold text-pink-600 dark:text-pink-400">
                   +{xpBreakdown.essaysXp.toLocaleString('pt-BR')} XP
                 </div>
               </div>
 
-              <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-slate-200/80 dark:border-white/5">
-                <div className="text-[11px] text-slate-500 font-bold">Edital Dominado</div>
-                <div className="text-base sm:text-lg font-black font-mono text-emerald-600 dark:text-emerald-400">
+              <div className="rounded-2xl border border-slate-200/60 bg-slate-50/70 p-3.5 dark:border-white/5 dark:bg-white/[0.03]">
+                <div className="text-[11px] font-bold text-[#645F78] dark:text-[#9D96B8]">Edital Dominado</div>
+                <div className="mt-1 font-display text-base sm:text-lg font-bold text-[#008E32] dark:text-[#19E85F]">
                   +{xpBreakdown.editalXp.toLocaleString('pt-BR')} XP
                 </div>
               </div>
 
-              <div className="p-3 bg-white dark:bg-surface-card rounded-xl border border-slate-200/80 dark:border-white/5">
-                <div className="text-[11px] text-slate-500 font-bold">Ofensiva e Constância</div>
-                <div className="text-base sm:text-lg font-black font-mono text-amber-600 dark:text-amber-400">
+              <div className="rounded-2xl border border-slate-200/60 bg-slate-50/70 p-3.5 dark:border-white/5 dark:bg-white/[0.03]">
+                <div className="text-[11px] font-bold text-[#645F78] dark:text-[#9D96B8]">Ofensiva e Constância</div>
+                <div className="mt-1 font-display text-base sm:text-lg font-bold text-[#D68200] dark:text-[#FFB84D]">
                   +{xpBreakdown.streakXp.toLocaleString('pt-BR')} XP
                 </div>
               </div>

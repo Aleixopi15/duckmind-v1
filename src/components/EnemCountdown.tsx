@@ -37,13 +37,18 @@ export default function EnemCountdown() {
   const detail = isPastDay2 ? '08/11 e 15/11 de 2026' : isBetweenDays ? '15/11/2026' : '08/11/2026 · 2º dia em 15/11';
 
   return (
-    <div className="flex w-full shrink-0 items-center gap-4 rounded-[22px] border-[3px] border-tinta bg-mente px-5 py-4 text-papel shadow-brutal dark:border-papel/70 lg:w-[380px]">
-      <span className="font-display text-[3.6rem] font-bold leading-none">{bigNumber}</span>
-      <span className="text-base font-semibold leading-snug">
-        <b className="font-display text-[17px] font-bold">{caption}</b>
-        <br />
-        <span className="text-papel/80">{detail}</span>
+    <div className="relative flex w-full shrink-0 items-center gap-4 overflow-hidden rounded-[26px] bg-gradient-to-r from-[#6F00D6] via-[#7B10E6] to-[#9B3DFF] px-6 py-5 text-white shadow-[0_10px_32px_-6px_rgba(111,0,214,0.38)] border border-white/15 lg:w-[390px]">
+      <span className="font-display text-[3.8rem] font-bold leading-none tracking-tight text-white select-none">
+        {bigNumber}
       </span>
+      <div className="flex flex-col justify-center">
+        <span className="font-display text-[17px] font-bold leading-snug tracking-tight text-white">
+          {caption}
+        </span>
+        <span className="mt-0.5 text-[13px] font-medium text-white/80">
+          {detail}
+        </span>
+      </div>
     </div>
   );
 }

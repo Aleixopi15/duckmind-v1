@@ -71,12 +71,14 @@ export interface ParsedSimulationQuestions {
   wrong: number;
   date: string;
   type: SimulationType;
+  target_area?: SimulationTargetArea | null;
   subjectsBreakdown: SimulationSubjectBreakdown[];
 }
 
 export function getSimulationQuestions(s: Simulation): ParsedSimulationQuestions {
   const { meta } = parseSimulationData(s);
   const type = s.simulation_type || meta.type || 'completo';
+  const target_area = s.target_area || meta.target_area || null;
   const subjectsBreakdown: SimulationSubjectBreakdown[] = meta.subjects_breakdown || [];
 
   let total = 0;
@@ -129,24 +131,75 @@ export function getSimulationQuestions(s: Simulation): ParsedSimulationQuestions
     wrong,
     date: s.simulation_date || (s.created_at ? s.created_at.split('T')[0] : new Date().toISOString().split('T')[0]),
     type,
+    target_area,
     subjectsBreakdown,
   };
 }
 
+export function getSimulationDate(s: Simulation): string {
+  if (s.simulation_date && s.simulation_date.trim()) {
+    return s.simulation_date.split('T')[0];
+  }
+  const q = getSimulationQuestions(s);
+  if (q.date && q.date.trim()) {
+    return q.date.split('T')[0];
+  }
+  if (s.created_at && s.created_at.trim()) {
+    return s.created_at.split('T')[0];
+  }
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export function formatISODateSafe(isoOrDate: string, options?: { dayMonthOnly?: boolean }): string {
+  if (!isoOrDate) return '';
+  const dateOnly = isoOrDate.split('T')[0].trim();
+  const parts = dateOnly.split('-');
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    if (options?.dayMonthOnly) {
+      return `${day}/${month}`;
+    }
+    return `${day}/${month}/${year}`;
+  }
+  try {
+    return new Date(isoOrDate).toLocaleDateString('pt-BR');
+  } catch {
+    return dateOnly;
+  }
+}
+
+export function getSimulationDuration(s: Simulation): number {
+  if (typeof s.duration_minutes === 'number' && s.duration_minutes > 0) {
+    return s.duration_minutes;
+  }
+  const { meta } = parseSimulationData(s);
+  if (typeof meta.duration_minutes === 'number' && meta.duration_minutes > 0) {
+    return meta.duration_minutes;
+  }
+  return 0;
+}
+
 /**
- * Returns question counts from a simulation that belong to a specific subject (by id or normalized name/area).
+ * Returns question counts from a simulation that belong to a specific subject (by id or normalized name).
+ * As requested: If simulation is 'personalizado', questions are attributed to the specified subjects.
+ * If it is by area, completo, dia 1 or dia 2, questions are NOT assigned to individual subjects,
+ * and are only counted generally in the overall question counters.
  */
 export function getSubjectSimulationQuestions(
   s: Simulation,
   subjectId: string,
   subjectName: string,
-  subjectArea?: string
+  _subjectArea?: string
 ): { total: number; correct: number } {
   const parsed = getSimulationQuestions(s);
   const normSubName = subjectName.trim().toLowerCase();
 
-  // 1. If simulation is personalizado and has subject breakdown
-  if (parsed.subjectsBreakdown.length > 0) {
+  // Only personalized simulations with subject breakdown assign to specific subjects
+  if (parsed.type === 'personalizado' && parsed.subjectsBreakdown.length > 0) {
     const match = parsed.subjectsBreakdown.find(b => {
       if (b.subject_id && b.subject_id === subjectId) return true;
       const bName = b.subject_name.trim().toLowerCase();
@@ -158,46 +211,9 @@ export function getSubjectSimulationQuestions(
         correct: Number(match.questions_correct) || 0,
       };
     }
-    return { total: 0, correct: 0 };
   }
 
-  // 2. If standard simulation, map based on subject area or exact name
-  const isMath = normSubName.includes('matemática') || normSubName === 'matematica';
-  const isNature = ['física', 'fisica', 'química', 'quimica', 'biologia'].some(n => normSubName.includes(n));
-  const isHuman = ['história', 'historia', 'geografia', 'filosofia', 'sociologia'].some(n => normSubName.includes(n));
-  const isLang = ['português', 'portugues', 'literatura', 'inglês', 'ingles', 'espanhol', 'artes'].some(n => normSubName.includes(n));
-
-  if (isMath) {
-    if (parsed.type === 'dia_2' || parsed.type === 'completo' || (parsed.type === 'area_unica' && (s.target_area === 'math' || parsed.target_area === 'math'))) {
-      const score = s.score_math ?? 0;
-      return { total: 45, correct: Math.min(45, score) };
-    }
-  }
-
-  if (isNature) {
-    if (parsed.type === 'dia_2' || parsed.type === 'completo' || (parsed.type === 'area_unica' && (s.target_area === 'natural_sciences' || parsed.target_area === 'natural_sciences'))) {
-      const score = s.score_natural_sciences ?? 0;
-      const subTotal = 15;
-      return { total: subTotal, correct: Math.min(subTotal, Math.round((score / 45) * subTotal)) };
-    }
-  }
-
-  if (isHuman) {
-    if (parsed.type === 'dia_1' || parsed.type === 'completo' || (parsed.type === 'area_unica' && (s.target_area === 'humanities' || parsed.target_area === 'humanities'))) {
-      const score = s.score_humanities ?? 0;
-      const subTotal = 11;
-      return { total: subTotal, correct: Math.min(subTotal, Math.round((score / 45) * subTotal)) };
-    }
-  }
-
-  if (isLang) {
-    if (parsed.type === 'dia_1' || parsed.type === 'completo' || (parsed.type === 'area_unica' && (s.target_area === 'languages' || parsed.target_area === 'languages'))) {
-      const score = s.score_languages ?? 0;
-      const subTotal = 15;
-      return { total: subTotal, correct: Math.min(subTotal, Math.round((score / 45) * subTotal)) };
-    }
-  }
-
+  // Non-personalized simulations (by area, dia 1, dia 2, completo) are NOT attributed to individual subjects
   return { total: 0, correct: 0 };
 }
 

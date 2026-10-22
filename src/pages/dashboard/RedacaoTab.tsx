@@ -254,24 +254,29 @@ export default function RedacaoTab() {
 
   return (
     <div className="w-full min-w-0 max-w-full animate-fade-in">
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="font-display text-[2rem] font-bold leading-tight tracking-tight text-tinta dark:text-papel sm:text-[2.6rem]">
-            Redação
+      {/* Cabeçalho */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#14102A] dark:text-[#F3F1FF]">
+            Redação ENEM
           </h1>
-          <p className="mt-1 text-[17px] font-semibold text-muted dark:text-papel/70">
+          <p className="mt-1 text-sm font-medium text-[#645F78] dark:text-[#9D96B8]">
             Acompanhe suas notas por competência do ENEM e consulte o banco de repertórios
           </p>
         </div>
         {activeSubTab === 'redacoes' && (
-          <button onClick={openNew} className="btn shrink-0 bg-pato px-5 py-2.5 text-tinta dark:border-papel">
-            <Plus size={18} strokeWidth={3} /> Nova redação
+          <button
+            onClick={openNew}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#00D64B] hover:bg-[#19E85F] text-[#14102A] text-sm font-bold shadow-xs hover:shadow-md transition-all active:scale-[0.98]"
+          >
+            <Plus size={16} strokeWidth={3} />
+            <span>Nova redação</span>
           </button>
         )}
       </div>
 
       {/* Sub-abas */}
-      <div className="mb-5 flex flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap gap-2">
         {([
           { id: 'redacoes' as const, label: `Minhas redações (${essays.length})`, icon: FileText },
           { id: 'repertorios' as const, label: 'Banco de repertórios', icon: BookOpen },
@@ -283,12 +288,14 @@ export default function RedacaoTab() {
               key={tab.id}
               onClick={() => setActiveSubTab(tab.id)}
               className={cn(
-                'flex items-center gap-2 rounded-[16px] border-[3px] border-tinta px-3.5 py-1.5 font-display text-sm font-bold transition-transform dark:border-papel',
-                active ? 'bg-pato text-tinta shadow-brutal-sm' : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                'flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all',
+                active
+                  ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                  : 'bg-white text-[#645F78] hover:bg-slate-50 dark:bg-[#151826] dark:text-[#9D96B8] dark:hover:bg-white/5 border border-slate-200/80 dark:border-white/5'
               )}
             >
-              <Icon size={15} strokeWidth={2.8} />
-              {tab.label}
+              <Icon size={14} strokeWidth={2.4} />
+              <span>{tab.label}</span>
             </button>
           );
         })}
@@ -300,33 +307,48 @@ export default function RedacaoTab() {
         <>
           {/* Métricas */}
           {essays.length > 0 && (
-            <div className="mb-5 grid grid-cols-3 gap-3 sm:gap-4">
-              <div className="stat min-w-0">
-                <div className="stat-value truncate">{essays.length}</div>
-                <div className="stat-label mt-0.5">Redações</div>
+            <div className="mb-6 grid grid-cols-3 gap-3 sm:gap-4">
+              <div className="rounded-[22px] border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+                <div className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#14102A] dark:text-white">
+                  {essays.length}
+                </div>
+                <div className="mt-1 text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+                  Redações
+                </div>
               </div>
-              <div className="stat min-w-0 bg-bico">
-                <div className="stat-value truncate">{bestGrade}</div>
-                <div className="stat-label mt-0.5">Melhor nota</div>
+              <div className="rounded-[22px] border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+                <div className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#D68200] dark:text-[#FFB84D]">
+                  {bestGrade}
+                </div>
+                <div className="mt-1 text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+                  Melhor nota
+                </div>
               </div>
-              <div className="stat min-w-0">
-                <div className="stat-value truncate">{avgGrade}</div>
-                <div className="stat-label mt-0.5">Média</div>
+              <div className="rounded-[22px] border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+                <div className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#008E32] dark:text-[#19E85F]">
+                  {avgGrade}
+                </div>
+                <div className="mt-1 text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+                  Média
+                </div>
               </div>
             </div>
           )}
 
           {essays.length === 0 ? (
-            <div className="card p-10 text-center">
-              <span className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[20px] border-[3px] border-tinta bg-pato text-tinta dark:border-papel">
-                <FileText size={28} strokeWidth={2.6} />
+            <div className="rounded-[24px] border border-slate-200/80 bg-white p-12 text-center shadow-xs dark:border-white/5 dark:bg-[#151826]">
+              <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#00D64B]/15 text-[#008E32] dark:text-[#19E85F]">
+                <FileText size={26} strokeWidth={2.4} />
               </span>
-              <h2 className="mb-1 font-display text-xl font-bold text-tinta dark:text-papel">Nenhuma redação ainda</h2>
-              <p className="mb-4 text-sm font-semibold text-muted dark:text-papel/60">
+              <h2 className="mb-1 font-display text-lg font-bold text-[#14102A] dark:text-white">Nenhuma redação ainda</h2>
+              <p className="mb-4 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
                 Adicione sua redação preenchendo as notas de cada uma das 5 competências do ENEM.
               </p>
-              <button onClick={openNew} className="btn inline-flex bg-pato px-4 py-2 text-sm text-tinta dark:border-papel">
-                <Plus size={16} strokeWidth={3} /> Adicionar redação
+              <button
+                onClick={openNew}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#00D64B] hover:bg-[#19E85F] text-[#14102A] text-xs font-bold shadow-xs transition-all"
+              >
+                <Plus size={15} strokeWidth={3} /> Adicionar redação
               </button>
             </div>
           ) : (
@@ -334,86 +356,98 @@ export default function RedacaoTab() {
               {essays.map(essay => {
                 const { comments: cleanComments, competencies: essayComps } = parseEssayComments(essay.comments);
                 return (
-                  <article key={essay.id} className="card flex flex-col gap-2.5 p-4">
-                    <div className="flex items-start gap-3">
-                      <button
-                        onClick={() => essay.file_path && viewFile(essay.file_path, essay.file_type ?? 'image')}
-                        className={cn(
-                          'flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] border-[3px] border-tinta transition-transform dark:border-papel',
-                          essay.file_path
-                            ? 'cursor-pointer bg-pato text-tinta hover:-translate-y-px'
-                            : 'bg-papel text-muted dark:bg-transparent dark:text-papel/40',
-                        )}
-                        disabled={!essay.file_path}
-                        title={essay.file_path ? 'Ver arquivo' : 'Sem arquivo'}
-                      >
-                        {essay.file_type === 'pdf' ? <FileText size={20} strokeWidth={2.6} /> : <ImageIcon size={20} strokeWidth={2.6} />}
-                      </button>
+                  <article
+                    key={essay.id}
+                    className="group flex flex-col justify-between rounded-[22px] border border-slate-200/70 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-white/5 dark:bg-[#151826]"
+                  >
+                    <div>
+                      <div className="flex items-start gap-3">
+                        <button
+                          onClick={() => essay.file_path && viewFile(essay.file_path, essay.file_type ?? 'image')}
+                          className={cn(
+                            'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all',
+                            essay.file_path
+                              ? 'cursor-pointer bg-emerald-500/15 text-[#008E32] dark:text-[#19E85F] hover:scale-105'
+                              : 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-white/30',
+                          )}
+                          disabled={!essay.file_path}
+                          title={essay.file_path ? 'Ver arquivo' : 'Sem arquivo'}
+                        >
+                          {essay.file_type === 'pdf' ? <FileText size={18} strokeWidth={2.4} /> : <ImageIcon size={18} strokeWidth={2.4} />}
+                        </button>
 
-                      <div className="min-w-0 flex-1">
-                        <h3 className="truncate font-display text-xl font-bold leading-tight text-tinta dark:text-papel">
-                          {essay.title}
-                        </h3>
-                        <p className="text-sm font-semibold text-muted dark:text-papel/60">
-                          {essay.written_at ? new Date(essay.written_at).toLocaleDateString('pt-BR') : 'Sem data'}
-                        </p>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate font-display text-base font-bold text-[#14102A] dark:text-white">
+                            {essay.title}
+                          </h3>
+                          <p className="text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
+                            {essay.written_at ? new Date(essay.written_at).toLocaleDateString('pt-BR') : 'Sem data'}
+                          </p>
+                        </div>
+
+                        {essay.grade !== null && (
+                          <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#00D64B]/15 px-3 py-0.5 font-display text-xs font-bold text-[#008E32] dark:text-[#19E85F]">
+                            <Star size={11} strokeWidth={2.6} /> {essay.grade}
+                          </span>
+                        )}
                       </div>
 
-                      {essay.grade !== null && (
-                        <span className="chip shrink-0 gap-1 bg-bico text-tinta dark:border-papel">
-                          <Star size={12} strokeWidth={3} /> {essay.grade}
-                        </span>
+                      {essay.prompt && (
+                        <p className="mt-3 line-clamp-2 text-xs font-medium italic text-[#645F78] dark:text-white/60">
+                          “{essay.prompt}”
+                        </p>
+                      )}
+
+                      {essayComps && (
+                        <div className="mt-3.5">
+                          <p className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+                            <Award size={11} strokeWidth={2.4} /> Competências ENEM
+                          </p>
+                          <div className="grid grid-cols-5 gap-1.5">
+                            {(['c1', 'c2', 'c3', 'c4', 'c5'] as const).map((cKey, idx) => {
+                              const val = essayComps[cKey] ?? 0;
+                              const isHigh = val >= 160;
+                              const isMed = val >= 120;
+                              return (
+                                <div
+                                  key={cKey}
+                                  className={cn(
+                                    'rounded-xl border py-1 text-center',
+                                    isHigh
+                                      ? 'border-emerald-500/20 bg-emerald-500/10 text-[#008E32] dark:text-[#19E85F]'
+                                      : isMed
+                                      ? 'border-amber-500/20 bg-amber-500/10 text-[#D68200] dark:text-[#FFB84D]'
+                                      : 'border-slate-200/60 bg-slate-50 text-slate-600 dark:border-white/5 dark:bg-white/5 dark:text-white/60'
+                                  )}
+                                >
+                                  <div className="text-[9px] font-bold">C{idx + 1}</div>
+                                  <div className="font-display text-xs font-bold leading-none mt-0.5">{val}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {cleanComments && (
+                        <p className="mt-3 line-clamp-2 rounded-xl bg-slate-50 p-2 text-xs font-medium text-[#645F78] dark:bg-white/5 dark:text-white/60">
+                          {cleanComments}
+                        </p>
                       )}
                     </div>
 
-                    {essay.prompt && (
-                      <p className="line-clamp-2 text-sm font-semibold italic text-muted dark:text-papel/55">
-                        “{essay.prompt}”
-                      </p>
-                    )}
-
-                    {essayComps && (
-                      <div>
-                        <p className="mb-1.5 flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted dark:text-papel/50">
-                          <Award size={11} strokeWidth={3} /> Competências ENEM
-                        </p>
-                        <div className="grid grid-cols-5 gap-1.5">
-                          {(['c1', 'c2', 'c3', 'c4', 'c5'] as const).map((cKey, idx) => {
-                            const val = essayComps[cKey] ?? 0;
-                            const isHigh = val >= 160;
-                            const isMed = val >= 120;
-                            return (
-                              <div
-                                key={cKey}
-                                className={cn(
-                                  'rounded-[12px] border-[3px] border-tinta py-1 text-center dark:border-papel',
-                                  isHigh ? 'bg-pato text-tinta' : isMed ? 'bg-bico text-tinta' : 'bg-papel text-tinta dark:bg-transparent dark:text-papel',
-                                )}
-                              >
-                                <div className="text-[10px] font-bold">C{idx + 1}</div>
-                                <div className="font-display text-base font-bold leading-none">{val}</div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {cleanComments && (
-                      <p className="line-clamp-3 rounded-[14px] border-[3px] border-tinta/20 bg-papel px-2.5 py-2 text-sm font-semibold text-muted dark:border-papel/20 dark:bg-transparent dark:text-papel/60">
-                        {cleanComments}
-                      </p>
-                    )}
-
-                    <div className="mt-auto flex gap-3 pt-1 text-sm font-bold">
-                      <button onClick={() => openEdit(essay.id)} className="flex items-center gap-1.5 text-tinta hover:underline dark:text-papel">
-                        <Pencil size={13} strokeWidth={3} /> Editar
+                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-white/5 text-xs font-semibold">
+                      <button
+                        onClick={() => openEdit(essay.id)}
+                        className="inline-flex items-center gap-1.5 text-[#008E32] hover:text-[#006e26] dark:text-[#19E85F] transition-colors"
+                      >
+                        <Pencil size={12} strokeWidth={2.4} /> Editar
                       </button>
                       <button
                         onClick={() => handleDelete(essay.id, essay.file_path)}
-                        className="flex items-center gap-1.5 text-tinta/70 hover:text-tinta hover:underline dark:text-papel/60 dark:hover:text-papel"
+                        className="inline-flex items-center gap-1.5 text-slate-400 hover:text-red-500 transition-colors"
                       >
-                        <Trash2 size={13} strokeWidth={3} /> Excluir
+                        <Trash2 size={12} strokeWidth={2.4} /> Excluir
                       </button>
                     </div>
                   </article>
@@ -432,13 +466,16 @@ export default function RedacaoTab() {
         size="lg"
         footer={
           <>
-            <button onClick={() => setDialogOpen(false)} className="btn bg-white px-4 py-2 text-sm dark:border-papel dark:bg-transparent dark:text-papel">
+            <button
+              onClick={() => setDialogOpen(false)}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-[#645F78] hover:text-[#14102A] dark:text-[#9D96B8] dark:hover:text-white transition-colors"
+            >
               Cancelar
             </button>
             <button
               onClick={handleSave}
               disabled={saving || !form.title.trim()}
-              className="btn bg-pato px-4 py-2 text-sm text-tinta dark:border-papel"
+              className="px-5 py-2 rounded-full bg-[#00D64B] hover:bg-[#19E85F] text-[#14102A] text-xs font-bold shadow-xs transition-all disabled:opacity-50"
             >
               {saving ? 'Salvando…' : 'Salvar redação'}
             </button>
@@ -447,60 +484,64 @@ export default function RedacaoTab() {
       >
         <div className="flex flex-col gap-4">
           {formError && (
-            <div className="rounded-[14px] border-[3px] border-tinta bg-bico px-3.5 py-2.5 text-sm font-bold text-tinta dark:border-papel">
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs font-semibold text-red-600 dark:text-red-400">
               {formError}
             </div>
           )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="red-titulo" className="mb-1.5 block text-sm font-bold">Título da redação *</label>
+              <label htmlFor="red-titulo" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+                Título da redação *
+              </label>
               <input
                 id="red-titulo"
                 value={form.title}
                 onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                className="input"
+                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3.5 py-2.5 text-xs font-semibold text-[#14102A] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00D64B]"
                 placeholder="Ex: Redação Simulado 4 — Maio"
               />
             </div>
             <div>
-              <label htmlFor="red-data" className="mb-1.5 block text-sm font-bold">Data</label>
+              <label htmlFor="red-data" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+                Data
+              </label>
               <input
                 id="red-data"
                 type="date"
                 value={form.written_at}
                 onChange={e => setForm(f => ({ ...f, written_at: e.target.value }))}
-                className="input"
+                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3.5 py-2.5 text-xs font-semibold text-[#14102A] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00D64B]"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="red-tema" className="mb-1.5 block text-sm font-bold">
-              Tema / proposta <span className="font-semibold text-muted dark:text-papel/50">(opcional)</span>
+            <label htmlFor="red-tema" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Tema / proposta <span className="font-normal opacity-70">(opcional)</span>
             </label>
             <textarea
               id="red-tema"
               value={form.prompt}
               onChange={e => setForm(f => ({ ...f, prompt: e.target.value }))}
-              className="input min-h-[70px]"
+              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-3 text-xs font-medium text-[#14102A] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00D64B] min-h-[70px]"
               placeholder="Ex: Desafios para a valorização do trabalho de cuidado realizado por mulheres no Brasil"
             />
           </div>
 
           {/* Competências */}
-          <div className="rounded-[22px] border-[3px] border-tinta p-4 dark:border-papel/50">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="rounded-[24px] border border-slate-200/80 bg-slate-50/70 p-4.5 dark:border-white/5 dark:bg-white/5">
+            <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h4 className="flex items-center gap-1.5 font-display text-lg font-bold text-tinta dark:text-papel">
-                  <Award size={16} strokeWidth={3} /> Notas por competência
+                <h4 className="flex items-center gap-1.5 font-display text-base font-bold text-[#14102A] dark:text-white">
+                  <Award size={16} strokeWidth={2.4} /> Notas por competência
                 </h4>
-                <p className="text-sm font-semibold text-muted dark:text-papel/55">
+                <p className="text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
                   De 0 a 200 em cada uma — o total é calculado automaticamente.
                 </p>
               </div>
 
-              <label className="flex cursor-pointer items-center gap-2 text-sm font-bold text-tinta dark:text-papel">
+              <label className="flex cursor-pointer items-center gap-2 text-xs font-bold text-[#14102A] dark:text-white">
                 <input
                   type="checkbox"
                   checked={useCompetencies}
@@ -511,7 +552,7 @@ export default function RedacaoTab() {
                       setForm(f => ({ ...f, grade: calculateTotal(competencies).toString() }));
                     }
                   }}
-                  className="h-5 w-5 rounded border-[3px] border-tinta"
+                  className="h-4 w-4 rounded text-[#00D64B] focus:ring-[#00D64B]"
                 />
                 Calcular pelas 5 competências
               </label>
@@ -522,11 +563,11 @@ export default function RedacaoTab() {
                 {COMPETENCIES_INFO.map(comp => {
                   const currentScore = competencies[comp.key];
                   return (
-                    <div key={comp.key} className="rounded-[16px] border-[3px] border-tinta bg-white p-3 dark:border-papel/40 dark:bg-transparent">
+                    <div key={comp.key} className="rounded-2xl border border-slate-200/70 bg-white p-3.5 dark:border-white/5 dark:bg-[#151826]">
                       <div className="mb-2 flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="block text-sm font-bold text-tinta dark:text-papel">{comp.title}</p>
-                          <p className="line-clamp-1 text-xs font-semibold text-muted dark:text-papel/55">{comp.desc}</p>
+                          <p className="block text-xs font-bold text-[#14102A] dark:text-white">{comp.title}</p>
+                          <p className="line-clamp-1 text-[11px] font-medium text-[#645F78] dark:text-[#9D96B8]">{comp.desc}</p>
                         </div>
                         <div className="flex shrink-0 items-center gap-1.5">
                           <input
@@ -537,9 +578,9 @@ export default function RedacaoTab() {
                             value={currentScore}
                             aria-label={`Nota ${comp.title}`}
                             onChange={e => updateCompetencyScore(comp.key, Number(e.target.value))}
-                            className="input w-20 px-2 py-1 text-center font-display text-sm font-bold"
+                            className="w-16 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-center font-display text-xs font-bold text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/10 dark:bg-white/5 dark:text-white"
                           />
-                          <span className="font-display text-xs font-bold text-muted dark:text-papel/50">/200</span>
+                          <span className="font-display text-xs font-bold text-[#645F78] dark:text-white/50">/200</span>
                         </div>
                       </div>
 
@@ -550,10 +591,10 @@ export default function RedacaoTab() {
                             key={score}
                             onClick={() => updateCompetencyScore(comp.key, score)}
                             className={cn(
-                              'rounded-[10px] border-2 border-tinta px-2.5 py-1 font-display text-xs font-bold transition-transform dark:border-papel',
+                              'rounded-lg px-2.5 py-1 font-display text-xs font-bold transition-all',
                               currentScore === score
-                                ? 'bg-mente text-papel'
-                                : 'bg-papel text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                                ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                                : 'bg-slate-100 text-[#645F78] hover:bg-slate-200/70 dark:bg-white/5 dark:text-[#9D96B8] dark:hover:bg-white/10'
                             )}
                           >
                             {score}
@@ -564,20 +605,22 @@ export default function RedacaoTab() {
                   );
                 })}
 
-                <div className="flex items-center justify-between gap-3 rounded-[16px] border-[3px] border-tinta bg-pato p-3.5 text-tinta dark:border-papel">
+                <div className="flex items-center justify-between gap-3 rounded-2xl bg-[#00D64B]/15 p-4 text-[#14102A] dark:text-white">
                   <div>
-                    <p className="text-xs font-extrabold uppercase tracking-wide">Nota total da redação</p>
-                    <p className="text-xs font-semibold text-tinta/70">Soma automática de C1 + C2 + C3 + C4 + C5</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-[#008E32] dark:text-[#19E85F]">Nota total da redação</p>
+                    <p className="text-xs font-medium opacity-70">Soma automática de C1 + C2 + C3 + C4 + C5</p>
                   </div>
-                  <div className="font-display text-3xl font-bold leading-none">
+                  <div className="font-display text-3xl font-bold leading-none text-[#008E32] dark:text-[#19E85F]">
                     {calculateTotal(competencies)}
-                    <span className="ml-1 text-sm font-bold text-tinta/60">/1000</span>
+                    <span className="ml-1 text-xs font-bold opacity-60">/1000</span>
                   </div>
                 </div>
               </div>
             ) : (
               <div>
-                <label htmlFor="red-nota" className="mb-1.5 block text-sm font-bold">Nota total direta (0 a 1000)</label>
+                <label htmlFor="red-nota" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+                  Nota total direta (0 a 1000)
+                </label>
                 <input
                   id="red-nota"
                   type="number"
@@ -585,7 +628,7 @@ export default function RedacaoTab() {
                   max={1000}
                   value={form.grade}
                   onChange={e => setForm(f => ({ ...f, grade: e.target.value }))}
-                  className="input font-display text-base font-bold"
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#151826] px-3.5 py-2.5 font-display text-base font-bold text-[#14102A] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00D64B]"
                   placeholder="Ex: 840"
                 />
               </div>
@@ -593,21 +636,21 @@ export default function RedacaoTab() {
           </div>
 
           <div>
-            <label htmlFor="red-comentarios" className="mb-1.5 block text-sm font-bold">
-              Comentários e feedbacks <span className="font-semibold text-muted dark:text-papel/50">(opcional)</span>
+            <label htmlFor="red-comentarios" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Comentários e feedbacks <span className="font-normal opacity-70">(opcional)</span>
             </label>
             <textarea
               id="red-comentarios"
               value={form.comments}
               onChange={e => setForm(f => ({ ...f, comments: e.target.value }))}
-              className="input min-h-[70px]"
+              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-3 text-xs font-medium text-[#14102A] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00D64B] min-h-[70px]"
               placeholder="Feedback do corretor, pontos de melhoria, observações de repertório…"
             />
           </div>
 
           <div>
-            <label htmlFor="red-arquivo" className="mb-1.5 block text-sm font-bold">
-              Arquivo da redação <span className="font-semibold text-muted dark:text-papel/50">(foto ou PDF)</span>
+            <label htmlFor="red-arquivo" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Arquivo da redação <span className="font-normal opacity-70">(foto ou PDF)</span>
             </label>
             <input
               id="red-arquivo"
@@ -615,11 +658,11 @@ export default function RedacaoTab() {
               type="file"
               accept="image/*,.pdf"
               onChange={handleFileChange}
-              className="input"
+              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-2 text-xs font-medium text-[#14102A] dark:text-white"
             />
             {previewUrl && (
-              <div className="relative mt-2 overflow-hidden rounded-[16px] border-[3px] border-tinta dark:border-papel/50">
-                <img src={previewUrl} alt="Pré-visualização" className="max-h-48 w-full bg-papel object-contain" />
+              <div className="relative mt-2 overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10">
+                <img src={previewUrl} alt="Pré-visualização" className="max-h-48 w-full bg-slate-50 dark:bg-white/5 object-contain" />
                 <button
                   type="button"
                   onClick={() => {
@@ -628,14 +671,14 @@ export default function RedacaoTab() {
                     if (fileInputRef.current) fileInputRef.current.value = '';
                   }}
                   aria-label="Remover arquivo"
-                  className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-tinta bg-white text-tinta"
+                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-xs hover:bg-black/80"
                 >
-                  <X size={16} strokeWidth={2.8} />
+                  <X size={14} strokeWidth={2.4} />
                 </button>
               </div>
             )}
             {editingId && !form.file && essays.find(e => e.id === editingId)?.file_path && (
-              <p className="mt-1.5 text-xs font-semibold text-muted dark:text-papel/55">
+              <p className="mt-1.5 text-[11px] font-medium text-[#645F78] dark:text-[#9D96B8]">
                 Arquivo atual mantido. Selecione um novo se desejar substituir.
               </p>
             )}
@@ -646,27 +689,27 @@ export default function RedacaoTab() {
       {/* Visualizador */}
       {viewingFile && (
         <div
-          className="fixed inset-0 z-[1100] flex items-center justify-center bg-tinta/85 p-4"
+          className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/80 backdrop-blur-xs p-4"
           onClick={() => setViewingFile(null)}
         >
           <button
-            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-papel bg-tinta text-papel"
+            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
             onClick={() => setViewingFile(null)}
             aria-label="Fechar visualizador"
           >
-            <X size={20} strokeWidth={2.8} />
+            <X size={18} strokeWidth={2.4} />
           </button>
           {viewingFile.type === 'pdf' ? (
             <iframe
               src={viewingFile.url}
-              className="h-full max-h-[90vh] w-full max-w-4xl rounded-[16px] border-[3px] border-papel bg-white"
+              className="h-full max-h-[90vh] w-full max-w-4xl rounded-2xl border border-white/10 bg-white"
               title="PDF viewer"
             />
           ) : (
             <img
               src={viewingFile.url}
               alt="Redação"
-              className="max-h-[90vh] max-w-full rounded-[16px] border-[3px] border-papel"
+              className="max-h-[90vh] max-w-full rounded-2xl border border-white/10 object-contain"
               onClick={e => e.stopPropagation()}
             />
           )}

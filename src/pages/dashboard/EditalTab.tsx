@@ -2,7 +2,9 @@ import { useState } from 'react';
 import Modal from '../../components/Modal';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../context/AppContext';
-import { Plus, ChevronRight, AlertCircle } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { getSubjectSimulationQuestions } from '../../lib/simulationUtils';
+import { cn } from '../../lib/theme';
 
 type Props = {
   onOpenSubject: (id: string) => void;
@@ -10,7 +12,7 @@ type Props = {
 };
 
 export default function EditalTab({ onOpenSubject, onOpenErrorNotebook }: Props) {
-  const { subjects, topics, sessions, topicCompletions, errorNotebook, refreshData } = useApp();
+  const { subjects, topics, sessions, simulations, topicCompletions, errorNotebook, refreshData } = useApp();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newTopicName, setNewTopicName] = useState('');
   const [newTopicDesc, setNewTopicDesc] = useState('');
@@ -39,14 +41,26 @@ export default function EditalTab({ onOpenSubject, onOpenErrorNotebook }: Props)
     );
     const questionsCorrect = subjectQuestions.reduce((sum, s) => sum + s.questions_correct, 0);
     const questionsWrong = subjectQuestions.reduce((sum, s) => sum + s.questions_wrong, 0);
-    const questionsAnswered = questionsCorrect + questionsWrong;
-    const accuracy = questionsAnswered > 0
-      ? Math.round((questionsCorrect / questionsAnswered) * 100)
+    const sessionQuestionsAnswered = questionsCorrect + questionsWrong;
+
+    // Questões provenientes de simulados para esta matéria
+    const simSubQuestions = simulations.reduce((acc, sim) => {
+      const q = getSubjectSimulationQuestions(sim, sub.id, sub.name, sub.area);
+      return {
+        total: acc.total + q.total,
+        correct: acc.correct + q.correct,
+      };
+    }, { total: 0, correct: 0 });
+
+    const totalQuestionsCorrect = questionsCorrect + simSubQuestions.correct;
+    const totalQuestionsAnswered = sessionQuestionsAnswered + simSubQuestions.total;
+    const accuracy = totalQuestionsAnswered > 0
+      ? Math.round((totalQuestionsCorrect / totalQuestionsAnswered) * 100)
       : null;
     return {
       ...sub, subTopics, progress, sessionCount,
       completedCount: completedTopicIds.size, errorCount,
-      questionsAnswered, accuracy,
+      questionsAnswered: totalQuestionsAnswered, accuracy,
     };
   });
 
@@ -72,35 +86,78 @@ export default function EditalTab({ onOpenSubject, onOpenErrorNotebook }: Props)
     setSaving(false);
   };
 
+  const [selectedArea, setSelectedArea] = useState<string>('Todas');
+
+  const visibleAreas = selectedArea === 'Todas'
+    ? areas
+    : areas.filter(a => a.toLowerCase().includes(selectedArea.toLowerCase()) || selectedArea.toLowerCase().includes(a.toLowerCase()));
+
   return (
     <div className="w-full min-w-0 max-w-full animate-fade-in">
       {/* Cabeçalho */}
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="font-display text-[2rem] font-bold leading-tight tracking-tight text-tinta dark:text-papel sm:text-[2.6rem]">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#14102A] dark:text-[#F3F1FF]">
             Edital ENEM
           </h1>
-          <p className="mt-1 text-[17px] font-semibold text-muted dark:text-papel/70">
+          <p className="mt-1 text-sm font-medium text-[#645F78] dark:text-[#9D96B8]">
             Acompanhe o preenchimento de cada matéria com retenção e precisão.
           </p>
         </div>
-        <button onClick={() => setDialogOpen(true)} className="btn shrink-0 bg-pato px-5 py-2.5 text-tinta dark:border-papel">
-          <Plus size={18} strokeWidth={3} /> Adicionar tópico
+        <button
+          onClick={() => setDialogOpen(true)}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#00D64B] hover:bg-[#19E85F] text-[#14102A] text-sm font-bold shadow-xs hover:shadow-md transition-all active:scale-[0.98]"
+        >
+          <Plus size={16} strokeWidth={3} />
+          <span>Adicionar tópico</span>
         </button>
       </div>
 
-      {areas.map(area => (
-        <section key={area} className="mb-7">
+      {/* Pílulas de filtro de Área (conforme screenshot Mobile e Web) */}
+      <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+        {['Todas', ...areas].map(area => {
+          const active = selectedArea === area;
+          // Shorten label for clean pills if needed: "Linguagens, Códigos e suas Tecnologias" -> "Linguagens"
+          const displayLabel = area === 'Todas'
+            ? 'Todas'
+            : area.includes('Linguagens')
+            ? 'Linguagens'
+            : area.includes('Natureza')
+            ? 'Natureza'
+            : area.includes('Humanas')
+            ? 'Humanas'
+            : area.includes('Matemática')
+            ? 'Matemática'
+            : area;
+
+          return (
+            <button
+              key={area}
+              onClick={() => setSelectedArea(area)}
+              className={cn(
+                'shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition-all',
+                active
+                  ? 'bg-[#00D64B]/15 text-[#008E32] border border-[#00D64B]/40 dark:text-[#19E85F] shadow-xs'
+                  : 'bg-white/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/5 text-[#645F78] dark:text-[#9D96B8] hover:bg-slate-100 dark:hover:bg-white/10'
+              )}
+            >
+              {displayLabel}
+            </button>
+          );
+        })}
+      </div>
+
+      {visibleAreas.map(area => (
+        <section key={area} className="mb-8">
           {/* Cabeçalho da área */}
-          <div className="mb-3.5 flex items-center gap-2.5">
+          <div className="mb-3.5 flex items-center gap-2">
             <span
-              className="h-3.5 w-3.5 shrink-0 rounded-full border-[3px] border-tinta dark:border-papel"
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ background: areaColor(area) }}
             />
-            <h2 className="text-[13px] font-extrabold uppercase tracking-[0.09em] text-tinta dark:text-papel">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
               {area}
             </h2>
-            <span className="dm-rule" style={{ opacity: 0.35 }} />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -108,44 +165,71 @@ export default function EditalTab({ onOpenSubject, onOpenErrorNotebook }: Props)
               <article
                 key={sub.id}
                 onClick={() => onOpenSubject(sub.id)}
-                className="card card-hover flex cursor-pointer flex-col gap-2.5 p-4"
+                className="group flex flex-col justify-between rounded-[22px] bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer border border-slate-200/70 dark:border-white/5 dark:bg-[#151826]"
               >
-                <div className="flex items-center gap-2.5">
-                  <span
-                    className="h-3.5 w-3.5 shrink-0 rounded-full border-[3px] border-tinta dark:border-papel"
-                    style={{ background: sub.color }}
-                  />
-                  <h3 className="min-w-0 flex-1 truncate font-display text-xl font-bold text-tinta dark:text-papel">
-                    {sub.name}
-                  </h3>
-                  <span className="shrink-0 rounded-[12px] border-[3px] border-tinta bg-papel px-2 py-0.5 font-display text-sm font-bold text-tinta dark:border-papel dark:bg-transparent dark:text-papel">
-                    {sub.progress}%
-                  </span>
+                <div>
+                  {/* Top row: dot + title + percentage pill */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ background: sub.color }}
+                      />
+                      <h3 className="truncate font-display text-base font-bold text-[#14102A] group-hover:text-[#008E32] dark:text-white dark:group-hover:text-[#19E85F] transition-colors">
+                        {sub.name}
+                      </h3>
+                    </div>
+                    <span
+                      className={cn(
+                        'shrink-0 px-2.5 py-0.5 rounded-full text-xs font-bold',
+                        sub.progress > 0
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
+                          : 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-slate-400'
+                      )}
+                    >
+                      {sub.progress}%
+                    </span>
+                  </div>
+
+                  {/* Progress Bar (vivid neon green) */}
+                  <div className="mt-3.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+                    <div
+                      className="h-full rounded-full transition-all duration-500 bg-[#00D64B] dark:bg-[#19E85F]"
+                      style={{ width: `${sub.progress}%` }}
+                    />
+                  </div>
+
+                  {/* Stats text */}
+                  <div className="mt-3.5 space-y-1">
+                    <p className="text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
+                      {sub.subTopics.length} {sub.subTopics.length === 1 ? 'tópico' : 'tópicos'} · {sub.sessionCount} {sub.sessionCount === 1 ? 'sessão' : 'sessões'}
+                    </p>
+                    <p className="text-xs font-semibold text-[#14102A] dark:text-white">
+                      Questões: <span className="font-bold">{sub.questionsAnswered}</span>
+                      {sub.accuracy !== null && (
+                        <>
+                          <span className="mx-1 text-[#645F78] dark:text-[#9D96B8] font-normal">·</span>
+                          <span className="font-bold">{sub.accuracy}%</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="track w-full" style={{ height: 12 }}>
-                  <div style={{ width: `${sub.progress}%`, background: sub.color }} />
-                </div>
-
-                <p className="text-sm font-semibold text-muted dark:text-papel/60">
-                  {sub.subTopics.length} tópicos · {sub.completedCount} concluídos · {sub.sessionCount} {sub.sessionCount === 1 ? 'sessão' : 'sessões'}
-                </p>
-
-                <p className="text-sm font-semibold text-tinta dark:text-papel/80">
-                  Questões: <b className="font-display">{sub.questionsAnswered}</b>
-                  <span className="mx-1.5 text-muted dark:text-papel/40">·</span>
-                  Aproveitamento: <b className="font-display">{sub.accuracy !== null ? `${sub.accuracy}%` : '–'}</b>
-                </p>
-
-                {sub.errorCount > 0 && onOpenErrorNotebook && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onOpenErrorNotebook(sub.id); }}
-                    className="mt-1 flex w-full items-center gap-2 rounded-[12px] border-[3px] border-tinta bg-bico px-2.5 py-1.5 text-[13px] font-bold text-tinta transition-transform hover:-translate-y-px active:translate-x-[2px] active:translate-y-[2px] dark:border-papel"
-                  >
-                    <AlertCircle size={14} strokeWidth={2.8} className="shrink-0" />
-                    <span>{sub.errorCount} {sub.errorCount === 1 ? 'erro pendente' : 'erros pendentes'}</span>
-                    <ChevronRight size={14} strokeWidth={3} className="ml-auto" />
-                  </button>
+                {/* Erros pendentes tag */}
+                {sub.errorCount > 0 && (
+                  <div className="mt-3.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onOpenErrorNotebook) onOpenErrorNotebook(sub.id);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-semibold hover:bg-amber-500/15 transition-colors"
+                    >
+                      <span>{sub.errorCount} {sub.errorCount === 1 ? 'erro pendente' : 'erros pendentes'}</span>
+                    </button>
+                  </div>
                 )}
               </article>
             ))}
@@ -160,13 +244,16 @@ export default function EditalTab({ onOpenSubject, onOpenErrorNotebook }: Props)
         size="sm"
         footer={
           <>
-            <button onClick={() => setDialogOpen(false)} className="btn bg-white px-4 py-2 text-sm dark:border-papel dark:bg-transparent dark:text-papel">
+            <button
+              onClick={() => setDialogOpen(false)}
+              className="px-4 py-2 rounded-xl text-sm font-semibold text-[#645F78] hover:text-[#14102A] dark:text-[#9D96B8] dark:hover:text-white transition-colors"
+            >
               Cancelar
             </button>
             <button
               onClick={handleAddTopic}
               disabled={saving || !newTopicName.trim() || !selectedSubject}
-              className="btn bg-pato px-4 py-2 text-sm text-tinta dark:border-papel"
+              className="px-5 py-2 rounded-full bg-[#00D64B] hover:bg-[#19E85F] text-[#14102A] text-sm font-bold shadow-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Salvando…' : 'Adicionar'}
             </button>
@@ -175,32 +262,41 @@ export default function EditalTab({ onOpenSubject, onOpenErrorNotebook }: Props)
       >
         <div className="flex flex-col gap-4">
           <div>
-            <label htmlFor="nova-materia" className="mb-1.5 block text-sm font-bold">Matéria</label>
-            <select id="nova-materia" value={selectedSubject} onChange={e => setSelectedSubject(e.target.value)} className="input">
-              <option value="">Selecione…</option>
+            <label htmlFor="nova-materia" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Matéria
+            </label>
+            <select
+              id="nova-materia"
+              value={selectedSubject}
+              onChange={e => setSelectedSubject(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3.5 py-2.5 text-sm font-medium text-[#14102A] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00D64B]"
+            >
+              <option value="">Selecione uma matéria…</option>
               {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
           <div>
-            <label htmlFor="novo-topico" className="mb-1.5 block text-sm font-bold">Nome do tópico</label>
+            <label htmlFor="novo-topico" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Nome do tópico
+            </label>
             <input
               id="novo-topico"
               value={newTopicName}
               onChange={e => setNewTopicName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAddTopic()}
-              className="input"
+              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3.5 py-2.5 text-sm font-medium text-[#14102A] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00D64B]"
               placeholder="Ex: Funções do 2º grau"
             />
           </div>
           <div>
-            <label htmlFor="novo-topico-desc" className="mb-1.5 block text-sm font-bold">
-              Descrição <span className="font-semibold text-muted dark:text-papel/50">(opcional)</span>
+            <label htmlFor="novo-topico-desc" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Descrição <span className="font-normal opacity-70">(opcional)</span>
             </label>
             <textarea
               id="novo-topico-desc"
               value={newTopicDesc}
               onChange={e => setNewTopicDesc(e.target.value)}
-              className="input min-h-[70px] resize-y"
+              className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3.5 py-2.5 text-sm font-medium text-[#14102A] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00D64B] min-h-[70px] resize-y"
               placeholder="Ex: Estudo de funções quadráticas, raízes, vértice e gráficos…"
               rows={2}
             />

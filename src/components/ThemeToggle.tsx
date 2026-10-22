@@ -1,16 +1,29 @@
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../lib/theme';
+import { cn } from '../lib/theme';
 
-export default function ThemeToggle({ size = 18 }: { size?: number }) {
+export default function ThemeToggle({ size = 18, className }: { size?: number; className?: string }) {
   const { mode, toggle } = useTheme();
+
   return (
     <button
+      type="button"
       onClick={toggle}
       aria-label={mode === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}
-      className="inline-flex items-center justify-center rounded-full border-[3px] border-tinta bg-white text-tinta transition-all hover:bg-mente hover:text-papel active:translate-x-[2px] active:translate-y-[2px] dark:border-papel dark:bg-surface-dark-card dark:text-papel dark:hover:bg-pato dark:hover:text-tinta"
-      style={{ width: size + 22, height: size + 22, boxShadow: '3px 3px 0 #17102B' }}
+      title={mode === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}
+      className={cn(
+        'inline-flex items-center justify-center rounded-full transition-all active:scale-95',
+        'border border-slate-200/80 bg-white/90 text-[#14102A] shadow-xs hover:bg-slate-100',
+        'dark:border-white/10 dark:bg-[#201A3B] dark:text-[#F3F1FF] dark:hover:bg-[#2B234F]',
+        className
+      )}
+      style={{ width: size + 18, height: size + 18 }}
     >
-      {mode === 'light' ? <Moon size={size} strokeWidth={2.4} /> : <Sun size={size} strokeWidth={2.4} />}
+      {mode === 'light' ? (
+        <Moon size={size} strokeWidth={2.2} className="text-[#645F78]" />
+      ) : (
+        <Sun size={size} strokeWidth={2.2} className="text-amber-300" />
+      )}
     </button>
   );
 }

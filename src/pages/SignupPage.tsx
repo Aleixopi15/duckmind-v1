@@ -38,86 +38,117 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-papel transition-colors duration-300 dark:bg-surface-dark">
+    <div className="flex min-h-screen bg-[#F8F7FC] transition-colors duration-300 dark:bg-[#0F0C1E]">
       <AuthBrandPanel
         title="Comece sua jornada"
-        description="Organize seus estudos, acompanhe seu progresso e passe no ENEM com método."
+        description="Organize seus estudos, acompanhe seu progresso e passe no ENEM com consistência."
         mood="studying"
       />
 
       <div className="relative flex flex-1 items-center justify-center p-4 sm:p-8">
-        <div className="absolute right-4 top-4"><ThemeToggle /></div>
+        <div className="absolute right-4 top-4">
+          <ThemeToggle />
+        </div>
 
-        <div className="card w-full max-w-sm animate-fade-in p-6 sm:p-8">
+        <div className="w-full max-w-sm animate-fade-in rounded-[28px] border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm dark:border-white/10 dark:bg-[#151826]">
           <div className="mb-5 flex items-center justify-center gap-2 md:hidden">
             <DuckMascot size={64} mood="happy" animate />
           </div>
 
-          <h2 className="font-display text-3xl font-bold leading-tight tracking-tight text-tinta dark:text-papel">
+          <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#14102A] dark:text-white">
             Criar conta
           </h2>
-          <p className="mb-4 text-sm font-semibold text-muted dark:text-papel/60">É grátis. Sem limites.</p>
+          <p className="mb-5 mt-1 text-xs sm:text-sm font-medium text-[#645F78] dark:text-[#9D96B8]">
+            É 100% gratuito. Sem limites ou cobranças.
+          </p>
 
           {isSecretKeyDetected && (
-            <div className="mb-4 rounded-[14px] border-[3px] border-tinta bg-amber-100 p-3 text-xs font-semibold text-tinta dark:border-papel dark:bg-amber-950/70 dark:text-amber-200">
-              <p className="mb-1 flex items-center gap-1.5 font-bold text-amber-900 dark:text-amber-300">
-                <AlertTriangle size={15} strokeWidth={2.8} /> Chave Secreta Detectada
+            <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+              <p className="mb-1 flex items-center gap-1.5 font-bold">
+                <AlertTriangle size={15} /> Chave Secreta Detectada
               </p>
-              Foi configurada a chave de servidor (<code className="rounded bg-black/10 px-1 py-0.5 dark:bg-white/10">sb_secret_...</code>). O Supabase bloqueia chaves secretas no navegador.
-              <p className="mt-1">
-                <strong>Solução:</strong> No Supabase, acesse <em>Project Settings &gt; API</em> e copie a chave <strong>Publishable / Anon</strong> (<code className="rounded bg-black/10 px-1 py-0.5 dark:bg-white/10">sb_publishable_...</code>).
-              </p>
-              <p className="mt-1.5 font-bold text-emerald-800 dark:text-emerald-300">
-                ✓ DuckMind ativou o modo local seguro para você navegar e testar normalmente.
+              Foi configurada a chave de servidor (<code className="rounded bg-black/10 px-1 py-0.5 dark:bg-white/10">sb_secret_...</code>).
+              <p className="mt-1 font-semibold text-emerald-700 dark:text-emerald-400">
+                ✓ Modo local seguro ativado para testes normais.
               </p>
             </div>
           )}
 
           {error && (
-            <div className="mb-4 rounded-[14px] border-[3px] border-tinta bg-bico px-3.5 py-2.5 text-sm font-bold text-tinta dark:border-papel">
+            <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs font-bold text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSignup} className="flex flex-col gap-4">
             <div>
-              <label htmlFor="signup-nome" className="mb-1.5 block text-sm font-bold">Nome</label>
+              <label htmlFor="signup-nome" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+                Nome
+              </label>
               <input
                 id="signup-nome"
-                value={name} onChange={e => setName(e.target.value)}
-                className="input" placeholder="Seu nome" autoComplete="name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-[#14102A] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                placeholder="Seu nome"
+                autoComplete="name"
               />
             </div>
             <div>
-              <label htmlFor="signup-email" className="mb-1.5 block text-sm font-bold">Email</label>
+              <label htmlFor="signup-email" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+                Email
+              </label>
               <input
                 id="signup-email"
-                type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                className="input" placeholder="seu@email.com" autoComplete="email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-[#14102A] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                placeholder="seu@email.com"
+                autoComplete="email"
               />
             </div>
             <div>
-              <label htmlFor="signup-senha" className="mb-1.5 block text-sm font-bold">Senha</label>
+              <label htmlFor="signup-senha" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+                Senha
+              </label>
               <input
                 id="signup-senha"
-                type="password" value={password} onChange={e => setPassword(e.target.value)} required
-                className="input" placeholder="Mínimo 6 caracteres" autoComplete="new-password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-[#14102A] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                placeholder="Mínimo 6 caracteres"
+                autoComplete="new-password"
               />
             </div>
 
-            <button type="submit" disabled={loading} className="btn mt-2 w-full bg-pato py-3 text-base text-tinta dark:border-papel">
-              {loading ? <Loader2 className="animate-spin" size={20} /> : 'Criar conta grátis'}
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-[#00D64B] py-3 text-sm font-bold text-[#14102A] shadow-xs transition-all hover:bg-[#19E85F] hover:shadow-md active:scale-[0.98] disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="animate-spin" size={18} /> : 'Criar conta grátis'}
             </button>
           </form>
 
-          <div className="my-5 text-center text-sm font-semibold text-muted dark:text-papel/60">
+          <div className="my-5 text-center text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
             Já tem conta?{' '}
-            <Link to="/login" className="font-bold text-mente hover:underline dark:text-pato">Fazer login</Link>
+            <Link to="/login" className="font-bold text-[#6F00D6] hover:underline dark:text-[#00D64B]">
+              Fazer login
+            </Link>
           </div>
 
-          <Link to="/" className="inline-flex items-center gap-1 text-sm font-bold text-muted transition hover:text-mente dark:text-papel/60 dark:hover:text-pato">
-            <ArrowLeft size={14} strokeWidth={3} /> Voltar para o início
-          </Link>
+          <div className="text-center">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#645F78] transition-colors hover:text-[#14102A] dark:text-[#9D96B8] dark:hover:text-white"
+            >
+              <ArrowLeft size={13} strokeWidth={2.4} /> Voltar para o início
+            </Link>
+          </div>
         </div>
       </div>
     </div>

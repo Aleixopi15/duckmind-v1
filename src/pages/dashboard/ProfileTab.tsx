@@ -5,6 +5,7 @@ import DuckMascot from '../../components/DuckMascot';
 import AchievementsDialog from '../../components/AchievementsDialog';
 import { cn } from '../../lib/theme';
 import { Check, Save, Trophy, Sparkles, ChevronRight } from 'lucide-react';
+import { getSimulationQuestions, getSimulationDuration } from '../../lib/simulationUtils';
 
 const EMOJIS = ['🦆', '🎓', '📚', '🔥', '⭐', '🚀', '💡', '🎯', '🏆', '🌱'];
 
@@ -19,12 +20,15 @@ export default function ProfileTab() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const totalMinutes = sessions.reduce((a, s) => a + s.duration_minutes, 0);
+  const sessionMinutes = sessions.reduce((a, s) => a + s.duration_minutes, 0);
+  const simMinutes = simulations.reduce((a, s) => a + getSimulationDuration(s), 0);
+  const totalMinutes = sessionMinutes + simMinutes;
+
   const sessionCorrect = sessions.reduce((a, s) => a + s.questions_correct, 0);
   const sessionQuestions = sessions.reduce((a, s) => a + s.questions_correct + s.questions_wrong, 0);
 
-  const simQuestionsTotal = simulations.reduce((a, s) => a + (s.questions_total ?? 0), 0);
-  const simCorrectTotal = simulations.reduce((a, s) => a + (s.questions_correct ?? 0), 0);
+  const simQuestionsTotal = simulations.reduce((a, s) => a + getSimulationQuestions(s).total, 0);
+  const simCorrectTotal = simulations.reduce((a, s) => a + getSimulationQuestions(s).correct, 0);
 
   const totalCorrect = sessionCorrect + simCorrectTotal;
   const totalQuestions = sessionQuestions + simQuestionsTotal;
@@ -43,49 +47,59 @@ export default function ProfileTab() {
 
   return (
     <div className="w-full max-w-3xl min-w-0 animate-fade-in">
-      <div className="mb-5">
-        <h1 className="font-display text-[2rem] font-bold leading-tight tracking-tight text-tinta dark:text-papel sm:text-[2.6rem]">
+      <div className="mb-6">
+        <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#14102A] dark:text-[#F3F1FF]">
           Perfil
         </h1>
-        <p className="mt-1 text-[17px] font-semibold text-muted dark:text-papel/70">
-          Gerencie suas informações e veja seu progresso no DuckMind
+        <p className="mt-1 text-sm font-medium text-[#645F78] dark:text-[#9D96B8]">
+          Gerencie suas informações e acompanhe sua trajetória no DuckMind
         </p>
       </div>
 
       {/* Cartão de identidade */}
-      <section className="card mb-5 flex flex-wrap items-center gap-5 bg-pato p-5 sm:p-6">
-        <div className="flex h-[86px] w-[86px] shrink-0 items-center justify-center rounded-[24px] border-[3px] border-tinta bg-papel text-5xl dark:border-papel">
+      <section className="mb-6 flex flex-wrap items-center gap-5 rounded-[24px] border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-[#00D64B]/15 text-4xl shadow-inner">
           {avatarEmoji}
         </div>
         <div className="min-w-[180px] flex-1">
-          <h2 className="font-display text-[2rem] font-bold leading-none text-tinta sm:text-[2.4rem]">
+          <h2 className="font-display text-2xl sm:text-3xl font-bold leading-tight tracking-tight text-[#14102A] dark:text-white">
             {displayName || 'Estudante'}
           </h2>
-          <p className="mt-1.5 text-sm font-semibold text-tinta/75">{profile?.bio || 'Sem bio definida'}</p>
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
-            <span className="chip bg-white text-tinta dark:border-papel dark:bg-transparent dark:text-papel">{sessions.length} sessões</span>
-            <span className="chip bg-white text-tinta dark:border-papel dark:bg-transparent dark:text-papel">{Math.floor(totalMinutes / 60)}h estudado</span>
-            <span className="chip bg-white text-tinta dark:border-papel dark:bg-transparent dark:text-papel">{acc}% aprov.</span>
-            <span className="chip bg-mente text-papel dark:border-papel">{gamification.totalXp.toLocaleString('pt-BR')} XP</span>
+          <p className="mt-1 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
+            {profile?.bio || 'Rumo à aprovação no ENEM'}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-[#14102A] dark:bg-white/5 dark:text-white/80">
+              {sessions.length} sessões
+            </span>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-[#14102A] dark:bg-white/5 dark:text-white/80">
+              {Math.floor(totalMinutes / 60)}h estudado
+            </span>
+            <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-[#008E32] dark:text-[#19E85F]">
+              {acc}% aprov.
+            </span>
+            <span className="rounded-full bg-[#6F00D6]/15 px-3 py-1 text-xs font-bold text-[#6F00D6] dark:text-[#B379FF]">
+              {gamification.totalXp.toLocaleString('pt-BR')} XP
+            </span>
           </div>
         </div>
       </section>
 
       {/* Nível e conquistas */}
-      <section className="card mb-5 p-5">
+      <section className="mb-6 rounded-[22px] border border-slate-200/80 bg-white p-5 shadow-xs dark:border-white/5 dark:bg-[#151826]">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3.5">
             <DuckMascot size={58} level={gamification.currentLevel.level} mood="celebrating" animate showAccessoryBadge />
             <div>
-              <div className="mb-0.5 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-[10px] border-2 border-tinta bg-bico px-2 py-0.5 font-display text-[11px] font-bold uppercase tracking-wide text-tinta dark:border-papel">
-                  <Sparkles size={11} strokeWidth={3} /> Nível {gamification.currentLevel.level}
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-bold text-[#D68200] dark:text-[#FFB84D]">
+                  <Sparkles size={11} strokeWidth={2.6} /> Nível {gamification.currentLevel.level}
                 </span>
-                <span className="text-sm font-bold text-tinta dark:text-papel">
+                <span className="text-xs sm:text-sm font-bold text-[#14102A] dark:text-white">
                   {gamification.currentLevel.accessory} {gamification.currentLevel.title}
                 </span>
               </div>
-              <p className="text-sm font-semibold text-muted dark:text-papel/60">
+              <p className="text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
                 {gamification.unlockedCount} de {gamification.totalCount} conquistas · {gamification.totalXp.toLocaleString('pt-BR')} XP total
               </p>
             </div>
@@ -93,30 +107,49 @@ export default function ProfileTab() {
 
           <button
             onClick={() => setAchievementsOpen(true)}
-            className="btn shrink-0 self-start bg-mente px-4 py-2 text-sm text-papel dark:border-papel sm:self-auto"
+            className="inline-flex items-center gap-1.5 self-start rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#14102A] transition-all hover:bg-slate-200 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:self-auto"
           >
-            <Trophy size={15} strokeWidth={2.8} /> Sala de Troféus <ChevronRight size={14} strokeWidth={3} />
+            <Trophy size={14} strokeWidth={2.4} /> Sala de Troféus <ChevronRight size={13} strokeWidth={2.6} />
           </button>
         </div>
       </section>
 
       {/* Formulário */}
-      <section className="card flex flex-col gap-4 p-5 sm:p-6">
-        <h2 className="font-display text-xl font-bold text-tinta dark:text-papel">Editar perfil</h2>
+      <section className="flex flex-col gap-5 rounded-[22px] border border-slate-200/80 bg-white p-6 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+        <h2 className="font-display text-lg font-bold text-[#14102A] dark:text-white">Editar perfil</h2>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3.5 sm:grid-cols-2">
           <div>
-            <label htmlFor="perfil-nome" className="mb-1.5 block text-sm font-bold">Nome</label>
-            <input id="perfil-nome" value={displayName} onChange={e => setDisplayName(e.target.value)} className="input" placeholder="Seu nome" />
+            <label htmlFor="perfil-nome" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Nome
+            </label>
+            <input
+              id="perfil-nome"
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/10 dark:bg-white/5 dark:text-white"
+              placeholder="Seu nome"
+            />
           </div>
           <div>
-            <label htmlFor="perfil-meta" className="mb-1.5 block text-sm font-bold">Meta diária (minutos)</label>
-            <input id="perfil-meta" type="number" min={1} value={goal} onChange={e => setGoal(e.target.value)} className="input" />
+            <label htmlFor="perfil-meta" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Meta diária (minutos)
+            </label>
+            <input
+              id="perfil-meta"
+              type="number"
+              min={1}
+              value={goal}
+              onChange={e => setGoal(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/10 dark:bg-white/5 dark:text-white"
+            />
           </div>
         </div>
 
         <div>
-          <span className="mb-1.5 block text-sm font-bold">Avatar</span>
+          <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+            Avatar
+          </span>
           <div className="flex flex-wrap gap-2">
             {EMOJIS.map(e => (
               <button
@@ -124,10 +157,10 @@ export default function ProfileTab() {
                 onClick={() => setAvatarEmoji(e)}
                 aria-label={`Avatar ${e}`}
                 className={cn(
-                  'flex h-12 w-12 items-center justify-center rounded-full border-[3px] border-tinta text-2xl transition-transform dark:border-papel',
+                  'flex h-11 w-11 items-center justify-center rounded-2xl text-xl transition-all',
                   avatarEmoji === e
-                    ? 'bg-pato shadow-brutal-sm'
-                    : 'bg-white hover:-translate-y-px dark:bg-transparent',
+                    ? 'bg-[#00D64B]/20 border-2 border-[#00D64B] shadow-xs scale-105'
+                    : 'border border-slate-200/80 bg-slate-50 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10',
                 )}
               >
                 {e}
@@ -137,24 +170,30 @@ export default function ProfileTab() {
         </div>
 
         <div>
-          <label htmlFor="perfil-bio" className="mb-1.5 block text-sm font-bold">Bio</label>
+          <label htmlFor="perfil-bio" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+            Bio
+          </label>
           <textarea
             id="perfil-bio"
             value={bio}
             onChange={e => setBio(e.target.value)}
             rows={3}
-            className="input resize-none"
-            placeholder="Conte um pouco sobre você e seus objetivos…"
+            className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-3.5 text-xs font-semibold text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/10 dark:bg-white/5 dark:text-white"
+            placeholder="Conte um pouco sobre você e seus objetivos no ENEM…"
           />
         </div>
 
-        <div className="mt-1 flex items-center gap-3">
-          <button onClick={handleSave} disabled={saving} className="btn bg-pato px-4 py-2.5 text-tinta dark:border-papel">
-            {saving ? 'Salvando…' : <><Save size={16} strokeWidth={2.8} /> Salvar alterações</>}
+        <div className="flex items-center gap-3 pt-1">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-full bg-[#00D64B] px-6 py-2.5 text-xs font-bold text-[#14102A] shadow-xs transition-all hover:bg-[#19E85F] active:scale-[0.98] disabled:opacity-50"
+          >
+            {saving ? 'Salvando…' : <><Save size={15} strokeWidth={2.4} /> Salvar alterações</>}
           </button>
           {saved && (
-            <span className="flex animate-fade-in items-center gap-1 text-sm font-bold text-mente dark:text-pato">
-              <Check size={16} strokeWidth={3} /> Salvo!
+            <span className="flex animate-fade-in items-center gap-1 text-xs font-bold text-[#008E32] dark:text-[#19E85F]">
+              <Check size={15} strokeWidth={2.6} /> Salvo com sucesso!
             </span>
           )}
         </div>

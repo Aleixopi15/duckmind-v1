@@ -65,27 +65,27 @@ export default function SettingsTab() {
       step={step}
       value={value}
       onChange={e => onChange(Number(e.target.value))}
-      className="h-3 w-full cursor-pointer appearance-none rounded-full border-[3px] border-tinta bg-papel accent-mente dark:border-papel dark:bg-surface-dark"
+      className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-[#00D64B] dark:bg-white/10"
     />
   );
 
   return (
     <div className="w-full max-w-3xl min-w-0 animate-fade-in">
-      <div className="mb-5">
-        <h1 className="font-display text-[2rem] font-bold leading-tight tracking-tight text-tinta dark:text-papel sm:text-[2.6rem]">
+      <div className="mb-6">
+        <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#14102A] dark:text-[#F3F1FF]">
           Configurações
         </h1>
-        <p className="mt-1 text-[17px] font-semibold text-muted dark:text-papel/70">Preferências do aplicativo</p>
+        <p className="mt-1 text-sm font-medium text-[#645F78] dark:text-[#9D96B8]">Preferências do aplicativo e metas de estudo</p>
       </div>
 
       {/* Metas */}
-      <section className="card mb-4 p-5">
+      <section className="mb-5 rounded-[22px] border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs dark:border-white/5 dark:bg-[#151826]">
         <div className="mb-1 flex items-center gap-2">
-          <Target size={18} strokeWidth={2.8} className="text-mente dark:text-pato" />
-          <h2 className="font-display text-xl font-bold text-tinta dark:text-papel">Metas de estudo</h2>
+          <Target size={18} strokeWidth={2.4} className="text-[#008E32] dark:text-[#19E85F]" />
+          <h2 className="font-display text-base sm:text-lg font-bold text-[#14102A] dark:text-white">Metas de estudo</h2>
         </div>
-        <p className="mb-4 text-sm font-semibold text-muted dark:text-papel/60">
-          Defina seus objetivos semanais e diários
+        <p className="mb-4 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
+          Defina seus objetivos semanais e diários para o ENEM
         </p>
 
         <div className="mb-5 flex flex-wrap gap-2">
@@ -94,10 +94,10 @@ export default function SettingsTab() {
               key={p.label}
               onClick={() => applyPreset(p)}
               className={cn(
-                'rounded-[14px] border-[3px] border-tinta px-3.5 py-1.5 font-display text-sm font-bold transition-transform dark:border-papel',
+                'rounded-full px-3.5 py-1.5 text-xs font-bold transition-all',
                 activePreset?.label === p.label
-                  ? 'bg-pato text-tinta shadow-brutal-sm'
-                  : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                  ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                  : 'border border-slate-200/80 bg-slate-50 text-[#645F78] hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-[#9D96B8] dark:hover:bg-white/10',
               )}
             >
               {p.label}
@@ -107,24 +107,24 @@ export default function SettingsTab() {
 
         <div className="mb-5">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-            <span className="flex items-center gap-2 text-sm font-bold">
-              <Clock size={15} strokeWidth={2.8} className="text-muted dark:text-papel/50" /> Meta diária de tempo
+            <span className="flex items-center gap-1.5 text-xs font-bold text-[#14102A] dark:text-white">
+              <Clock size={14} strokeWidth={2.4} className="text-[#645F78] dark:text-[#9D96B8]" /> Meta diária de tempo
             </span>
             <div className="flex items-center gap-1.5">
               <input
                 type="number" min={15} max={480} step={5} value={dailyMinutes}
                 onChange={e => { const v = Number(e.target.value); if (!isNaN(v)) setDailyMinutes(v); }}
                 onBlur={() => setDailyMinutes(Math.max(15, Math.min(480, dailyMinutes || 15)))}
-                className="input w-20 py-1 text-center font-display text-sm font-bold"
+                className="w-16 rounded-xl border border-slate-200 bg-slate-50 py-1 text-center font-display text-xs font-bold text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
-              <span className="text-xs font-bold text-muted dark:text-papel/60">min</span>
-              <span className="ml-1 font-display text-xs font-bold text-muted dark:text-papel/40">
+              <span className="text-xs font-semibold text-[#645F78] dark:text-[#9D96B8]">min</span>
+              <span className="ml-1 font-display text-xs font-bold text-[#645F78] dark:text-white/40">
                 ({Math.floor(dailyMinutes / 60)}h{dailyMinutes % 60 > 0 ? `${dailyMinutes % 60}m` : ''})
               </span>
             </div>
           </div>
           {slider(dailyMinutes, 15, 480, 5, setDailyMinutes, 'Meta diária de tempo')}
-          <div className="mt-1 flex justify-between text-[11px] font-bold text-muted dark:text-papel/40">
+          <div className="mt-1.5 flex justify-between text-[11px] font-medium text-[#645F78] dark:text-white/40">
             <span>15 min</span>
             <span>8h</span>
           </div>
@@ -132,24 +132,24 @@ export default function SettingsTab() {
 
         <div className="mb-5">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-            <span className="flex items-center gap-2 text-sm font-bold">
-              <Clock size={15} strokeWidth={2.8} className="text-muted dark:text-papel/50" /> Meta semanal de tempo
+            <span className="flex items-center gap-1.5 text-xs font-bold text-[#14102A] dark:text-white">
+              <Clock size={14} strokeWidth={2.4} className="text-[#645F78] dark:text-[#9D96B8]" /> Meta semanal de tempo
             </span>
             <div className="flex items-center gap-1.5">
               <input
                 type="number" min={60} max={2400} step={15} value={weeklyMinutes}
                 onChange={e => { const v = Number(e.target.value); if (!isNaN(v)) setWeeklyMinutes(v); }}
                 onBlur={() => setWeeklyMinutes(Math.max(60, Math.min(2400, weeklyMinutes || 60)))}
-                className="input w-20 py-1 text-center font-display text-sm font-bold"
+                className="w-16 rounded-xl border border-slate-200 bg-slate-50 py-1 text-center font-display text-xs font-bold text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
-              <span className="text-xs font-bold text-muted dark:text-papel/60">min</span>
-              <span className="ml-1 font-display text-xs font-bold text-muted dark:text-papel/40">
+              <span className="text-xs font-semibold text-[#645F78] dark:text-[#9D96B8]">min</span>
+              <span className="ml-1 font-display text-xs font-bold text-[#645F78] dark:text-white/40">
                 ({Math.floor(weeklyMinutes / 60)}h{weeklyMinutes % 60 > 0 ? `${weeklyMinutes % 60}m` : ''})
               </span>
             </div>
           </div>
           {slider(weeklyMinutes, 60, 2400, 15, setWeeklyMinutes, 'Meta semanal de tempo')}
-          <div className="mt-1 flex justify-between text-[11px] font-bold text-muted dark:text-papel/40">
+          <div className="mt-1.5 flex justify-between text-[11px] font-medium text-[#645F78] dark:text-white/40">
             <span>1h</span>
             <span>40h</span>
           </div>
@@ -157,43 +157,48 @@ export default function SettingsTab() {
 
         <div className="mb-5">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-            <span className="flex items-center gap-2 text-sm font-bold">
-              <HelpCircle size={15} strokeWidth={2.8} className="text-muted dark:text-papel/50" /> Meta semanal de questões
+            <span className="flex items-center gap-1.5 text-xs font-bold text-[#14102A] dark:text-white">
+              <HelpCircle size={14} strokeWidth={2.4} className="text-[#645F78] dark:text-[#9D96B8]" /> Meta semanal de questões
             </span>
             <div className="flex items-center gap-1.5">
               <input
                 type="number" min={0} max={1000} step={5} value={weeklyQuestions}
                 onChange={e => { const v = Number(e.target.value); if (!isNaN(v)) setWeeklyQuestions(v); }}
                 onBlur={() => setWeeklyQuestions(Math.max(0, Math.min(1000, weeklyQuestions || 0)))}
-                className="input w-20 py-1 text-center font-display text-sm font-bold"
+                className="w-16 rounded-xl border border-slate-200 bg-slate-50 py-1 text-center font-display text-xs font-bold text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
-              <span className="text-xs font-bold text-muted dark:text-papel/60">questões</span>
+              <span className="text-xs font-semibold text-[#645F78] dark:text-[#9D96B8]">questões</span>
             </div>
           </div>
           {slider(weeklyQuestions, 0, 1000, 5, setWeeklyQuestions, 'Meta semanal de questões')}
-          <div className="mt-1 flex justify-between text-[11px] font-bold text-muted dark:text-papel/40">
+          <div className="mt-1.5 flex justify-between text-[11px] font-medium text-[#645F78] dark:text-white/40">
             <span>0</span>
             <span>1000</span>
           </div>
         </div>
 
-        <button onClick={handleSaveGoals} className="btn bg-pato px-4 py-2 text-sm text-tinta dark:border-papel">
-          Salvar metas
-        </button>
-        {saved && (
-          <div className="mt-3 flex animate-fade-in items-center gap-1 text-sm font-bold text-mente dark:text-pato">
-            <Check size={16} strokeWidth={3} /> Metas salvas com sucesso
-          </div>
-        )}
+        <div className="flex items-center gap-3 pt-1">
+          <button
+            onClick={handleSaveGoals}
+            className="inline-flex items-center gap-2 rounded-full bg-[#00D64B] px-6 py-2.5 text-xs font-bold text-[#14102A] shadow-xs transition-all hover:bg-[#19E85F] active:scale-[0.98]"
+          >
+            Salvar metas
+          </button>
+          {saved && (
+            <span className="flex animate-fade-in items-center gap-1 text-xs font-bold text-[#008E32] dark:text-[#19E85F]">
+              <Check size={15} strokeWidth={2.6} /> Metas salvas com sucesso!
+            </span>
+          )}
+        </div>
       </section>
 
       {/* Tema */}
-      <section className="card mb-4 p-5">
+      <section className="mb-5 rounded-[22px] border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs dark:border-white/5 dark:bg-[#151826]">
         <div className="mb-1 flex items-center gap-2">
-          <Moon size={18} strokeWidth={2.8} className="text-mente dark:text-pato" />
-          <h2 className="font-display text-xl font-bold text-tinta dark:text-papel">Tema</h2>
+          <Moon size={18} strokeWidth={2.4} className="text-[#6F00D6] dark:text-[#B379FF]" />
+          <h2 className="font-display text-base sm:text-lg font-bold text-[#14102A] dark:text-white">Tema</h2>
         </div>
-        <p className="mb-3 text-sm font-semibold text-muted dark:text-papel/60">Escolha entre modo claro e escuro</p>
+        <p className="mb-3 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">Escolha entre modo claro e escuro</p>
         <div className="flex gap-2">
           {[
             { id: 'light' as const, label: 'Claro', icon: Sun },
@@ -206,11 +211,13 @@ export default function SettingsTab() {
                 key={opt.id}
                 onClick={() => setMode(opt.id)}
                 className={cn(
-                  'flex items-center gap-2 rounded-[14px] border-[3px] border-tinta px-4 py-1.5 font-display text-sm font-bold transition-transform dark:border-papel',
-                  active ? 'bg-pato text-tinta shadow-brutal-sm' : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                  'flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all',
+                  active
+                    ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                    : 'border border-slate-200/80 bg-slate-50 text-[#645F78] hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-[#9D96B8] dark:hover:bg-white/10',
                 )}
               >
-                <Icon size={16} strokeWidth={2.8} /> {opt.label}
+                <Icon size={14} strokeWidth={2.4} /> {opt.label}
               </button>
             );
           })}
@@ -218,14 +225,14 @@ export default function SettingsTab() {
       </section>
 
       {/* Notificações */}
-      <section className="card mb-4 flex items-center justify-between gap-4 p-5">
+      <section className="mb-5 flex items-center justify-between gap-4 rounded-[22px] border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs dark:border-white/5 dark:bg-[#151826]">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-[14px] border-[3px] border-tinta bg-pato text-tinta dark:border-papel">
-            <Bell size={20} strokeWidth={2.6} />
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#00D64B]/15 text-[#008E32] dark:text-[#19E85F]">
+            <Bell size={18} strokeWidth={2.4} />
           </span>
           <div>
-            <h2 className="font-display text-lg font-bold text-tinta dark:text-papel">Notificações</h2>
-            <p className="text-sm font-semibold text-muted dark:text-papel/60">Receber lembretes de estudos</p>
+            <h2 className="font-display text-base font-bold text-[#14102A] dark:text-white">Notificações</h2>
+            <p className="text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">Receber lembretes diários de estudos</p>
           </div>
         </div>
         <button
@@ -234,34 +241,38 @@ export default function SettingsTab() {
           aria-checked={notifications}
           aria-label="Alternar notificações"
           className={cn(
-            'relative h-8 w-14 shrink-0 rounded-full border-[3px] border-tinta transition-colors dark:border-papel',
-            notifications ? 'bg-pato' : 'bg-slate-200 dark:bg-surface-dark',
+            'relative h-7 w-12 shrink-0 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#00D64B]',
+            notifications ? 'bg-[#00D64B]' : 'bg-slate-200 dark:bg-white/10',
           )}
         >
           <span
             className={cn(
-              'absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 border-tinta bg-white transition-transform dark:border-papel',
-              notifications ? 'translate-x-[1.6rem]' : 'translate-x-[0.15rem]',
+              'absolute top-1 h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200',
+              notifications ? 'translate-x-6' : 'translate-x-1',
             )}
           />
         </button>
       </section>
 
       {/* Status da Conexão Supabase */}
-      <section className="card mb-4 p-5">
-        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+      <section className="mb-5 rounded-[22px] border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Database size={18} strokeWidth={2.8} className="text-mente dark:text-pato" />
-            <h2 className="font-display text-xl font-bold text-tinta dark:text-papel">Integração Supabase</h2>
+            <Database size={18} strokeWidth={2.4} className="text-[#6F00D6] dark:text-[#B379FF]" />
+            <h2 className="font-display text-base font-bold text-[#14102A] dark:text-white">Integração Supabase</h2>
           </div>
           <span className={cn(
-            'chip text-xs font-bold',
-            isRealSupabaseConfigured ? 'bg-pato text-tinta dark:border-papel' : isSecretKeyDetected ? 'bg-amber-300 text-tinta dark:border-papel' : 'bg-bico text-tinta dark:border-papel'
+            'rounded-full px-3 py-0.5 text-xs font-bold',
+            isRealSupabaseConfigured
+              ? 'bg-emerald-500/15 text-[#008E32] dark:text-[#19E85F]'
+              : isSecretKeyDetected
+              ? 'bg-amber-500/15 text-[#D68200] dark:text-[#FFB84D]'
+              : 'bg-slate-100 text-[#645F78] dark:bg-white/5 dark:text-[#9D96B8]'
           )}>
             {isRealSupabaseConfigured ? '● Conectado à Nuvem' : isSecretKeyDetected ? '▲ Chave Secreta Detectada' : '○ Modo Local / Demonstração'}
           </span>
         </div>
-        <p className="mt-1 text-sm font-semibold text-muted dark:text-papel/60">
+        <p className="text-xs font-medium leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
           {isRealSupabaseConfigured
             ? 'A aplicação está conectada ao seu projeto do Supabase em nuvem. Suas sessões, simulados, redações e edital estão sincronizados com PostgreSQL.'
             : isSecretKeyDetected
@@ -271,13 +282,13 @@ export default function SettingsTab() {
       </section>
 
       {/* Zona de perigo */}
-      <section className="card border-bico p-5 dark:border-papel">
-        <div className="mb-3 flex items-center gap-2">
-          <AlertTriangle size={18} strokeWidth={2.8} className="text-tinta dark:text-papel" />
-          <h2 className="font-display text-xl font-bold text-tinta dark:text-papel">Zona de perigo</h2>
+      <section className="rounded-[22px] border border-rose-500/20 bg-rose-500/5 p-5 sm:p-6 dark:border-rose-500/15">
+        <div className="mb-2 flex items-center gap-2">
+          <AlertTriangle size={18} strokeWidth={2.4} className="text-rose-600 dark:text-rose-400" />
+          <h2 className="font-display text-base font-bold text-rose-600 dark:text-rose-400">Zona de perigo</h2>
         </div>
-        <p className="mb-3 text-sm font-semibold text-muted dark:text-papel/60">
-          Resetar seus dados de estudo. Esta ação não pode ser desfeita.
+        <p className="mb-4 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
+          Resetar seus dados de estudo. Esta ação apagará histórico de sessões, simulados e cadernos e não pode ser desfeita.
         </p>
         {confirmReset ? (
           <div className="flex flex-wrap items-center gap-2">
@@ -296,16 +307,22 @@ export default function SettingsTab() {
                   window.location.reload();
                 }
               }}
-              className="btn bg-bico px-4 py-2 text-sm text-tinta dark:border-papel"
+              className="rounded-full bg-rose-600 px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-rose-700 transition-all active:scale-[0.98]"
             >
               Confirmar e apagar tudo
             </button>
-            <button onClick={() => setConfirmReset(false)} className="btn bg-white px-4 py-2 text-sm dark:border-papel dark:bg-transparent dark:text-papel">
+            <button
+              onClick={() => setConfirmReset(false)}
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-[#14102A] hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white"
+            >
               Cancelar
             </button>
           </div>
         ) : (
-          <button onClick={() => setConfirmReset(true)} className="btn bg-bico px-4 py-2.5 text-sm text-tinta dark:border-papel">
+          <button
+            onClick={() => setConfirmReset(true)}
+            className="rounded-full border border-rose-500/30 bg-white px-5 py-2 text-xs font-bold text-rose-600 shadow-xs hover:bg-rose-50 dark:border-rose-500/30 dark:bg-white/5 dark:text-rose-400 dark:hover:bg-rose-500/10 transition-all"
+          >
             Resetar todos os dados
           </button>
         )}

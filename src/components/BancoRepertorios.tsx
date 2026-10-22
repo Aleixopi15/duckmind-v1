@@ -425,24 +425,22 @@ export default function BancoRepertorios() {
     <div className="space-y-6 animate-fade-in">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-[1100] flex animate-bounce-subtle items-center gap-2 rounded-[18px] border-[3px] border-tinta bg-pato px-4 py-3 text-sm font-bold text-tinta shadow-brutal dark:border-papel">
-          <Sparkles size={16} strokeWidth={2.8} />
+        <div className="fixed bottom-6 right-6 z-[1100] flex animate-bounce-subtle items-center gap-2 rounded-full border border-emerald-500/20 bg-[#00D64B] px-5 py-3 text-xs font-bold text-[#14102A] shadow-xl">
+          <Sparkles size={15} strokeWidth={2.6} />
           {toastMessage}
         </div>
       )}
 
       {/* Top Banner / Info Card */}
-      <div className="relative overflow-hidden rounded-[28px] border-[3px] border-tinta bg-pato p-6 text-tinta shadow-brutal dark:border-papel md:p-8">
-        <div className="pointer-events-none absolute -right-14 -top-20 hidden h-64 w-64 rounded-full border-[4px] border-tinta bg-mente md:block" />
-
+      <div className="relative overflow-hidden rounded-[26px] border border-slate-200/80 bg-white p-6 shadow-xs dark:border-white/5 dark:bg-[#151826] md:p-8">
         <div className="relative z-10 max-w-2xl">
-          <div className="mb-3 inline-flex items-center gap-1.5 rounded-[10px] border-[3px] border-tinta bg-white/70 px-3 py-0.5 text-xs font-bold uppercase tracking-wide">
-            <Sparkles size={14} strokeWidth={3} /> Banco sociocultural ENEM
+          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#00D64B]/15 px-3 py-1 text-xs font-bold text-[#008E32] dark:text-[#19E85F]">
+            <Sparkles size={13} strokeWidth={2.4} /> Banco sociocultural ENEM
           </div>
-          <h2 className="mb-2 font-display text-[1.7rem] font-bold leading-tight tracking-tight md:text-[2.2rem]">
+          <h2 className="mb-2 font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#14102A] dark:text-white">
             Repertórios por eixo temático
           </h2>
-          <p className="mb-6 text-sm font-semibold leading-relaxed text-tinta/80">
+          <p className="mb-6 text-xs sm:text-sm font-medium leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
             Amplie sua nota na <strong>Competência 2</strong> e <strong>Competência 3</strong>.
             Filtre citações, conceitos filosóficos, leis e obras validadas para aplicar diretamente na sua redação.
           </p>
@@ -450,29 +448,29 @@ export default function BancoRepertorios() {
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={openNewModal}
-              className="btn bg-white px-4 py-2.5 text-sm"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#00D64B] hover:bg-[#19E85F] text-[#14102A] text-xs font-bold shadow-xs hover:shadow-md transition-all active:scale-[0.98]"
             >
-              <Plus size={18} strokeWidth={3} /> Adicionar repertório
+              <Plus size={15} strokeWidth={3} /> Adicionar repertório
             </button>
-            <div className="flex items-center gap-2 rounded-[14px] border-[3px] border-tinta bg-white/60 px-3.5 py-2 text-sm font-bold">
-              <BookOpen size={15} strokeWidth={3} />
+            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-[#14102A] dark:border-white/10 dark:bg-white/5 dark:text-white">
+              <BookOpen size={13} strokeWidth={2.4} />
               <span>{allRepertorios.length} no banco</span>
               <span className="opacity-40">·</span>
-              <Star size={15} strokeWidth={3} />
+              <Star size={13} strokeWidth={2.4} className="text-amber-500 fill-amber-500" />
               <span>{favorites.length} salvos</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Primary Filters: Eixos Temáticos (Key Requirement) */}
+      {/* Primary Filters: Eixos Temáticos */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-            <Filter size={14} className="text-brand-600 dark:text-brand-400" />
+          <label className="text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8] flex items-center gap-1.5">
+            <Filter size={13} strokeWidth={2.4} />
             Eixos Temáticos do ENEM
           </label>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
             {filteredRepertorios.length} de {allRepertorios.length} exibidos
           </span>
         </div>
@@ -482,15 +480,15 @@ export default function BancoRepertorios() {
           <button
             onClick={() => setSelectedAxis('todos')}
             className={cn(
-              'flex shrink-0 items-center gap-2 rounded-[14px] border-[3px] border-tinta px-3.5 py-1.5 text-sm font-bold transition-transform dark:border-papel',
+              'flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all',
               selectedAxis === 'todos'
-                ? 'bg-pato text-tinta'
-                : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                : 'border border-slate-200/80 bg-white text-[#645F78] hover:bg-slate-50 dark:border-white/5 dark:bg-[#151826] dark:text-[#9D96B8] dark:hover:bg-white/5',
             )}
           >
-            <BookOpen size={14} strokeWidth={3} />
+            <BookOpen size={13} strokeWidth={2.4} />
             Todos os eixos
-            <span className="rounded-[8px] bg-tinta/10 px-1.5 font-display text-[11px] font-bold dark:bg-papel/15">
+            <span className="rounded-full bg-black/10 px-1.5 text-[10px] font-bold dark:bg-white/10">
               {countByAxis.todos}
             </span>
           </button>
@@ -506,19 +504,19 @@ export default function BancoRepertorios() {
                 key={axisKey}
                 onClick={() => setSelectedAxis(axisKey)}
                 className={cn(
-                  'flex shrink-0 items-center gap-2 rounded-[14px] border-[3px] border-tinta px-3.5 py-1.5 text-sm font-bold transition-transform dark:border-papel',
+                  'flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all',
                   isSelected
-                    ? 'bg-pato text-tinta'
-                    : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                    ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                    : 'border border-slate-200/80 bg-white text-[#645F78] hover:bg-slate-50 dark:border-white/5 dark:bg-[#151826] dark:text-[#9D96B8] dark:hover:bg-white/5',
                 )}
               >
                 <span
-                  className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-tinta"
+                  className="flex h-2.5 w-2.5 shrink-0 rounded-full"
                   style={{ background: config.cor }}
                 />
-                <Icon size={14} strokeWidth={3} />
+                <Icon size={13} strokeWidth={2.4} />
                 {config.label}
-                <span className="rounded-[8px] bg-tinta/10 px-1.5 font-display text-[11px] font-bold dark:bg-papel/15">
+                <span className="rounded-full bg-black/10 px-1.5 text-[10px] font-bold dark:bg-white/10">
                   {count}
                 </span>
               </button>

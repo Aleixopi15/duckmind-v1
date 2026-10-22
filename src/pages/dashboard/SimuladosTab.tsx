@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useApp } from '../../context/AppContext';
 import { cn } from '../../lib/theme';
 import type { Simulation, SimulationType, SimulationTargetArea } from '../../lib/supabase';
+import { parseSimulationData, type SimulationMeta, type SimulationSubjectBreakdown } from '../../lib/simulationUtils';
 import {
   Plus,
   Edit2,
@@ -17,7 +18,6 @@ import {
   ChevronDown,
   ChevronUp,
   BookOpen,
-  Check,
 } from 'lucide-react';
 
 export interface EnemAreaConfig {
@@ -146,62 +146,6 @@ const SUGGESTED_SOURCES = [
   'Simulado Autoral / Outros',
 ];
 
-// Helper to extract embedded metadata from notes if DB columns are not migrated yet
-interface SimulationMeta {
-  type: SimulationType;
-  target_area?: SimulationTargetArea | null;
-  duration_minutes?: number | null;
-  exam_source?: string | null;
-  questions_total?: number | null;
-  questions_correct?: number | null;
-  difficulty?: 'facil' | 'medio' | 'dificil' | 'muito_dificil' | null;
-  area_correct?: Record<string, number>;
-  area_tri?: Record<string, number>;
-  total_tri?: number | null;
-  essay_competencies?: [number, number, number, number, number];
-  error_reasons?: string[];
-}
-
-function parseSimulationData(s: Simulation): {
-  cleanNotes: string;
-  meta: SimulationMeta;
-} {
-  let cleanNotes = s.notes ? String(s.notes) : '';
-  const meta: SimulationMeta = {
-    type: s.simulation_type || 'completo',
-    target_area: s.target_area,
-    duration_minutes: s.duration_minutes,
-    exam_source: s.exam_source,
-    questions_total: s.questions_total,
-    questions_correct: s.questions_correct,
-    difficulty: s.perceived_difficulty,
-    total_tri: s.total_score,
-  };
-
-  // Check for embedded JSON tag in notes
-  const tagMatch = cleanNotes.match(/<!-- ENEM_META:(\{.*?\}) -->/);
-  if (tagMatch) {
-    try {
-      const parsed = JSON.parse(tagMatch[1]);
-      if (parsed.type && !s.simulation_type) meta.type = parsed.type;
-      if (parsed.target_area && !s.target_area) meta.target_area = parsed.target_area;
-      if (parsed.duration_minutes && !s.duration_minutes) meta.duration_minutes = parsed.duration_minutes;
-      if (parsed.exam_source && !s.exam_source) meta.exam_source = parsed.exam_source;
-      if (parsed.questions_total && !s.questions_total) meta.questions_total = parsed.questions_total;
-      if (parsed.questions_correct && !s.questions_correct) meta.questions_correct = parsed.questions_correct;
-      if (parsed.difficulty && !s.perceived_difficulty) meta.difficulty = parsed.difficulty;
-      if (parsed.essay_competencies) meta.essay_competencies = parsed.essay_competencies;
-      if (parsed.error_reasons) meta.error_reasons = parsed.error_reasons;
-      if (parsed.area_tri) meta.area_tri = parsed.area_tri;
-      if (parsed.total_tri && s.total_score === null) meta.total_tri = parsed.total_tri;
-      cleanNotes = cleanNotes.replace(/<!-- ENEM_META:(\{.*?\}) -->/, '').trim();
-    } catch {
-      // ignore JSON parse error
-    }
-  }
-
-  return { cleanNotes, meta };
-}
 
 export interface FormSubjectEntry {
   subject_id: string;
@@ -480,6 +424,10 @@ export default function SimuladosTab() {
       setError('Por favor, informe um título ou identifique o simulado.');
       return;
     }
+    if (form.simulation_type === 'personalizado' && form.custom_subjects.length === 0) {
+      setError('Adicione pelo menos uma matéria para o simulado personalizado.');
+      return;
+    }
     setError('');
     setSaving(true);
 
@@ -507,6 +455,12 @@ export default function SimuladosTab() {
       if (form.target_area !== 'natural_sciences') nVal = null;
       if (form.target_area !== 'math') mVal = null;
       if (form.target_area !== 'essay') eVal = null;
+    } else if (form.simulation_type === 'personalizado') {
+      lVal = null;
+      hVal = null;
+      nVal = null;
+      mVal = null;
+      eVal = null;
     }
 
     // User-entered TRI score (if provided by user)
@@ -727,17 +681,19 @@ export default function SimuladosTab() {
   }, [sortedSims]);
 
   return (
-    <div className="animate-fade-in w-full max-w-full min-w-0">
+    <div className="w-full min-w-0 max-w-full animate-fade-in">
       {/* Header */}
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="font-display text-[2rem] font-bold leading-tight tracking-tight text-tinta dark:text-papel sm:text-[2.6rem]">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#14102A] dark:text-[#F3F1FF]">
               Simulados ENEM
             </h1>
-            <span className="chip bg-bico text-tinta dark:border-papel">Padrão 2026</span>
+            <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-[#008E32] dark:text-[#19E85F]">
+              Padrão 2026
+            </span>
           </div>
-          <p className="mt-1 text-[17px] font-semibold text-muted dark:text-papel/70">
+          <p className="mt-1 text-sm font-medium text-[#645F78] dark:text-[#9D96B8]">
             Registre 1º dia, 2º dia, áreas isoladas (45q) e simulado completo
           </p>
         </div>
@@ -747,36 +703,53 @@ export default function SimuladosTab() {
             setForm(emptyForm);
             setOpen(true);
           }}
-          className="btn shrink-0 bg-pato px-5 py-2.5 text-tinta dark:border-papel"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#00D64B] hover:bg-[#19E85F] text-[#14102A] text-sm font-bold shadow-xs hover:shadow-md transition-all active:scale-[0.98]"
         >
-          <Plus size={18} strokeWidth={3} /> Novo simulado
+          <Plus size={16} strokeWidth={3} />
+          <span>Novo simulado</span>
         </button>
       </div>
 
       {/* KPI Stats cards */}
       {sortedSims.length > 0 && (
-        <div className="mb-5 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
-          <div className="stat min-w-0">
-            <div className="stat-value truncate">{stats.total}</div>
-            <div className="stat-label mt-0.5 truncate">Simulados</div>
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+          <div className="rounded-[22px] border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+            <div className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#14102A] dark:text-white">
+              {stats.total}
+            </div>
+            <div className="mt-1 text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Simulados
+            </div>
           </div>
-          <div className="stat min-w-0">
-            <div className="stat-value truncate">{stats.bestScore !== null ? stats.bestScore : '–'}</div>
-            <div className="stat-label mt-0.5 truncate">Melhor nota TRI</div>
+          <div className="rounded-[22px] border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+            <div className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#6F00D6] dark:text-[#B379FF]">
+              {stats.bestScore !== null ? stats.bestScore : '–'}
+            </div>
+            <div className="mt-1 text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Melhor nota TRI
+            </div>
           </div>
-          <div className="stat min-w-0 bg-pato">
-            <div className="stat-value truncate">{stats.avgAccuracy > 0 ? `${stats.avgAccuracy}%` : '–'}</div>
-            <div className="stat-label mt-0.5 truncate">Aproveitamento</div>
+          <div className="rounded-[22px] border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+            <div className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#008E32] dark:text-[#19E85F]">
+              {stats.avgAccuracy > 0 ? `${stats.avgAccuracy}%` : '–'}
+            </div>
+            <div className="mt-1 text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Aproveitamento
+            </div>
           </div>
-          <div className="stat min-w-0">
-            <div className="stat-value truncate">{stats.totalHours > 0 ? `${stats.totalHours}h` : '–'}</div>
-            <div className="stat-label mt-0.5 truncate">Horas de prova</div>
+          <div className="rounded-[22px] border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-white/5 dark:bg-[#151826]">
+            <div className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#D68200] dark:text-[#FFB84D]">
+              {stats.totalHours > 0 ? `${stats.totalHours}h` : '–'}
+            </div>
+            <div className="mt-1 text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Horas de prova
+            </div>
           </div>
         </div>
       )}
 
       {/* Filter Tabs */}
-      <div className="no-scrollbar mb-5 flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="no-scrollbar mb-6 flex items-center gap-2 overflow-x-auto pb-1">
         {([
           { id: 'all', label: `Todos (${sortedSims.length})`, icon: '' },
           { id: 'completo', label: 'Completo', icon: '🎓' },
@@ -789,10 +762,10 @@ export default function SimuladosTab() {
             key={f.id}
             onClick={() => setActiveFilter(f.id)}
             className={cn(
-              'flex shrink-0 items-center gap-1.5 rounded-[14px] border-[3px] border-tinta px-3.5 py-1 font-display text-sm font-bold transition-transform dark:border-papel',
+              'flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-all',
               activeFilter === f.id
-                ? 'bg-pato text-tinta'
-                : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                : 'border border-slate-200/80 bg-white text-[#645F78] hover:bg-slate-50 dark:border-white/5 dark:bg-[#151826] dark:text-[#9D96B8] dark:hover:bg-white/5',
             )}
           >
             {f.icon && <span>{f.icon}</span>}
@@ -803,14 +776,14 @@ export default function SimuladosTab() {
 
       {/* Simulations List */}
       {filteredSims.length === 0 ? (
-        <div className="card p-10 text-center">
-          <span className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-[20px] border-[3px] border-tinta bg-pato text-tinta dark:border-papel">
-            <ClipboardList size={28} strokeWidth={2.6} />
+        <div className="flex flex-col items-center rounded-[24px] border border-slate-200/80 bg-white p-12 text-center shadow-xs dark:border-white/5 dark:bg-[#151826]">
+          <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#00D64B]/15 text-[#008E32] dark:text-[#19E85F]">
+            <ClipboardList size={26} strokeWidth={2.4} />
           </span>
-          <h3 className="mb-1 font-display text-xl font-bold text-tinta dark:text-papel">
+          <h3 className="mb-1 font-display text-lg font-bold text-[#14102A] dark:text-white">
             Nenhum simulado nesta categoria
           </h3>
-          <p className="mx-auto mb-4 max-w-sm text-sm font-semibold text-muted dark:text-papel/60">
+          <p className="mx-auto mb-5 max-w-sm text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
             Adicione simulados do ENEM (1º dia, 2º dia, áreas isoladas de 45 questões ou completo) para acompanhar sua evolução.
           </p>
           <button
@@ -822,13 +795,13 @@ export default function SimuladosTab() {
               });
               setOpen(true);
             }}
-            className="btn inline-flex bg-pato px-4 py-2 text-sm text-tinta dark:border-papel"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#00D64B] hover:bg-[#19E85F] text-[#14102A] text-xs font-bold shadow-xs transition-all"
           >
             <Plus size={16} strokeWidth={3} /> Adicionar simulado
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3.5">
           {filteredSims.map(s => {
             const { cleanNotes, meta } = parseSimulationData(s);
             const simType = s.simulation_type || meta.type || 'completo';
@@ -844,55 +817,58 @@ export default function SimuladosTab() {
             const paceSec = durationTotal && totalQ > 0 ? Math.round((durationTotal * 60) / totalQ) : null;
 
             return (
-              <div key={s.id} className="card group p-4 md:p-5">
+              <div
+                key={s.id}
+                className="group rounded-[22px] border border-slate-200/70 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-white/5 dark:bg-[#151826]"
+              >
                 {/* Header row */}
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-                      <span className="chip bg-mente text-papel dark:border-papel">
+                    <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                      <span className="rounded-full bg-[#6F00D6]/15 px-2.5 py-0.5 text-xs font-bold text-[#6F00D6] dark:text-[#B379FF]">
                         {typeInfo.icon} {typeInfo.label}
                       </span>
 
                       {targetAreaConfig && (
-                        <span className="chip bg-white text-tinta dark:border-papel dark:bg-transparent dark:text-papel">
+                        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-[#14102A] dark:bg-white/5 dark:text-white/80">
                           {targetAreaConfig.icon} {targetAreaConfig.shortLabel}
                         </span>
                       )}
 
                       {(s.exam_source || meta.exam_source) && (
-                        <span className="chip bg-white text-tinta dark:border-papel dark:bg-transparent dark:text-papel">
+                        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-[#645F78] dark:bg-white/5 dark:text-white/70">
                           {s.exam_source || meta.exam_source}
                         </span>
                       )}
 
                       {(s.perceived_difficulty || meta.difficulty) && (
-                        <span className="chip bg-white text-tinta dark:border-papel dark:bg-transparent dark:text-papel">
+                        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-[#645F78] dark:bg-white/5 dark:text-white/70">
                           Nível: {s.perceived_difficulty || meta.difficulty}
                         </span>
                       )}
                     </div>
 
-                    <h3 className="truncate font-display text-2xl font-bold leading-tight text-tinta dark:text-papel">
+                    <h3 className="truncate font-display text-lg sm:text-xl font-bold tracking-tight text-[#14102A] dark:text-white">
                       {s.title}
                     </h3>
 
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold text-tinta dark:text-papel/80">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
                       <span className="flex items-center gap-1">
-                        <Calendar size={13} strokeWidth={2.8} />
+                        <Calendar size={13} strokeWidth={2.4} />
                         {new Date(s.simulation_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                       </span>
 
                       {durationTotal !== null && durationTotal > 0 && (
                         <span className="flex items-center gap-1">
-                          <Clock size={13} strokeWidth={2.8} />
+                          <Clock size={13} strokeWidth={2.4} />
                           {hours > 0 ? `${hours}h ${mins}min` : `${mins}min`}
                           {paceSec ? ` (~${Math.floor(paceSec / 60)}m${paceSec % 60}s/q)` : ''}
                         </span>
                       )}
 
                       {correctQ !== null && totalQ > 0 && (
-                        <span className="flex items-center gap-1 font-bold">
-                          <CheckCircle2 size={13} strokeWidth={2.8} />
+                        <span className="flex items-center gap-1 font-bold text-[#008E32] dark:text-[#19E85F]">
+                          <CheckCircle2 size={13} strokeWidth={2.4} />
                           {correctQ}/{totalQ} acertos ({Math.round((correctQ / totalQ) * 100)}%)
                         </span>
                       )}
@@ -902,38 +878,38 @@ export default function SimuladosTab() {
                   {/* Nota TRI + ações */}
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <div className="font-display text-3xl font-bold leading-none text-tinta dark:text-papel">
+                      <div className="font-display text-2xl sm:text-3xl font-bold leading-none text-[#14102A] dark:text-white">
                         {s.total_score !== null && s.total_score !== undefined ? s.total_score : '–'}
                       </div>
-                      <div className="mt-0.5 text-[11px] font-bold uppercase tracking-wide text-muted dark:text-papel/50">
+                      <div className="mt-1 text-[10px] font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
                         {s.total_score !== null && s.total_score !== undefined ? 'Nota TRI' : 'Sem TRI'}
                       </div>
                     </div>
 
-                    <div className="flex gap-1 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => setSelectedDetail(s)}
                         title="Ver análise detalhada"
                         aria-label="Ver análise detalhada"
-                        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-tinta bg-white text-tinta hover:bg-pato dark:border-papel dark:bg-transparent dark:text-papel"
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-[#645F78] transition-colors hover:bg-slate-200 hover:text-[#14102A] dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white"
                       >
-                        <Info size={14} strokeWidth={2.8} />
+                        <Info size={14} strokeWidth={2.4} />
                       </button>
                       <button
                         onClick={() => handleEdit(s)}
                         title="Editar simulado"
                         aria-label="Editar simulado"
-                        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-tinta bg-white text-tinta hover:bg-pato dark:border-papel dark:bg-transparent dark:text-papel"
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-[#645F78] transition-colors hover:bg-slate-200 hover:text-[#14102A] dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white"
                       >
-                        <Edit2 size={14} strokeWidth={2.8} />
+                        <Edit2 size={14} strokeWidth={2.4} />
                       </button>
                       <button
                         onClick={() => handleDelete(s.id)}
                         title="Excluir simulado"
                         aria-label="Excluir simulado"
-                        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-tinta bg-white text-tinta hover:bg-bico dark:border-papel dark:bg-transparent dark:text-papel"
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-[#645F78] transition-colors hover:bg-rose-50 hover:text-rose-600 dark:bg-white/5 dark:text-white/60 dark:hover:bg-rose-500/20 dark:hover:text-rose-400"
                       >
-                        <Trash2 size={14} strokeWidth={2.8} />
+                        <Trash2 size={14} strokeWidth={2.4} />
                       </button>
                     </div>
                   </div>
@@ -941,13 +917,13 @@ export default function SimuladosTab() {
 
                 {/* Subject Bars Breakdown */}
                 {simType === 'personalizado' && meta.subjects_breakdown && meta.subjects_breakdown.length > 0 ? (
-                  <div className="mt-3.5 border-t-[3px] border-tinta/15 pt-3 dark:border-papel/15">
+                  <div className="mt-4 border-t border-slate-100 pt-3.5 dark:border-white/5">
                     <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted dark:text-papel/60">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
                         Matérias do Simulado ({meta.subjects_breakdown.length})
                       </span>
-                      {totalQ > 0 && (
-                        <span className="chip bg-pato text-tinta text-xs font-bold">
+                      {totalQ > 0 && correctQ !== null && (
+                        <span className="rounded-full bg-[#00D64B]/15 px-2.5 py-0.5 text-xs font-bold text-[#008E32] dark:text-[#19E85F]">
                           {correctQ}/{totalQ} ({Math.round((correctQ / totalQ) * 100)}%)
                         </span>
                       )}
@@ -958,21 +934,27 @@ export default function SimuladosTab() {
                         return (
                           <div
                             key={sbIdx}
-                            className="flex flex-col justify-between rounded-[14px] border-[3px] border-tinta bg-papel p-2.5 dark:border-papel/40 dark:bg-transparent"
+                            className="flex flex-col justify-between rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-white/5 dark:bg-white/[0.03]"
                           >
-                            <div className="truncate text-xs font-bold text-tinta dark:text-papel">
+                            <div className="truncate text-xs font-bold text-[#14102A] dark:text-white">
                               {sb.subject_name}
                             </div>
-                            <div className="mt-1 flex items-baseline justify-between font-mono">
-                              <span className="text-sm font-bold text-tinta dark:text-papel">
+                            <div className="mt-1 flex items-baseline justify-between font-mono text-xs">
+                              <span className="font-bold text-[#14102A] dark:text-white">
                                 {sb.questions_correct}/{sb.questions_total}
                               </span>
-                              <span className={cn('text-xs font-bold', sbPct >= 70 ? 'text-emerald-600 dark:text-pato' : sbPct >= 50 ? 'text-amber-600' : 'text-red-500')}>
+                              <span className={cn('font-bold', sbPct >= 70 ? 'text-[#008E32] dark:text-[#19E85F]' : sbPct >= 50 ? 'text-[#D68200] dark:text-[#FFB84D]' : 'text-rose-500')}>
                                 {sbPct}%
                               </span>
                             </div>
-                            <div className="track mt-1.5 w-full" style={{ height: 10 }}>
-                              <div style={{ width: `${sbPct}%`, background: sbPct >= 70 ? '#00D64B' : sbPct >= 50 ? '#D68200' : '#EF4444' }} />
+                            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
+                              <div
+                                className="h-full rounded-full transition-all duration-300"
+                                style={{
+                                  width: `${sbPct}%`,
+                                  background: sbPct >= 70 ? '#00D64B' : sbPct >= 50 ? '#D68200' : '#EF4444'
+                                }}
+                              />
                             </div>
                           </div>
                         );
@@ -980,7 +962,7 @@ export default function SimuladosTab() {
                     </div>
                   </div>
                 ) : simType === 'area_unica' && targetAreaConfig ? (
-                  <div className="mt-3.5 border-t-[3px] border-tinta/15 pt-3 dark:border-papel/15">
+                  <div className="mt-4 border-t border-slate-100 pt-3.5 dark:border-white/5">
                     {(() => {
                       const a = targetAreaConfig;
                       const val = s[`score_${a.key}` as keyof Simulation] as number | null;
@@ -990,33 +972,35 @@ export default function SimuladosTab() {
                       const areaTriVal = meta.area_tri?.[a.key];
 
                       return (
-                        <div className="flex flex-col justify-between gap-3 rounded-[16px] border-[3px] border-tinta bg-papel p-3 dark:border-papel/40 dark:bg-transparent sm:flex-row sm:items-center">
-                          <div className="flex items-center gap-2.5">
+                        <div className="flex flex-col justify-between gap-3 rounded-2xl border border-slate-200/60 bg-slate-50/70 p-3.5 dark:border-white/5 dark:bg-white/[0.03] sm:flex-row sm:items-center">
+                          <div className="flex items-center gap-3">
                             <div className="text-2xl">{a.icon}</div>
                             <div>
-                              <div className="text-sm font-bold text-tinta dark:text-papel">{a.label}</div>
-                              <div className="text-xs font-semibold text-muted dark:text-papel/50">
+                              <div className="text-sm font-bold text-[#14102A] dark:text-white">{a.label}</div>
+                              <div className="text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
                                 Área isolada · {isEssay ? 'Prova de redação' : '45 questões'}
                               </div>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-3.5 self-end sm:self-auto">
+                          <div className="flex items-center gap-4 self-end sm:self-auto">
                             <div className="text-right">
-                              <div className="font-display text-lg font-bold text-tinta dark:text-papel">
+                              <div className="font-display text-base sm:text-lg font-bold text-[#14102A] dark:text-white">
                                 {val !== null && val !== undefined ? `${val} ${isEssay ? 'pts' : '/ 45'}` : '–'}
                               </div>
                               {areaTriVal !== undefined && (
-                                <div className="font-display text-xs font-bold text-bico dark:text-bico">TRI: {areaTriVal}</div>
+                                <div className="font-display text-xs font-bold text-[#6F00D6] dark:text-[#B379FF]">
+                                  TRI: {areaTriVal}
+                                </div>
                               )}
                             </div>
                             <div className="w-24 sm:w-28">
-                              <div className="mb-1 flex justify-between text-[11px] font-bold text-muted dark:text-papel/50">
+                              <div className="mb-1 flex justify-between text-[11px] font-bold text-[#645F78] dark:text-[#9D96B8]">
                                 <span>Aprov.</span>
                                 <span>{Math.round(pct)}%</span>
                               </div>
-                              <div className="track w-full" style={{ height: 12 }}>
-                                <div style={{ width: `${pct}%`, background: a.color }} />
+                              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
+                                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, background: a.color }} />
                               </div>
                             </div>
                           </div>
@@ -1025,7 +1009,7 @@ export default function SimuladosTab() {
                     })()}
                   </div>
                 ) : (
-                  <div className="mt-3.5 grid grid-cols-2 gap-2 border-t-[3px] border-tinta/15 pt-3 dark:border-papel/15 sm:grid-cols-3 lg:grid-cols-5">
+                  <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3.5 dark:border-white/5 sm:grid-cols-3 lg:grid-cols-5">
                     {ENEM_AREAS.map((a, aIdx) => {
                       const val = s[`score_${a.key}` as keyof Simulation] as number | null;
                       const isApplicable =
@@ -1036,11 +1020,11 @@ export default function SimuladosTab() {
 
                       if (!isApplicable) {
                         return (
-                          <div key={a.key} className="hidden rounded-[14px] border-2 border-dashed border-tinta/25 p-2 dark:border-papel/25 sm:block">
-                            <div className="flex items-center gap-1 truncate text-[11px] font-bold text-muted dark:text-papel/40">
+                          <div key={a.key} className="hidden rounded-xl border border-dashed border-slate-200 p-2.5 dark:border-white/10 sm:block">
+                            <div className="flex items-center gap-1 truncate text-[11px] font-bold text-[#645F78] dark:text-white/40">
                               <span>{a.icon}</span> {a.shortLabel}
                             </div>
-                            <div className="text-[11px] font-semibold italic text-muted dark:text-papel/30">Não se aplica</div>
+                            <div className="mt-1 text-[11px] font-medium italic text-[#645F78]/70 dark:text-white/30">Não se aplica</div>
                           </div>
                         );
                       }
@@ -1054,30 +1038,30 @@ export default function SimuladosTab() {
                         <div
                           key={a.key}
                           className={cn(
-                            'flex flex-col justify-between rounded-[14px] border-[3px] border-tinta bg-papel p-2.5 dark:border-papel/40 dark:bg-transparent',
+                            'flex flex-col justify-between rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-white/5 dark:bg-white/[0.03]',
                             simType === 'completo' && aIdx === 4 ? 'col-span-2 sm:col-span-1' : ''
                           )}
                         >
-                          <div className="mb-1 flex items-center justify-between gap-1 text-[11px] font-bold text-tinta dark:text-papel">
+                          <div className="mb-1 flex items-center justify-between gap-1 text-[11px] font-bold text-[#14102A] dark:text-white">
                             <span className="flex flex-1 items-center gap-1 truncate">
                               <span>{a.icon}</span>
                               {a.shortLabel}
                             </span>
-                            <span className="shrink-0 text-muted dark:text-papel/40">{isEssay ? '1000' : '45q'}</span>
+                            <span className="shrink-0 text-xs font-semibold text-[#645F78] dark:text-white/40">{isEssay ? '1000' : '45q'}</span>
                           </div>
-                          <div className="flex items-baseline gap-1 font-display text-lg font-bold leading-none text-tinta dark:text-papel">
+                          <div className="flex items-baseline gap-1 font-display text-base font-bold leading-none text-[#14102A] dark:text-white">
                             {val !== null && val !== undefined ? val : '–'}
                             {val !== null && (
-                              <span className="font-sans text-[11px] font-semibold text-muted dark:text-papel/40">
+                              <span className="font-sans text-[11px] font-semibold text-[#645F78] dark:text-white/50">
                                 {isEssay ? 'pts' : 'acertos'}
                               </span>
                             )}
                           </div>
                           {areaTriVal !== undefined && (
-                            <div className="font-display text-[11px] font-bold text-bico">TRI: {areaTriVal}</div>
+                            <div className="mt-0.5 font-display text-[11px] font-bold text-[#6F00D6] dark:text-[#B379FF]">TRI: {areaTriVal}</div>
                           )}
-                          <div className="track mt-1.5 w-full" style={{ height: 10 }}>
-                            <div style={{ width: `${pct}%`, background: a.color }} />
+                          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
+                            <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, background: a.color }} />
                           </div>
                         </div>
                       );
@@ -1087,17 +1071,19 @@ export default function SimuladosTab() {
 
                 {/* Notes and error tags */}
                 {(cleanNotes || (meta.error_reasons && meta.error_reasons.length > 0)) && (
-                  <div className="mt-3 flex flex-col gap-1.5 border-t-[3px] border-tinta/15 pt-2.5 dark:border-papel/15">
+                  <div className="mt-3.5 flex flex-col gap-1.5 border-t border-slate-100 pt-3 dark:border-white/5">
                     {meta.error_reasons && meta.error_reasons.length > 0 && (
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-xs font-bold text-muted dark:text-papel/50">Pontos de atenção:</span>
+                        <span className="text-xs font-bold text-[#645F78] dark:text-[#9D96B8]">Pontos de atenção:</span>
                         {meta.error_reasons.map((r, i) => (
-                          <span key={i} className="chip bg-bico text-tinta dark:border-papel">{r}</span>
+                          <span key={i} className="rounded-full bg-rose-500/15 px-2.5 py-0.5 text-xs font-bold text-rose-600 dark:text-rose-400">
+                            {r}
+                          </span>
                         ))}
                       </div>
                     )}
                     {cleanNotes && (
-                      <p className="line-clamp-2 text-xs font-semibold italic text-muted dark:text-papel/55">
+                      <p className="line-clamp-2 text-xs font-medium italic text-[#645F78] dark:text-white/60">
                         “{cleanNotes}”
                       </p>
                     )}
@@ -1120,25 +1106,25 @@ export default function SimuladosTab() {
         size="lg"
         footer={
           <div className="flex w-full items-center justify-between gap-2">
-            <div className="hidden text-xs font-bold text-muted dark:text-papel/50 sm:block">
+            <div className="hidden text-xs font-bold text-[#645F78] dark:text-[#9D96B8] sm:block">
               {parsedFormStats.totalQuestions > 0
                 ? `${parsedFormStats.totalCorrect}/${parsedFormStats.totalQuestions} acertos (${parsedFormStats.accuracyPct}%)`
                 : ''}
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => {
                   setOpen(false);
                   setForm(emptyForm);
                 }}
-                className="btn bg-white px-4 py-2 text-sm dark:border-papel dark:bg-transparent dark:text-papel"
+                className="rounded-full border border-slate-200/80 bg-white px-5 py-2.5 text-xs font-bold text-[#14102A] transition-all hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="btn bg-pato px-5 py-2 text-sm text-tinta dark:border-papel"
+                className="inline-flex items-center gap-2 rounded-full bg-[#00D64B] px-6 py-2.5 text-xs font-bold text-[#14102A] shadow-xs transition-all hover:bg-[#19E85F] active:scale-[0.98] disabled:opacity-50"
               >
                 {saving ? 'Salvando…' : 'Salvar simulado'}
               </button>
@@ -1148,18 +1134,18 @@ export default function SimuladosTab() {
       >
         <div className="flex flex-col gap-4">
           {error && (
-            <div className="rounded-[14px] border-[3px] border-tinta bg-bico px-3.5 py-2.5 text-sm font-bold text-tinta dark:border-papel">
+            <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-xs font-bold text-rose-600 dark:text-rose-400">
               {error}
             </div>
           )}
 
           {/* 1. Modalidade de Simulado (ENEM) */}
           <div>
-            <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-muted dark:text-papel/50">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
               1. Modalidade do simulado *
             </span>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {(['completo', 'dia_1', 'dia_2', 'area_unica'] as SimulationType[]).map(typeKey => {
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+              {(['completo', 'dia_1', 'dia_2', 'area_unica', 'personalizado'] as SimulationType[]).map(typeKey => {
                 const item = SIM_TYPE_DETAILS[typeKey];
                 const isSelected = form.simulation_type === typeKey;
                 return (
@@ -1173,15 +1159,15 @@ export default function SimuladosTab() {
                       }));
                     }}
                     className={cn(
-                      'rounded-[16px] border-[3px] border-tinta p-3 text-left transition-transform dark:border-papel',
+                      'rounded-2xl border p-3 text-left transition-all',
                       isSelected
-                        ? 'bg-pato text-tinta shadow-brutal-sm'
-                        : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                        ? 'border-[#00D64B] bg-[#00D64B]/10 text-[#14102A] shadow-xs dark:bg-[#00D64B]/15 dark:text-white'
+                        : 'border-slate-200/80 bg-white text-[#14102A] hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10',
                     )}
                   >
                     <div className="mb-1 text-xl">{item.icon}</div>
                     <div className="text-xs font-bold leading-tight">{item.label}</div>
-                    <div className={cn('mt-1 line-clamp-2 text-[11px] font-semibold', isSelected ? 'text-tinta/70' : 'text-muted dark:text-papel/50')}>
+                    <div className={cn('mt-1 line-clamp-2 text-[11px] font-medium', isSelected ? 'text-[#14102A]/80 dark:text-white/80' : 'text-[#645F78] dark:text-[#9D96B8]')}>
                       {item.desc}
                     </div>
                   </button>
@@ -1192,8 +1178,8 @@ export default function SimuladosTab() {
 
           {/* Seletor específico caso seja Área Única */}
           {form.simulation_type === 'area_unica' && (
-            <div className="animate-fade-in rounded-[18px] border-[3px] border-tinta bg-mente/10 p-3.5 dark:border-papel/50">
-              <span className="mb-2 block text-xs font-extrabold text-tinta dark:text-papel">
+            <div className="animate-fade-in rounded-2xl border border-[#6F00D6]/20 bg-[#6F00D6]/5 p-3.5 dark:border-[#6F00D6]/30 dark:bg-[#6F00D6]/10">
+              <span className="mb-2 block text-xs font-bold text-[#14102A] dark:text-white">
                 Qual área única do ENEM você realizou?
               </span>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -1205,15 +1191,15 @@ export default function SimuladosTab() {
                       type="button"
                       onClick={() => setForm(prev => ({ ...prev, target_area: a.key as SimulationTargetArea }))}
                       className={cn(
-                        'rounded-[14px] border-[3px] border-tinta p-2.5 text-center transition-transform dark:border-papel',
+                        'rounded-xl border p-2.5 text-center transition-all',
                         isAreaSelected
-                          ? 'bg-mente text-papel shadow-brutal-sm'
-                          : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                          ? 'border-[#6F00D6] bg-[#6F00D6] text-white shadow-xs'
+                          : 'border-slate-200/80 bg-white text-[#14102A] hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10',
                       )}
                     >
                       <div className="text-lg">{a.icon}</div>
                       <div className="mt-0.5 truncate text-xs font-bold">{a.shortLabel}</div>
-                      <div className={cn('text-[11px] font-semibold', isAreaSelected ? 'text-papel/70' : 'text-muted dark:text-papel/40')}>
+                      <div className={cn('text-[11px] font-medium', isAreaSelected ? 'text-white/80' : 'text-[#645F78] dark:text-[#9D96B8]')}>
                         {a.key === 'essay' ? '1000 pts' : '45 questões'}
                       </div>
                     </button>
@@ -1338,78 +1324,252 @@ export default function SimuladosTab() {
             </div>
           </div>
 
-          {/* 3. Acertos por Área do ENEM */}
+          {/* 3. Matérias do Simulado */}
           <div className="pt-2 border-t border-slate-100 dark:border-white/5">
-            <div className="flex justify-between items-center mb-2.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                3. Acertos nas Áreas do ENEM
-              </label>
-              <span className="text-[0.7rem] text-slate-400">
-                Padrão ENEM: 45 questões por área
-              </span>
-            </div>
+            {form.simulation_type === 'personalizado' ? (
+              <div className="animate-fade-in">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <BookOpen size={15} className="text-pato" />
+                    3. Matérias do Simulado Personalizado *
+                  </label>
+                  <p className="text-[11px] font-semibold text-muted dark:text-papel/60 mt-0.5">
+                    Defina as matérias presentes no simulado e informe as questões e acertos de cada uma individualmente.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddAllSubjects}
+                  className="rounded-[12px] border-2 border-tinta bg-white dark:bg-transparent dark:border-papel px-2.5 py-1 text-xs font-bold text-tinta dark:text-papel hover:bg-papel shrink-0"
+                >
+                  <Plus size={12} strokeWidth={3} className="inline mr-1" />
+                  Adicionar todas do edital ({subjects.length})
+                </button>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-              {ENEM_AREAS.map(a => {
-                const isApplicable =
-                  form.simulation_type === 'completo' ||
-                  (form.simulation_type === 'dia_1' && a.day === 1) ||
-                  (form.simulation_type === 'dia_2' && a.day === 2) ||
-                  (form.simulation_type === 'area_unica' && form.target_area === a.key) ||
-                  form.simulation_type === 'personalizado';
+              {/* Seletor rápido para adicionar matéria */}
+              <div className="flex flex-wrap sm:flex-nowrap gap-2 mb-3 p-2.5 rounded-[16px] border-[3px] border-tinta bg-papel dark:border-papel/40 dark:bg-white/5">
+                <select
+                  value=""
+                  onChange={e => {
+                    if (e.target.value) {
+                      const s = subjects.find(sub => sub.id === e.target.value);
+                      if (s) handleAddCustomSubject(s.id, s.name);
+                    }
+                  }}
+                  className="input text-xs font-bold py-1.5 flex-1 min-w-[180px]"
+                >
+                  <option value="">+ Selecionar matéria do edital...</option>
+                  {subjects.map(sub => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.name} ({sub.area})
+                    </option>
+                  ))}
+                </select>
 
-                if (!isApplicable) return null;
-
-                const isEssay = a.key === 'essay';
-                const fieldKey = `score_${a.key}` as keyof FormState;
-                const currentVal = form[fieldKey] as string;
-
-                return (
-                  <div
-                    key={a.key}
-                    className="p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]"
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <input
+                    value={newSubjectInput}
+                    onChange={e => setNewSubjectInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomSubject();
+                      }
+                    }}
+                    placeholder="Ou nome personalizado..."
+                    className="input text-xs py-1.5 min-w-[140px] flex-1 sm:flex-initial"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAddCustomSubject()}
+                    className="btn bg-pato text-tinta text-xs px-3 py-1.5 shrink-0 dark:border-papel"
                   >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
-                        <span>{a.icon}</span>
-                        {a.shortLabel}
-                      </label>
-                      <span className="text-[0.65rem] text-slate-400 font-mono">
-                        {isEssay ? '0 a 1000 pts' : 'de 45 questões'}
-                      </span>
-                    </div>
+                    Adicionar
+                  </button>
+                </div>
+              </div>
 
-                    <div className="relative">
-                      <input
-                        type="number"
-                        step={isEssay ? '10' : '1'}
-                        min="0"
-                        max={isEssay ? 1000 : 45}
-                        value={currentVal}
-                        onChange={e => setForm({ ...form, [fieldKey]: e.target.value })}
-                        className="input text-base font-bold font-mono text-center pr-12"
-                        placeholder={isEssay ? '0 - 1000' : '0 - 45'}
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
-                        {isEssay ? 'pts' : '/ 45'}
-                      </span>
-                    </div>
-
-                    {/* Essay Competencies Accordion button */}
-                    {isEssay && (
-                      <button
-                        type="button"
-                        onClick={() => setForm(prev => ({ ...prev, show_essay_details: !prev.show_essay_details }))}
-                        className="text-[0.7rem] font-bold text-pink-600 dark:text-pink-400 hover:underline mt-2 flex items-center gap-1"
-                      >
-                        {form.show_essay_details ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                        {form.show_essay_details ? 'Ocultar competências' : 'Detalhar as 5 Competências do ENEM'}
-                      </button>
-                    )}
+              {/* Lista de matérias adicionadas */}
+              {form.custom_subjects.length === 0 ? (
+                <div className="p-6 text-center rounded-[16px] border-2 border-dashed border-tinta/30 dark:border-papel/30 bg-white/50 dark:bg-white/[0.02]">
+                  <p className="text-xs font-bold text-muted dark:text-papel/60 mb-2">
+                    Nenhuma matéria adicionada a este simulado ainda.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleAddAllSubjects}
+                    className="btn bg-pato text-tinta text-xs px-4 py-2 dark:border-papel"
+                  >
+                    Adicionar todas as {subjects.length} matérias do edital
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <div className="hidden sm:grid grid-cols-12 gap-2 px-2 text-[11px] font-extrabold uppercase text-muted dark:text-papel/50">
+                    <span className="col-span-5">Matéria</span>
+                    <span className="col-span-3 text-center">Total Questões</span>
+                    <span className="col-span-3 text-center">Acertos</span>
+                    <span className="col-span-1 text-center">Ações</span>
                   </div>
-                );
-              })}
+
+                  {form.custom_subjects.map((cs, idx) => {
+                    const qTot = parseInt(cs.questions_total) || 0;
+                    const qCor = parseInt(cs.questions_correct) || 0;
+                    const pct = qTot > 0 ? Math.min(100, Math.round((qCor / qTot) * 100)) : 0;
+                    const matchedSub = subjects.find(s => s.id === cs.subject_id || s.name.toLowerCase() === cs.subject_name.toLowerCase());
+
+                    return (
+                      <div
+                        key={idx}
+                        className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2.5 rounded-[14px] border-[3px] border-tinta bg-white dark:border-papel/40 dark:bg-surface-dark-card"
+                      >
+                        <div className="sm:col-span-5 flex items-center gap-2 min-w-0">
+                          <span
+                            className="h-3.5 w-3.5 rounded-full border-2 border-tinta shrink-0"
+                            style={{ background: matchedSub?.color || '#00D64B' }}
+                          />
+                          <input
+                            value={cs.subject_name}
+                            onChange={e => handleUpdateCustomSubject(idx, 'subject_name', e.target.value)}
+                            placeholder="Nome da matéria"
+                            className="input text-xs font-bold py-1 px-2 border-none bg-transparent shadow-none"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-3 flex items-center justify-between sm:justify-center gap-2">
+                          <span className="text-xs font-bold text-muted sm:hidden">Total:</span>
+                          <div className="relative w-full max-w-[120px]">
+                            <input
+                              type="number"
+                              min="1"
+                              max="200"
+                              value={cs.questions_total}
+                              onChange={e => handleUpdateCustomSubject(idx, 'questions_total', e.target.value)}
+                              className="input text-center text-xs font-bold font-mono py-1 pr-6"
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted font-bold">q</span>
+                          </div>
+                        </div>
+
+                        <div className="sm:col-span-3 flex items-center justify-between sm:justify-center gap-2">
+                          <span className="text-xs font-bold text-muted sm:hidden">Acertos:</span>
+                          <div className="relative w-full max-w-[120px]">
+                            <input
+                              type="number"
+                              min="0"
+                              max={qTot || 200}
+                              value={cs.questions_correct}
+                              onChange={e => handleUpdateCustomSubject(idx, 'questions_correct', e.target.value)}
+                              className="input text-center text-xs font-bold font-mono py-1 pr-6"
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted font-bold">✓</span>
+                          </div>
+                          <span className={cn('text-xs font-mono font-bold shrink-0 w-11 text-right', pct >= 70 ? 'text-emerald-600 dark:text-pato' : pct >= 50 ? 'text-amber-600' : 'text-red-500')}>
+                            {pct}%
+                          </span>
+                        </div>
+
+                        <div className="sm:col-span-1 flex justify-end sm:justify-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveCustomSubject(idx)}
+                            aria-label={`Remover ${cs.subject_name}`}
+                            className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-tinta text-muted hover:bg-bico hover:text-tinta dark:border-papel dark:hover:bg-bico"
+                          >
+                            <Trash2 size={13} strokeWidth={2.8} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Barra de totalizador do Simulado Personalizado */}
+                  <div className="mt-1 flex items-center justify-between p-3 rounded-[14px] border-[3px] border-tinta bg-pato text-tinta dark:border-papel">
+                    <span className="text-xs font-extrabold uppercase tracking-wide">
+                      Total ({form.custom_subjects.length} {form.custom_subjects.length === 1 ? 'matéria' : 'matérias'})
+                    </span>
+                    <span className="font-mono text-sm font-extrabold">
+                      {parsedFormStats.totalCorrect} / {parsedFormStats.totalQuestions} questões acertadas ({parsedFormStats.accuracyPct}%)
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
+          ) : (
+            <div>
+              <div className="flex justify-between items-center mb-2.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  3. Acertos nas Áreas do ENEM
+                </label>
+                <span className="text-[0.7rem] text-slate-400">
+                  Padrão ENEM: 45 questões por área
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                {ENEM_AREAS.map(a => {
+                  const isApplicable =
+                    form.simulation_type === 'completo' ||
+                    (form.simulation_type === 'dia_1' && a.day === 1) ||
+                    (form.simulation_type === 'dia_2' && a.day === 2) ||
+                    (form.simulation_type === 'area_unica' && form.target_area === a.key);
+
+                  if (!isApplicable) return null;
+
+                  const isEssay = a.key === 'essay';
+                  const fieldKey = `score_${a.key}` as keyof FormState;
+                  const currentVal = form[fieldKey] as string;
+
+                  return (
+                    <div
+                      key={a.key}
+                      className="p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]"
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
+                          <span>{a.icon}</span>
+                          {a.shortLabel}
+                        </label>
+                        <span className="text-[0.65rem] text-slate-400 font-mono">
+                          {isEssay ? '0 a 1000 pts' : 'de 45 questões'}
+                        </span>
+                      </div>
+
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step={isEssay ? '10' : '1'}
+                          min="0"
+                          max={isEssay ? 1000 : 45}
+                          value={currentVal}
+                          onChange={e => setForm({ ...form, [fieldKey]: e.target.value })}
+                          className="input text-base font-bold font-mono text-center pr-12"
+                          placeholder={isEssay ? '0 - 1000' : '0 - 45'}
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                          {isEssay ? 'pts' : '/ 45'}
+                        </span>
+                      </div>
+
+                      {/* Essay Competencies Accordion button */}
+                      {isEssay && (
+                        <button
+                          type="button"
+                          onClick={() => setForm(prev => ({ ...prev, show_essay_details: !prev.show_essay_details }))}
+                          className="text-[0.7rem] font-bold text-pink-600 dark:text-pink-400 hover:underline mt-2 flex items-center gap-1"
+                        >
+                          {form.show_essay_details ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                          {form.show_essay_details ? 'Ocultar competências' : 'Detalhar as 5 Competências do ENEM'}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
             {/* Redação: 5 Competências do ENEM (C1 a C5: 0 a 200 pontos cada) */}
             {form.show_essay_details && (form.simulation_type === 'completo' || form.simulation_type === 'dia_1' || (form.simulation_type === 'area_unica' && form.target_area === 'essay')) && (
@@ -1767,37 +1927,63 @@ export default function SimuladosTab() {
                 </div>
               </div>
 
-              {/* Area Scores */}
-              <div>
-                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-2">Desempenho por Área</h4>
-                <div className="flex flex-col gap-2">
-                  {ENEM_AREAS.map(a => {
-                    const val = selectedDetail[`score_${a.key}` as keyof Simulation] as number | null;
-                    if (val === null || val === undefined) return null;
-                    const isEssay = a.key === 'essay';
-                    const areaTriVal = meta.area_tri?.[a.key];
-
-                    return (
-                      <div key={a.key} className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-white/5">
-                        <div className="flex items-center gap-2">
-                          <span>{a.icon}</span>
-                          <span className="font-semibold text-xs">{a.label}</span>
-                        </div>
-                        <div className="flex items-center gap-2 font-mono">
-                          <span className="font-bold text-sm">
-                            {val} {isEssay ? 'pts' : 'acertos / 45'}
-                          </span>
-                          {areaTriVal !== undefined && (
-                            <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 font-semibold">
-                              TRI: {areaTriVal}
+              {/* Desempenho por Matéria ou por Área */}
+              {simType === 'personalizado' && meta.subjects_breakdown && meta.subjects_breakdown.length > 0 ? (
+                <div>
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-2">
+                    Desempenho por Matéria ({meta.subjects_breakdown.length})
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {meta.subjects_breakdown.map((sb, sbIdx) => {
+                      const sbPct = sb.questions_total > 0 ? Math.round((sb.questions_correct / sb.questions_total) * 100) : 0;
+                      return (
+                        <div key={sbIdx} className="p-2.5 rounded-lg border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-bold text-xs text-tinta dark:text-papel truncate">{sb.subject_name}</span>
+                            <span className="font-mono text-xs font-bold text-tinta dark:text-papel shrink-0 ml-2">
+                              {sb.questions_correct}/{sb.questions_total} ({sbPct}%)
                             </span>
-                          )}
+                          </div>
+                          <div className="track w-full" style={{ height: 8 }}>
+                            <div style={{ width: `${sbPct}%`, background: sbPct >= 70 ? '#00D64B' : sbPct >= 50 ? '#D68200' : '#EF4444' }} />
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-2">Desempenho por Área</h4>
+                  <div className="flex flex-col gap-2">
+                    {ENEM_AREAS.map(a => {
+                      const val = selectedDetail[`score_${a.key}` as keyof Simulation] as number | null;
+                      if (val === null || val === undefined) return null;
+                      const isEssay = a.key === 'essay';
+                      const areaTriVal = meta.area_tri?.[a.key];
+
+                      return (
+                        <div key={a.key} className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-white/5">
+                          <div className="flex items-center gap-2">
+                            <span>{a.icon}</span>
+                            <span className="font-semibold text-xs">{a.label}</span>
+                          </div>
+                          <div className="flex items-center gap-2 font-mono">
+                            <span className="font-bold text-sm">
+                              {val} {isEssay ? 'pts' : 'acertos / 45'}
+                            </span>
+                            {areaTriVal !== undefined && (
+                              <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 font-semibold">
+                                TRI: {areaTriVal}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Redação competências se houver */}
               {meta.essay_competencies && (
