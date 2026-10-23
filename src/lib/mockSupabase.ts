@@ -10,6 +10,12 @@ import type {
   ErrorNotebookEntry,
   RepertorioCustomEntry,
   RepertorioFavoriteEntry,
+  VestibularTask,
+  UniversitySubject,
+  UniversityGrade,
+  UniversityTask,
+  UniversityStudySession,
+  UniversityFlashcard,
 } from './supabase';
 
 type StoredData = {
@@ -21,8 +27,14 @@ type StoredData = {
   essays: Essay[];
   topic_completions: TopicCompletion[];
   error_notebook_entries: ErrorNotebookEntry[];
+  vestibular_tasks: VestibularTask[];
   repertorios_custom: RepertorioCustomEntry[];
   repertorio_favorites: RepertorioFavoriteEntry[];
+  university_subjects: UniversitySubject[];
+  university_grades: UniversityGrade[];
+  university_tasks: UniversityTask[];
+  university_study_sessions: UniversityStudySession[];
+  university_flashcards: UniversityFlashcard[];
   storage_files: Record<string, string>; // path -> dataUrl
 };
 
@@ -61,8 +73,14 @@ function loadDB(): StoredData {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.subjects) && parsed.subjects.length > 0) {
+        if (!parsed.vestibular_tasks) parsed.vestibular_tasks = [];
         if (!parsed.repertorios_custom) parsed.repertorios_custom = [];
         if (!parsed.repertorio_favorites) parsed.repertorio_favorites = [];
+        if (!parsed.university_subjects) parsed.university_subjects = [];
+        if (!parsed.university_grades) parsed.university_grades = [];
+        if (!parsed.university_tasks) parsed.university_tasks = [];
+        if (!parsed.university_study_sessions) parsed.university_study_sessions = [];
+        if (!parsed.university_flashcards) parsed.university_flashcards = [];
         return parsed;
       }
     }
@@ -79,8 +97,14 @@ function loadDB(): StoredData {
     essays: [],
     topic_completions: [],
     error_notebook_entries: [],
+    vestibular_tasks: [],
     repertorios_custom: [],
     repertorio_favorites: [],
+    university_subjects: [],
+    university_grades: [],
+    university_tasks: [],
+    university_study_sessions: [],
+    university_flashcards: [],
     storage_files: {},
   };
   saveDB(initial);

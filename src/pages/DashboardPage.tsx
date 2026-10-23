@@ -17,6 +17,16 @@ import SettingsTab from './dashboard/SettingsTab';
 import RedacaoTab from './dashboard/RedacaoTab';
 import ErrorNotebookTab from './dashboard/ErrorNotebookTab';
 import SubjectDetailPage from './dashboard/SubjectDetailPage';
+import VestibularTarefasTab from './dashboard/VestibularTarefasTab';
+
+// University Mode Tabs
+import DisciplinasTab from './dashboard/university/DisciplinasTab';
+import ProvasENotasTab from './dashboard/university/ProvasENotasTab';
+import PrazosEEntregasTab from './dashboard/university/PrazosEEntregasTab';
+import ResumosFlashcardsTab from './dashboard/university/ResumosFlashcardsTab';
+import UniversityActivityTab from './dashboard/university/UniversityActivityTab';
+import UniversityStatsTab from './dashboard/university/UniversityStatsTab';
+
 import { cn } from '../lib/theme';
 import {
   LayoutDashboard,
@@ -33,15 +43,29 @@ import {
   Plus,
   Flame,
   LogOut,
+  Calculator,
+  Kanban,
+  Brain,
 } from 'lucide-react';
 
-const TABS = [
+const VESTIBULAR_TABS = [
   { id: 'overview', label: 'Início', icon: LayoutDashboard },
   { id: 'edital', label: 'Edital', icon: BookOpen },
-  { id: 'activity', label: 'Atividade', icon: History },
+  { id: 'tarefas', label: 'Tarefas', icon: Kanban },
   { id: 'simulados', label: 'Simulados', icon: ClipboardList },
   { id: 'redacao', label: 'Redação', icon: PenLine },
   { id: 'errors', label: 'Caderno de Erros', icon: AlertCircle },
+  { id: 'activity', label: 'Atividade', icon: History },
+  { id: 'stats', label: 'Estatísticas', icon: BarChart3 },
+];
+
+const UNIVERSITY_TABS = [
+  { id: 'overview', label: 'Início', icon: LayoutDashboard },
+  { id: 'disciplinas', label: 'Disciplinas', icon: BookOpen },
+  { id: 'provas_notas', label: 'Provas e Notas', icon: Calculator },
+  { id: 'prazos', label: 'Prazos e Entregas', icon: Kanban },
+  { id: 'resumos_flashcards', label: 'Resumos e Flashcards', icon: Brain },
+  { id: 'activity', label: 'Atividade', icon: History },
   { id: 'stats', label: 'Estatísticas', icon: BarChart3 },
 ];
 
@@ -50,7 +74,11 @@ const BOTTOM_TABS = [
   { id: 'settings', label: 'Configurações', icon: Settings },
 ];
 
-type NavTab = { id: string; label: string; icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }> };
+type NavTab = {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
+};
 
 function NavButton({ tab, active, onClick }: { tab: NavTab; active: boolean; onClick: () => void }) {
   const Icon = tab.icon;
@@ -87,22 +115,59 @@ export default function DashboardPage() {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
   const [errorFilterSubjectId, setErrorFilterSubjectId] = useState<string | null>(null);
   const [errorFilterTopicId, setErrorFilterTopicId] = useState<string | null>(null);
-  const { profile, user } = useApp();
+  const { currentMode, profile, user } = useApp();
   const navigate = useNavigate();
 
-  useEffect(() => { if (!user) navigate('/login'); }, [user, navigate]);
+  useEffect(() => {
+    if (!user) navigate('/login');
+  }, [user, navigate]);
 
-  const handleLogout = async () => { await supabase.auth.signOut(); navigate('/'); };
+  // Adjust activeTab if mode changes and current tab is exclusive to the other mode
+  useEffect(() => {
+    if (currentMode === 'universitario') {
+      const uniValid = UNIVERSITY_TABS.concat(BOTTOM_TABS).some(t => t.id === activeTab);
+      if (!uniValid) {
+        if (activeTab === 'edital') setActiveTab('disciplinas');
+        else if (activeTab === 'tarefas') setActiveTab('prazos');
+        else if (activeTab === 'simulados') setActiveTab('provas_notas');
+        else if (activeTab === 'redacao') setActiveTab('prazos');
+        else if (activeTab === 'errors') setActiveTab('resumos_flashcards');
+        else setActiveTab('overview');
+      }
+    } else {
+      const vestValid = VESTIBULAR_TABS.concat(BOTTOM_TABS).some(t => t.id === activeTab);
+      if (!vestValid) {
+        if (activeTab === 'disciplinas') setActiveTab('edital');
+        else if (activeTab === 'prazos') setActiveTab('tarefas');
+        else if (activeTab === 'provas_notas') setActiveTab('simulados');
+        else if (activeTab === 'resumos_flashcards') setActiveTab('errors');
+        else setActiveTab('overview');
+      }
+    }
+  }, [currentMode, activeTab]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
+
   const streak = profile?.current_streak ?? 0;
   const initial = (profile?.display_name ?? 'Pedro').trim().charAt(0).toUpperCase() || 'P';
 
   const handleTimerComplete = (minutes: number) => {
-    setTimerOpen(false); setPendingMinutes(minutes); setLogOpen(true);
+    setTimerOpen(false);
+    setPendingMinutes(minutes);
+    setLogOpen(true);
   };
 
-  const pageLabel = TABS.concat(BOTTOM_TABS).find(t => t.id === activeTab)?.label || 'Início';
+  const currentTabs = currentMode === 'universitario' ? UNIVERSITY_TABS : VESTIBULAR_TABS;
+  const pageLabel = currentTabs.concat(BOTTOM_TABS).find(t => t.id === activeTab)?.label || 'Início';
 
-  const go = (id: string) => { setSelectedSubjectId(null); setActiveTab(id); setDrawerOpen(false); };
+  const go = (id: string) => {
+    setSelectedSubjectId(null);
+    setActiveTab(id);
+    setDrawerOpen(false);
+  };
 
   const sidebarInner = (
     <div className="flex h-full select-none flex-col justify-between overflow-hidden">
@@ -124,7 +189,7 @@ export default function DashboardPage() {
       {/* Navegação principal */}
       <div className="no-scrollbar flex flex-1 flex-col justify-between gap-2 overflow-y-auto">
         <div className="flex flex-col gap-1.5">
-          {TABS.map(t => (
+          {currentTabs.map(t => (
             <NavButton key={t.id} tab={t} active={activeTab === t.id && !selectedSubjectId} onClick={() => go(t.id)} />
           ))}
         </div>
@@ -153,7 +218,7 @@ export default function DashboardPage() {
 
   return (
     <div className="relative min-h-screen bg-[#F6F5FB] text-[#14102A] transition-colors duration-300 dark:bg-[#0B0819] dark:text-[#F3F1FF]">
-      {/* Background Ambient Glow (Fiel ao design DuckMind 2.0 das imagens) */}
+      {/* Background Ambient Glow (Fiel ao design DuckMind 2.0) */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         {/* Top purple ambient glow */}
         <div className="absolute -top-32 right-[-5%] h-[550px] w-[550px] rounded-full bg-[#6F00D6]/12 blur-[120px] dark:bg-[#6F00D6]/30" />
@@ -163,7 +228,7 @@ export default function DashboardPage() {
         <div className="absolute -bottom-36 right-[25%] h-[500px] w-[500px] rounded-full bg-[#6F00D6]/8 blur-[140px] dark:bg-[#6F00D6]/20" />
       </div>
 
-      {/* Sidebar desktop: Menu lateral flutuante conforme V2 · Web Início (escuro) */}
+      {/* Sidebar desktop: Menu lateral flutuante */}
       <aside
         className="fixed left-4 top-4 bottom-4 z-40 hidden w-[240px] flex-col rounded-[28px] border border-slate-200/80 bg-white/95 p-5 shadow-2xl backdrop-blur-md dark:border-white/5 dark:bg-[#131024]/90 md:flex"
       >
@@ -191,15 +256,22 @@ export default function DashboardPage() {
       <div className="relative z-10 flex min-h-screen min-w-0 max-w-full flex-col overflow-x-hidden pb-28 md:ml-[264px] md:pb-8">
         {/* Cabeçalho sem limitações/separadores rígidos: Totalmente integrado ao fundo */}
         <header className="flex h-[72px] shrink-0 items-center justify-between gap-3 px-4 pt-3 pb-2 md:px-8 md:pt-6 md:pb-4 transition-colors">
-          {/* Mobile: Apenas Logo DuckMind à esquerda (sem menu aqui) */}
+          {/* Mobile: Apenas Logo DuckMind à esquerda */}
           <div className="flex min-w-0 items-center gap-2 md:hidden">
             <Logo size="md" />
           </div>
 
-          {/* Desktop: Trilha / Breadcrumb */}
+          {/* Desktop: Trilha / Breadcrumb Adaptado ao Modo */}
           <div className="hidden min-w-0 items-center gap-2 md:flex">
-            <span className="rounded-full bg-[#00D64B]/15 px-3.5 py-1 font-display text-xs font-bold text-[#008E32] dark:text-[#19E85F]">
-              ENEM 2026
+            <span
+              className={cn(
+                'rounded-full px-3.5 py-1 font-display text-xs font-bold',
+                currentMode === 'universitario'
+                  ? 'bg-[#6F00D6]/15 text-[#6F00D6] dark:text-[#9B3DFF]'
+                  : 'bg-[#00D64B]/15 text-[#008E32] dark:text-[#19E85F]'
+              )}
+            >
+              {currentMode === 'universitario' ? 'SEMESTRE 2026.1' : 'ENEM 2026'}
             </span>
             <span className="text-slate-300 dark:text-white/20 font-display">/</span>
             <span className="truncate font-display text-sm font-bold text-[#14102A] dark:text-white">
@@ -253,7 +325,7 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* Conteúdo */}
+        {/* Conteúdo Principal */}
         <main className="min-w-0 max-w-full flex-1 px-4 py-4 sm:px-6 md:px-8 md:py-5">
           {selectedSubjectId ? (
             <SubjectDetailPage subjectId={selectedSubjectId} onBack={() => setSelectedSubjectId(null)} />
@@ -267,7 +339,9 @@ export default function DashboardPage() {
                   onOpenStreak={() => setStreakOpen(true)}
                 />
               )}
-              {activeTab === 'edital' && (
+
+              {/* ROTAS EXCLUSIVAS DO MODO VESTIBULAR */}
+              {activeTab === 'edital' && currentMode === 'vestibular' && (
                 <EditalTab
                   onOpenSubject={setSelectedSubjectId}
                   onOpenErrorNotebook={(subjectId, topicId) => {
@@ -277,17 +351,32 @@ export default function DashboardPage() {
                   }}
                 />
               )}
-              {activeTab === 'activity' && <ActivityTab />}
-              {activeTab === 'simulados' && <SimuladosTab />}
-              {activeTab === 'redacao' && <RedacaoTab />}
-              {activeTab === 'errors' && (
+              {activeTab === 'tarefas' && currentMode === 'vestibular' && <VestibularTarefasTab />}
+              {activeTab === 'simulados' && currentMode === 'vestibular' && <SimuladosTab />}
+              {activeTab === 'redacao' && currentMode === 'vestibular' && <RedacaoTab />}
+              {activeTab === 'errors' && currentMode === 'vestibular' && (
                 <ErrorNotebookTab
                   filterSubjectId={errorFilterSubjectId ?? undefined}
                   filterTopicId={errorFilterTopicId ?? undefined}
                   onClearFilter={() => { setErrorFilterSubjectId(null); setErrorFilterTopicId(null); }}
                 />
               )}
-              {activeTab === 'stats' && <StatsTab />}
+
+              {/* ROTAS EXCLUSIVAS DO MODO UNIVERSITÁRIO */}
+              {activeTab === 'disciplinas' && currentMode === 'universitario' && <DisciplinasTab />}
+              {activeTab === 'provas_notas' && currentMode === 'universitario' && <ProvasENotasTab />}
+              {activeTab === 'prazos' && currentMode === 'universitario' && <PrazosEEntregasTab />}
+              {activeTab === 'resumos_flashcards' && currentMode === 'universitario' && <ResumosFlashcardsTab />}
+
+              {/* ATIVIDADE (TOTALMENTE SEPARADA POR MODO) */}
+              {activeTab === 'activity' && currentMode === 'vestibular' && <ActivityTab />}
+              {activeTab === 'activity' && currentMode === 'universitario' && <UniversityActivityTab />}
+
+              {/* ESTATÍSTICAS (TOTALMENTE SEPARADA POR MODO) */}
+              {activeTab === 'stats' && currentMode === 'vestibular' && <StatsTab />}
+              {activeTab === 'stats' && currentMode === 'universitario' && <UniversityStatsTab />}
+
+              {/* PERFIL E CONFIGURAÇÕES */}
               {activeTab === 'profile' && <ProfileTab />}
               {activeTab === 'settings' && <SettingsTab />}
             </>
@@ -295,7 +384,7 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      {/* Menu flutuante na parte inferior da tela (Mobile conforme V2 · Mobile Início) */}
+      {/* Menu flutuante na parte inferior da tela (Mobile) */}
       <nav
         aria-label="Navegação móvel"
         className="fixed bottom-4 inset-x-4 max-w-[420px] mx-auto z-40 flex h-[66px] items-center justify-around rounded-[32px] bg-white/90 backdrop-blur-xl border border-slate-200/80 shadow-[0_12px_36px_rgba(20,16,42,0.18)] dark:border-white/10 dark:bg-[#14102A]/90 dark:shadow-[0_12px_36px_rgba(0,0,0,0.5)] px-2 md:hidden"
@@ -309,13 +398,19 @@ export default function DashboardPage() {
           <span>Início</span>
         </button>
 
-        {/* 2: Edital */}
+        {/* 2: Disciplinas (Universitário) vs Edital (Vestibular) */}
         <button
-          onClick={() => go('edital')}
-          className={cn('tab-item flex-1', activeTab === 'edital' && !selectedSubjectId && 'tab-item-active')}
+          onClick={() => go(currentMode === 'universitario' ? 'disciplinas' : 'edital')}
+          className={cn(
+            'tab-item flex-1',
+            ((currentMode === 'universitario' && activeTab === 'disciplinas') ||
+             (currentMode === 'vestibular' && activeTab === 'edital')) &&
+              !selectedSubjectId &&
+              'tab-item-active'
+          )}
         >
-          <BookOpen size={20} strokeWidth={activeTab === 'edital' ? 2.6 : 2} />
-          <span>Edital</span>
+          <BookOpen size={20} strokeWidth={2} />
+          <span>{currentMode === 'universitario' ? 'Matérias' : 'Edital'}</span>
         </button>
 
         {/* 3: Botão de ação flutuante elevado no centro com glow verde */}
@@ -329,14 +424,24 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* 4: Atividade */}
-        <button
-          onClick={() => go('activity')}
-          className={cn('tab-item flex-1', activeTab === 'activity' && !selectedSubjectId && 'tab-item-active')}
-        >
-          <History size={20} strokeWidth={activeTab === 'activity' ? 2.6 : 2} />
-          <span>Atividade</span>
-        </button>
+        {/* 4: Prazos (Universitário) vs Tarefas (Vestibular) */}
+        {currentMode === 'universitario' ? (
+          <button
+            onClick={() => go('prazos')}
+            className={cn('tab-item flex-1', activeTab === 'prazos' && !selectedSubjectId && 'tab-item-active')}
+          >
+            <Kanban size={20} strokeWidth={activeTab === 'prazos' ? 2.6 : 2} />
+            <span>Prazos</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => go('tarefas')}
+            className={cn('tab-item flex-1', activeTab === 'tarefas' && !selectedSubjectId && 'tab-item-active')}
+          >
+            <Kanban size={20} strokeWidth={activeTab === 'tarefas' ? 2.6 : 2} />
+            <span>Tarefas</span>
+          </button>
+        )}
 
         {/* 5: Menu de três barras substituindo o perfil */}
         <button

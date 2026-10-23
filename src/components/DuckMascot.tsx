@@ -1,5 +1,3 @@
-import { DUCK_LEVELS } from '../lib/gamification';
-
 export type Mood = 'happy' | 'celebrating' | 'studying' | 'sad' | 'fire';
 
 export type DuckMascotProps = {
@@ -185,22 +183,15 @@ export default function DuckMascot({
   mood = 'studying',
   animate = false,
   className = '',
-  level = 1,
-  showAccessoryBadge = false,
-  showLevelTag = false,
   fullBody = false,
 }: DuckMascotProps) {
-  const currentLvl = DUCK_LEVELS.find(l => l.level === level) || DUCK_LEVELS[0];
-  const isFederalTier = level >= 8;
-  const badgeSize = Math.max(16, Math.min(28, Math.round(size * 0.36)));
-
   return (
     <div
       className={`relative inline-flex items-center justify-center shrink-0 ${className}`}
       style={{ width: size, height: size }}
-      title={`Quack · ${currentLvl.title}`}
+      title="Quack · DuckMind"
       role="img"
-      aria-label={`Quack, o pato do DuckMind — ${currentLvl.title}`}
+      aria-label="Quack, o pato do DuckMind"
     >
       <svg
         viewBox="0 0 200 200"
@@ -211,46 +202,6 @@ export default function DuckMascot({
       >
         {fullBody ? <QuackBody /> : <QuackFace mood={mood} />}
       </svg>
-
-      {showAccessoryBadge && (
-        <div
-          className="absolute -bottom-1 -right-1 z-20 flex items-center justify-center rounded-full leading-none"
-          style={{
-            width: `${badgeSize}px`,
-            height: `${badgeSize}px`,
-            fontSize: badgeSize < 20 ? '10px' : badgeSize < 24 ? '12px' : '14px',
-            background: C.papel,
-            border: `3px solid ${C.tinta}`,
-            boxShadow: `2px 2px 0 ${C.tinta}`,
-            color: C.tinta,
-          }}
-          title={`${currentLvl.title} (${currentLvl.accessory})`}
-        >
-          <span>{currentLvl.accessory}</span>
-        </div>
-      )}
-
-      {isFederalTier && !fullBody && (
-        <span className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 text-lg" title="Aprovado na Federal!">
-          👑
-        </span>
-      )}
-
-      {showLevelTag && (
-        <div
-          className="absolute -bottom-2.5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap font-display text-[10px] font-bold uppercase tracking-wide"
-          style={{
-            background: C.mente,
-            color: C.papel,
-            border: `2px solid ${C.tinta}`,
-            borderRadius: '10px',
-            padding: '1px 8px',
-            boxShadow: `2px 2px 0 ${C.tinta}`,
-          }}
-        >
-          Nv.{level}
-        </div>
-      )}
     </div>
   );
 }

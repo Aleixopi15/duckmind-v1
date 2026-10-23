@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { cn } from '../../lib/theme';
 import type { Simulation, SimulationType, SimulationTargetArea } from '../../lib/supabase';
 import { parseSimulationData, type SimulationMeta, type SimulationSubjectBreakdown } from '../../lib/simulationUtils';
+import type { ElementType } from 'react';
 import {
   Plus,
   Edit2,
@@ -18,6 +19,13 @@ import {
   ChevronDown,
   ChevronUp,
   BookOpen,
+  Landmark,
+  PenLine,
+  FlaskConical,
+  Calculator,
+  GraduationCap,
+  Target,
+  Sliders,
 } from 'lucide-react';
 
 export interface EnemAreaConfig {
@@ -30,7 +38,7 @@ export interface EnemAreaConfig {
   badgeText: string;
   defaultQuestions: number;
   maxScore: number;
-  icon: string;
+  icon: ElementType;
 }
 
 export const ENEM_AREAS: EnemAreaConfig[] = [
@@ -44,7 +52,7 @@ export const ENEM_AREAS: EnemAreaConfig[] = [
     badgeText: 'text-blue-700 dark:text-blue-300',
     defaultQuestions: 45,
     maxScore: 1000,
-    icon: '📖',
+    icon: BookOpen,
   },
   {
     key: 'humanities',
@@ -56,7 +64,7 @@ export const ENEM_AREAS: EnemAreaConfig[] = [
     badgeText: 'text-amber-700 dark:text-amber-300',
     defaultQuestions: 45,
     maxScore: 1000,
-    icon: '🏛️',
+    icon: Landmark,
   },
   {
     key: 'essay',
@@ -68,7 +76,7 @@ export const ENEM_AREAS: EnemAreaConfig[] = [
     badgeText: 'text-pink-700 dark:text-pink-300',
     defaultQuestions: 0,
     maxScore: 1000,
-    icon: '✍️',
+    icon: PenLine,
   },
   {
     key: 'natural_sciences',
@@ -80,7 +88,7 @@ export const ENEM_AREAS: EnemAreaConfig[] = [
     badgeText: 'text-emerald-700 dark:text-emerald-300',
     defaultQuestions: 45,
     maxScore: 1000,
-    icon: '🔬',
+    icon: FlaskConical,
   },
   {
     key: 'math',
@@ -92,45 +100,45 @@ export const ENEM_AREAS: EnemAreaConfig[] = [
     badgeText: 'text-purple-700 dark:text-purple-300',
     defaultQuestions: 45,
     maxScore: 1000,
-    icon: '📐',
+    icon: Calculator,
   },
 ];
 
-const SIM_TYPE_DETAILS: Record<SimulationType, { label: string; desc: string; officialTime: number; badgeColor: string; icon: string }> = {
+const SIM_TYPE_DETAILS: Record<SimulationType, { label: string; desc: string; officialTime: number; badgeColor: string; icon: ElementType }> = {
   completo: {
     label: 'ENEM Completo',
     desc: '1º e 2º Dia juntos (180 questões + Redação)',
     officialTime: 630, // 10h30 total
     badgeColor: 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300 border-brand-200 dark:border-brand-500/30',
-    icon: '🎓',
+    icon: GraduationCap,
   },
   dia_1: {
     label: '1º Dia do ENEM',
     desc: 'Linguagens (45q) + Humanas (45q) + Redação',
     officialTime: 330, // 5h30
     badgeColor: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 border-blue-200 dark:border-blue-500/30',
-    icon: '📘',
+    icon: BookOpen,
   },
   dia_2: {
     label: '2º Dia do ENEM',
     desc: 'Ciências da Natureza (45q) + Matemática (45q)',
     officialTime: 300, // 5h00
     badgeColor: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30',
-    icon: '🧪',
+    icon: FlaskConical,
   },
   area_unica: {
     label: 'Área Única do ENEM',
     desc: 'Simulado focado em apenas 1 área (45q ou Redação)',
     officialTime: 150, // 2h30
     badgeColor: 'bg-purple-50 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300 border-purple-200 dark:border-purple-500/30',
-    icon: '🎯',
+    icon: Target,
   },
   personalizado: {
     label: 'Personalizado',
     desc: 'Você escolhe as áreas e quantitativo de questões',
     officialTime: 180,
     badgeColor: 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300 border-slate-200 dark:border-white/10',
-    icon: '⚙️',
+    icon: Sliders,
   },
 };
 
@@ -751,27 +759,30 @@ export default function SimuladosTab() {
       {/* Filter Tabs */}
       <div className="no-scrollbar mb-6 flex items-center gap-2 overflow-x-auto pb-1">
         {([
-          { id: 'all', label: `Todos (${sortedSims.length})`, icon: '' },
-          { id: 'completo', label: 'Completo', icon: '🎓' },
-          { id: 'dia_1', label: '1º dia', icon: '📘' },
-          { id: 'dia_2', label: '2º dia', icon: '🧪' },
-          { id: 'area_unica', label: 'Área única', icon: '🎯' },
-          { id: 'personalizado', label: 'Personalizado', icon: '⚙️' },
-        ] as const).map(f => (
-          <button
-            key={f.id}
-            onClick={() => setActiveFilter(f.id)}
-            className={cn(
-              'flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-all',
-              activeFilter === f.id
-                ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
-                : 'border border-slate-200/80 bg-white text-[#645F78] hover:bg-slate-50 dark:border-white/5 dark:bg-[#151826] dark:text-[#9D96B8] dark:hover:bg-white/5',
-            )}
-          >
-            {f.icon && <span>{f.icon}</span>}
-            {f.label}
-          </button>
-        ))}
+          { id: 'all', label: `Todos (${sortedSims.length})`, icon: null },
+          { id: 'completo', label: 'Completo', icon: GraduationCap },
+          { id: 'dia_1', label: '1º dia', icon: BookOpen },
+          { id: 'dia_2', label: '2º dia', icon: FlaskConical },
+          { id: 'area_unica', label: 'Área única', icon: Target },
+          { id: 'personalizado', label: 'Personalizado', icon: Sliders },
+        ] as const).map(f => {
+          const Icon = f.icon;
+          return (
+            <button
+              key={f.id}
+              onClick={() => setActiveFilter(f.id)}
+              className={cn(
+                'flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-all',
+                activeFilter === f.id
+                  ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                  : 'border border-slate-200/80 bg-white text-[#645F78] hover:bg-slate-50 dark:border-white/5 dark:bg-[#151826] dark:text-[#9D96B8] dark:hover:bg-white/5',
+              )}
+            >
+              {Icon && <Icon size={13} strokeWidth={2.4} />}
+              <span>{f.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Simulations List */}
@@ -811,6 +822,9 @@ export default function SimuladosTab() {
             const hours = durationTotal ? Math.floor(durationTotal / 60) : 0;
             const mins = durationTotal ? durationTotal % 60 : 0;
 
+            const TypeIcon = typeInfo.icon;
+            const TargetAreaIcon = targetAreaConfig?.icon;
+
             // Compute correct questions count & pace
             const totalQ = meta.questions_total ?? (simType === 'dia_1' || simType === 'dia_2' ? 90 : simType === 'area_unica' ? 45 : 180);
             const correctQ = meta.questions_correct ?? null;
@@ -825,13 +839,15 @@ export default function SimuladosTab() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                      <span className="rounded-full bg-[#6F00D6]/15 px-2.5 py-0.5 text-xs font-bold text-[#6F00D6] dark:text-[#B379FF]">
-                        {typeInfo.icon} {typeInfo.label}
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6F00D6]/15 px-2.5 py-0.5 text-xs font-bold text-[#6F00D6] dark:text-[#B379FF]">
+                        <TypeIcon size={12} strokeWidth={2.4} />
+                        <span>{typeInfo.label}</span>
                       </span>
 
-                      {targetAreaConfig && (
-                        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-[#14102A] dark:bg-white/5 dark:text-white/80">
-                          {targetAreaConfig.icon} {targetAreaConfig.shortLabel}
+                      {targetAreaConfig && TargetAreaIcon && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-[#14102A] dark:bg-white/5 dark:text-white/80">
+                          <TargetAreaIcon size={12} strokeWidth={2.4} />
+                          <span>{targetAreaConfig.shortLabel}</span>
                         </span>
                       )}
 
@@ -971,10 +987,14 @@ export default function SimuladosTab() {
                       const pct = val !== null && val !== undefined ? Math.min(100, (val / maxVal) * 100) : 0;
                       const areaTriVal = meta.area_tri?.[a.key];
 
+                      const AreaIcon = a.icon;
+
                       return (
                         <div className="flex flex-col justify-between gap-3 rounded-2xl border border-slate-200/60 bg-slate-50/70 p-3.5 dark:border-white/5 dark:bg-white/[0.03] sm:flex-row sm:items-center">
                           <div className="flex items-center gap-3">
-                            <div className="text-2xl">{a.icon}</div>
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                              <AreaIcon size={20} strokeWidth={2.4} />
+                            </div>
                             <div>
                               <div className="text-sm font-bold text-[#14102A] dark:text-white">{a.label}</div>
                               <div className="text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
@@ -1011,6 +1031,7 @@ export default function SimuladosTab() {
                 ) : (
                   <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3.5 dark:border-white/5 sm:grid-cols-3 lg:grid-cols-5">
                     {ENEM_AREAS.map((a, aIdx) => {
+                      const AreaIcon = a.icon;
                       const val = s[`score_${a.key}` as keyof Simulation] as number | null;
                       const isApplicable =
                         simType === 'completo' ||
@@ -1021,8 +1042,8 @@ export default function SimuladosTab() {
                       if (!isApplicable) {
                         return (
                           <div key={a.key} className="hidden rounded-xl border border-dashed border-slate-200 p-2.5 dark:border-white/10 sm:block">
-                            <div className="flex items-center gap-1 truncate text-[11px] font-bold text-[#645F78] dark:text-white/40">
-                              <span>{a.icon}</span> {a.shortLabel}
+                            <div className="flex items-center gap-1.5 truncate text-[11px] font-bold text-[#645F78] dark:text-white/40">
+                              <AreaIcon size={12} strokeWidth={2.2} /> {a.shortLabel}
                             </div>
                             <div className="mt-1 text-[11px] font-medium italic text-[#645F78]/70 dark:text-white/30">Não se aplica</div>
                           </div>
@@ -1043,9 +1064,9 @@ export default function SimuladosTab() {
                           )}
                         >
                           <div className="mb-1 flex items-center justify-between gap-1 text-[11px] font-bold text-[#14102A] dark:text-white">
-                            <span className="flex flex-1 items-center gap-1 truncate">
-                              <span>{a.icon}</span>
-                              {a.shortLabel}
+                            <span className="flex flex-1 items-center gap-1.5 truncate">
+                              <AreaIcon size={12} strokeWidth={2.2} />
+                              <span>{a.shortLabel}</span>
                             </span>
                             <span className="shrink-0 text-xs font-semibold text-[#645F78] dark:text-white/40">{isEssay ? '1000' : '45q'}</span>
                           </div>
@@ -1147,6 +1168,7 @@ export default function SimuladosTab() {
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
               {(['completo', 'dia_1', 'dia_2', 'area_unica', 'personalizado'] as SimulationType[]).map(typeKey => {
                 const item = SIM_TYPE_DETAILS[typeKey];
+                const ItemIcon = item.icon;
                 const isSelected = form.simulation_type === typeKey;
                 return (
                   <button
@@ -1165,7 +1187,9 @@ export default function SimuladosTab() {
                         : 'border-slate-200/80 bg-white text-[#14102A] hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10',
                     )}
                   >
-                    <div className="mb-1 text-xl">{item.icon}</div>
+                    <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 text-[#6F00D6] dark:text-[#B379FF]">
+                      <ItemIcon size={17} strokeWidth={2.4} />
+                    </div>
                     <div className="text-xs font-bold leading-tight">{item.label}</div>
                     <div className={cn('mt-1 line-clamp-2 text-[11px] font-medium', isSelected ? 'text-[#14102A]/80 dark:text-white/80' : 'text-[#645F78] dark:text-[#9D96B8]')}>
                       {item.desc}
@@ -1184,6 +1208,7 @@ export default function SimuladosTab() {
               </span>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                 {ENEM_AREAS.map(a => {
+                  const AreaBtnIcon = a.icon;
                   const isAreaSelected = form.target_area === a.key;
                   return (
                     <button
@@ -1197,7 +1222,9 @@ export default function SimuladosTab() {
                           : 'border-slate-200/80 bg-white text-[#14102A] hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10',
                       )}
                     >
-                      <div className="text-lg">{a.icon}</div>
+                      <div className="mx-auto mb-1 flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/10">
+                        <AreaBtnIcon size={15} strokeWidth={2.4} />
+                      </div>
                       <div className="mt-0.5 truncate text-xs font-bold">{a.shortLabel}</div>
                       <div className={cn('text-[11px] font-medium', isAreaSelected ? 'text-white/80' : 'text-[#645F78] dark:text-[#9D96B8]')}>
                         {a.key === 'essay' ? '1000 pts' : '45 questões'}
@@ -1522,6 +1549,8 @@ export default function SimuladosTab() {
                   const fieldKey = `score_${a.key}` as keyof FormState;
                   const currentVal = form[fieldKey] as string;
 
+                  const AreaFieldIcon = a.icon;
+
                   return (
                     <div
                       key={a.key}
@@ -1529,8 +1558,8 @@ export default function SimuladosTab() {
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
-                          <span>{a.icon}</span>
-                          {a.shortLabel}
+                          <AreaFieldIcon size={13} strokeWidth={2.4} />
+                          <span>{a.shortLabel}</span>
                         </label>
                         <span className="text-[0.65rem] text-slate-400 font-mono">
                           {isEssay ? '0 a 1000 pts' : 'de 45 questões'}
@@ -1677,8 +1706,8 @@ export default function SimuladosTab() {
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div>
-                      <label className="block text-[0.65rem] font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                        📖 TRI Linguagens
+                      <label className="flex items-center gap-1 text-[0.65rem] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                        <BookOpen size={11} className="text-blue-500" strokeWidth={2.4} /> TRI Linguagens
                       </label>
                       <input
                         type="number"
@@ -1692,8 +1721,8 @@ export default function SimuladosTab() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[0.65rem] font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                        🏛️ TRI Humanas
+                      <label className="flex items-center gap-1 text-[0.65rem] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                        <Landmark size={11} className="text-amber-500" strokeWidth={2.4} /> TRI Humanas
                       </label>
                       <input
                         type="number"
@@ -1707,8 +1736,8 @@ export default function SimuladosTab() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[0.65rem] font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                        🔬 TRI Natureza
+                      <label className="flex items-center gap-1 text-[0.65rem] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                        <FlaskConical size={11} className="text-emerald-500" strokeWidth={2.4} /> TRI Natureza
                       </label>
                       <input
                         type="number"
@@ -1722,8 +1751,8 @@ export default function SimuladosTab() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[0.65rem] font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                        📐 TRI Matemática
+                      <label className="flex items-center gap-1 text-[0.65rem] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                        <Calculator size={11} className="text-purple-500" strokeWidth={2.4} /> TRI Matemática
                       </label>
                       <input
                         type="number"
@@ -1882,9 +1911,15 @@ export default function SimuladosTab() {
             <div className="flex flex-col gap-4 text-sm">
               {/* Header tags */}
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${typeInfo.badgeColor}`}>
-                  {typeInfo.icon} {typeInfo.label}
-                </span>
+                {(() => {
+                  const ModalTypeIcon = typeInfo.icon;
+                  return (
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${typeInfo.badgeColor}`}>
+                      <ModalTypeIcon size={12} strokeWidth={2.4} />
+                      <span>{typeInfo.label}</span>
+                    </span>
+                  );
+                })()}
                 {(selectedDetail.exam_source || meta.exam_source) && (
                   <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300">
                     {selectedDetail.exam_source || meta.exam_source}
@@ -1962,10 +1997,14 @@ export default function SimuladosTab() {
                       const isEssay = a.key === 'essay';
                       const areaTriVal = meta.area_tri?.[a.key];
 
+                      const AreaRowIcon = a.icon;
+
                       return (
                         <div key={a.key} className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-white/5">
                           <div className="flex items-center gap-2">
-                            <span>{a.icon}</span>
+                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300">
+                              <AreaRowIcon size={13} strokeWidth={2.4} />
+                            </span>
                             <span className="font-semibold text-xs">{a.label}</span>
                           </div>
                           <div className="flex items-center gap-2 font-mono">

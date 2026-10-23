@@ -2,10 +2,11 @@ import { useState, useMemo } from 'react';
 import Modal from '../../components/Modal';
 import { supabase } from '../../lib/supabase';
 import { useApp } from '../../context/AppContext';
-import { formatDuration, hmsToMinutes, minutesToHMS, studyTypeLabel, studyTypeEmoji, STUDY_TYPES } from '../../components/LogStudyDialog';
+import { formatDuration, hmsToMinutes, minutesToHMS, studyTypeLabel, StudyTypeIcon, STUDY_TYPES } from '../../components/LogStudyDialog';
+import SubjectIcon from '../../components/SubjectIcon';
 import { cn } from '../../lib/theme';
 import type { StudySession, StudyType, Simulation } from '../../lib/supabase';
-import { Search, Edit2, Trash2, History, Filter } from 'lucide-react';
+import { Search, Edit2, Trash2, History, Filter, FileText } from 'lucide-react';
 import { getSimulationQuestions, getSubjectSimulationQuestions, getSimulationDuration, parseSimulationData, getSimulationDate, formatISODateSafe } from '../../lib/simulationUtils';
 
 type EditForm = {
@@ -271,10 +272,10 @@ export default function ActivityTab() {
                   className="group flex items-start gap-4 rounded-[22px] border border-slate-200/70 bg-white p-4 shadow-xs transition-all hover:border-slate-300 dark:border-white/5 dark:bg-[#151826] dark:hover:border-white/10 sm:items-center"
                 >
                   <span
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-lg shadow-xs"
-                    style={{ background: `${subjectColor}18` }}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-xs"
+                    style={{ background: `${subjectColor}18`, color: subjectColor }}
                   >
-                    {studyTypeEmoji(s.study_type ?? 'teoria')}
+                    <SubjectIcon name={sub?.name} size={18} />
                   </span>
 
                   <div className="min-w-0 flex-1">
@@ -292,8 +293,8 @@ export default function ActivityTab() {
                     )}
 
                     <div className="mt-2.5 flex flex-wrap gap-1.5">
-                      <span className="rounded-full bg-purple-500/10 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:text-purple-300">
-                        {studyTypeEmoji(s.study_type ?? 'teoria')} {studyTypeLabel(s.study_type ?? 'teoria')}
+                      <span className="rounded-full bg-purple-500/10 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:text-purple-300 inline-flex items-center gap-1.5">
+                        <StudyTypeIcon type={s.study_type ?? 'teoria'} size={12} strokeWidth={2.4} /> {studyTypeLabel(s.study_type ?? 'teoria')}
                       </span>
                       <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 dark:bg-white/5 dark:text-slate-300">
                         {formatDuration(s.duration_minutes)}
@@ -365,9 +366,9 @@ export default function ActivityTab() {
                   className="group flex items-start gap-4 rounded-[22px] border border-slate-200/70 bg-white p-4 shadow-xs transition-all hover:border-slate-300 dark:border-white/5 dark:bg-[#151826] dark:hover:border-white/10 sm:items-center"
                 >
                   <span
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-lg shadow-xs bg-amber-500/15 text-[#D68200] dark:text-[#FFB84D]"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-xs bg-amber-500/15 text-[#D68200] dark:text-[#FFB84D]"
                   >
-                    📝
+                    <FileText size={18} strokeWidth={2.4} />
                   </span>
 
                   <div className="min-w-0 flex-1">
@@ -510,22 +511,25 @@ export default function ActivityTab() {
                 Tipo de estudo
               </label>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {STUDY_TYPES.map(t => (
-                  <button
-                    key={t.value}
-                    type="button"
-                    onClick={() => setEditForm(f => ({ ...f!, study_type: t.value }))}
-                    className={cn(
-                      'flex flex-col items-center gap-1 rounded-2xl border p-2.5 text-xs font-bold transition-all',
-                      editForm.study_type === t.value
-                        ? 'border-[#00D64B] bg-[#00D64B]/10 text-[#008E32] dark:text-[#19E85F]'
-                        : 'border-slate-200/80 bg-white text-[#645F78] hover:border-slate-300 dark:border-white/5 dark:bg-white/5 dark:text-[#9D96B8]'
-                    )}
-                  >
-                    <span className="text-base">{t.emoji}</span>
-                    <span>{t.label}</span>
-                  </button>
-                ))}
+                {STUDY_TYPES.map(t => {
+                  const TypeIcon = t.icon;
+                  return (
+                    <button
+                      key={t.value}
+                      type="button"
+                      onClick={() => setEditForm(f => ({ ...f!, study_type: t.value }))}
+                      className={cn(
+                        'flex flex-col items-center gap-1.5 rounded-2xl border p-2.5 text-xs font-bold transition-all',
+                        editForm.study_type === t.value
+                          ? 'border-[#00D64B] bg-[#00D64B]/10 text-[#008E32] dark:text-[#19E85F]'
+                          : 'border-slate-200/80 bg-white text-[#645F78] hover:border-slate-300 dark:border-white/5 dark:bg-white/5 dark:text-[#9D96B8]'
+                      )}
+                    >
+                      <TypeIcon size={16} strokeWidth={2.4} />
+                      <span>{t.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

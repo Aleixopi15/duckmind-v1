@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause, Square, RefreshCw } from 'lucide-react';
+import { Play, Pause, Square, RefreshCw, Target, Coffee } from 'lucide-react';
 import Modal from './Modal';
 import DuckMascot from './DuckMascot';
 import { cn } from '../lib/theme';
@@ -128,13 +128,21 @@ export default function StudyTimerDialog({ open, onClose, onComplete }: Props) {
         {mode === 'pomodoro' && (
           <span
             className={cn(
-              'px-3 py-1 rounded-full font-display text-xs font-bold',
+              'px-3 py-1 rounded-full font-display text-xs font-bold inline-flex items-center gap-1.5',
               pomoPhase === 'work'
                 ? 'bg-[#6F00D6]/15 text-[#6F00D6] dark:text-[#9B3DFF]'
                 : 'bg-amber-500/15 text-[#D68200] dark:text-[#FFB84D]'
             )}
           >
-            {pomoPhase === 'work' ? '🎯 Foco' : '☕ Pausa'}
+            {pomoPhase === 'work' ? (
+              <>
+                <Target size={13} strokeWidth={2.4} /> Foco
+              </>
+            ) : (
+              <>
+                <Coffee size={13} strokeWidth={2.4} /> Pausa
+              </>
+            )}
           </span>
         )}
 

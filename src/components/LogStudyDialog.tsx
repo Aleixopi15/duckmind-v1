@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import type { ElementType } from 'react';
 import Modal from './Modal';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
 import DuckMascot from './DuckMascot';
-import { CheckCircle2, Zap } from 'lucide-react';
+import { CheckCircle2, BookOpen, PenLine, RotateCcw, Layers } from 'lucide-react';
 import { cn } from '../lib/theme';
 
 import type { StudyType } from '../lib/supabase';
@@ -30,19 +31,25 @@ const emptyForm: SessionForm = {
   questions_correct: '', questions_wrong: '', notes: '',
 };
 
-export const STUDY_TYPES: { value: StudyType; label: string; emoji: string }[] = [
-  { value: 'teoria', label: 'Teoria', emoji: '📖' },
-  { value: 'questoes', label: 'Questões', emoji: '✏️' },
-  { value: 'revisao', label: 'Revisão', emoji: '🔄' },
-  { value: 'flashcards', label: 'Flashcards', emoji: '🗂️' },
+export const STUDY_TYPES: { value: StudyType; label: string; icon: ElementType }[] = [
+  { value: 'teoria', label: 'Teoria', icon: BookOpen },
+  { value: 'questoes', label: 'Questões', icon: PenLine },
+  { value: 'revisao', label: 'Revisão', icon: RotateCcw },
+  { value: 'flashcards', label: 'Flashcards', icon: Layers },
 ];
 
 export function studyTypeLabel(type: StudyType): string {
   return STUDY_TYPES.find(t => t.value === type)?.label ?? type;
 }
 
-export function studyTypeEmoji(type: StudyType): string {
-  return STUDY_TYPES.find(t => t.value === type)?.emoji ?? '📚';
+export function studyTypeEmoji(_type: StudyType): string {
+  return '';
+}
+
+export function StudyTypeIcon({ type, size = 16, strokeWidth = 2.4, className = '' }: { type: StudyType; size?: number; strokeWidth?: number; className?: string }) {
+  const item = STUDY_TYPES.find(t => t.value === type);
+  const Icon = item?.icon || BookOpen;
+  return <Icon size={size} strokeWidth={strokeWidth} className={className} />;
 }
 
 export function studyTypeColor(type: StudyType): string {
@@ -77,12 +84,11 @@ export function formatDuration(totalMinutes: number) {
 type Props = { open: boolean; onClose: () => void; initialMinutes?: number };
 
 export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Props) {
-  const { subjects, topics, refreshData, updateStreak, user } = useApp();
+  const { currentMode, subjects, topics, universitySubjects, addUniversitySession, refreshData, updateStreak, user } = useApp();
   const [form, setForm] = useState<SessionForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [earnedXp, setEarnedXp] = useState(0);
 
   useEffect(() => {
     if (open && initialMinutes > 0) {
@@ -101,6 +107,21 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
     if (totalMins <= 0) { setError('Informe um tempo de estudo válido.'); return; }
     if (form.study_type === 'flashcards' && (parseInt(form.flashcards_count) || 0) <= 0) { setError('Informe quantos flashcards foram estudados.'); return; }
     setError(''); setSaving(true);
+
+    if (currentMode === 'universitario') {
+      const typeMapping = form.study_type === 'flashcards' ? 'revisao' : form.study_type === 'teoria' ? 'estudo' : form.study_type === 'questoes' ? 'exercicios' : 'revisao';
+      await addUniversitySession({
+        subject_id: form.subject_id,
+        duration_minutes: totalMins,
+        notes: form.notes.trim(),
+        session_type: typeMapping,
+        studied_at: `${form.studied_at}T12:00:00`,
+      });
+      setSuccess(true);
+      setSaving(false);
+      setTimeout(() => { setSuccess(false); onClose(); }, 1400);
+      return;
+    }
 
     const qCorrect = parseInt(form.questions_correct) || 0;
     const qWrong = parseInt(form.questions_wrong) || 0;
@@ -123,12 +144,10 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
       setError(insertErr.message); setSaving(false); return;
     }
 
-    const xp = Math.round(totalMins * 1.5 + qCorrect * 5 + (form.study_type === 'flashcards' ? (parseInt(form.flashcards_count) || 0) * 0.5 : 0));
-    setEarnedXp(xp);
     setSuccess(true);
     setSaving(false);
     await refreshData();
-    await updateStreak();
+    await updateStreak('vestibular');
     setTimeout(() => { setSuccess(false); onClose(); }, 1400);
   };
 
@@ -138,16 +157,14 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
     return (
       <Modal open={open} onClose={() => {}} size="sm">
         <div className="flex flex-col items-center gap-3 py-6 text-center">
-          <DuckMascot size={80} mood="celebrating" animate showAccessoryBadge />
+          <DuckMascot size={80} mood="celebrating" animate />
           <div className="flex items-center gap-2 font-display text-xl font-bold text-tinta dark:text-texto">
             <CheckCircle2 size={20} strokeWidth={2.8} className="text-[#00D64B] dark:text-[#19E85F]" />
-            Sessão registrada!
+            Sessão registrada com sucesso!
           </div>
-          {earnedXp > 0 && (
-            <div className="inline-flex animate-scale-in items-center gap-1.5 rounded-full bg-amber-500/15 px-3.5 py-1 font-display text-xs font-bold text-[#D68200] dark:text-[#FFB84D]">
-              <Zap size={14} strokeWidth={2.8} /> +{earnedXp} XP ganhos!
-            </div>
-          )}
+          <p className="text-xs text-muted">
+            Tempo e métricas contabilizados no seu histórico de estudos.
+          </p>
         </div>
       </Modal>
     );
@@ -232,7 +249,7 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
 
           <div>
             <label htmlFor="log-materia" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
-              Matéria *
+              {currentMode === 'universitario' ? 'Disciplina da Graduação *' : 'Matéria *'}
             </label>
             <select
               id="log-materia"
@@ -241,31 +258,39 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
               className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm font-medium text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white"
             >
               <option value="">Selecione…</option>
-              {subjects.map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
+              {currentMode === 'universitario'
+                ? universitySubjects.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} {s.code ? `(${s.code})` : ''}
+                    </option>
+                  ))
+                : subjects.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
             </select>
           </div>
         </div>
 
-        {/* Tópico (opcional) */}
-        <div>
-          <label htmlFor="log-topico" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
-            Tópico <span className="font-normal opacity-70">(opcional)</span>
-          </label>
-          <select
-            id="log-topico"
-            value={form.topic_id}
-            onChange={e => setForm(f => ({ ...f, topic_id: e.target.value }))}
-            disabled={!form.subject_id}
-            className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm font-medium text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white disabled:opacity-50"
-          >
-            <option value="">Nenhum</option>
-            {filteredTopics.map(t => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
-        </div>
+        {/* Tópico (apenas no modo vestibular) */}
+        {currentMode === 'vestibular' && (
+          <div>
+            <label htmlFor="log-topico" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+              Tópico <span className="font-normal opacity-70">(opcional)</span>
+            </label>
+            <select
+              id="log-topico"
+              value={form.topic_id}
+              onChange={e => setForm(f => ({ ...f, topic_id: e.target.value }))}
+              disabled={!form.subject_id}
+              className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm font-medium text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white disabled:opacity-50"
+            >
+              <option value="">Nenhum</option>
+              {filteredTopics.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Tempo de Estudo */}
         <div>

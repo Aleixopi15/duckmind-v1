@@ -163,6 +163,24 @@ export type ErrorNotebookEntry = {
   observacoes: string;
 };
 
+export type VestibularTaskPriority = 'low' | 'medium' | 'high';
+export type VestibularTaskStatus = 'todo' | 'in_progress' | 'done';
+
+export type VestibularTask = {
+  id: string;
+  user_id: string;
+  subject_id: string;
+  title: string;
+  description: string;
+  status: VestibularTaskStatus;
+  priority: VestibularTaskPriority;
+  due_date: string | null;
+  delivered_at: string | null;
+  created_at: string;
+};
+
+export type UserMode = 'vestibular' | 'universitario';
+
 export type UserProfile = {
   id: string;
   display_name: string;
@@ -176,6 +194,79 @@ export type UserProfile = {
   goal_weekly_minutes: number;
   goal_weekly_questions: number;
   notifications_enabled: boolean;
+  current_mode?: UserMode;
+  created_at: string;
+};
+
+export type UniversitySubject = {
+  id: string;
+  user_id: string;
+  name: string;
+  code?: string | null;
+  professor?: string | null;
+  room?: string | null;
+  schedule?: string | null;
+  credits: number;
+  target_hours_weekly: number;
+  color: string;
+  icon: string;
+  semester: string;
+  created_at: string;
+};
+
+export type UniversityGrade = {
+  id: string;
+  user_id: string;
+  subject_id: string;
+  title: string;
+  weight: number;
+  score: number | null;
+  max_score: number;
+  date: string | null;
+  notes: string;
+  created_at: string;
+};
+
+export type UniversityTaskPriority = 'low' | 'medium' | 'high';
+export type UniversityTaskStatus = 'todo' | 'in_progress' | 'done';
+
+export type UniversityTask = {
+  id: string;
+  user_id: string;
+  subject_id: string;
+  title: string;
+  description: string;
+  status: UniversityTaskStatus;
+  priority: UniversityTaskPriority;
+  due_date: string | null;
+  delivered_at: string | null;
+  created_at: string;
+};
+
+export type UniversitySessionType = 'estudo' | 'aula' | 'revisao' | 'projeto' | 'exercicios';
+
+export type UniversityStudySession = {
+  id: string;
+  user_id: string;
+  subject_id: string;
+  duration_minutes: number;
+  notes: string;
+  session_type: UniversitySessionType;
+  studied_at: string;
+  created_at: string;
+};
+
+export type UniversityFlashcardStatus = 'novo' | 'revisando' | 'dominado';
+
+export type UniversityFlashcard = {
+  id: string;
+  user_id: string;
+  subject_id: string;
+  front: string;
+  back: string;
+  summary_topic: string;
+  status: UniversityFlashcardStatus;
+  last_reviewed_at: string | null;
   created_at: string;
 };
 

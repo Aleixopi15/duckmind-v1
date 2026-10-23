@@ -223,7 +223,36 @@ export default function StatsTab() {
   });
   const maxTypeMinutes = Math.max(...typeStats.map(t => t.minutes), 60);
 
-  const simByDate = [...simulations].sort((a, b) => a.simulation_date.localeCompare(b.simulation_date));
+  const simEvolution = useMemo(() => {
+    const sorted = [...simulations].sort((a, b) => {
+      const da = getSimulationDate(a);
+      const db = getSimulationDate(b);
+      return da.localeCompare(db);
+    });
+
+    return sorted.map(s => {
+      const q = getSimulationQuestions(s);
+      const pct = q.total > 0
+        ? Math.round((q.correct / q.total) * 100)
+        : (s.total_score ? Math.min(100, Math.round((s.total_score / 1000) * 100)) : 0);
+      const dateStr = getSimulationDate(s);
+      return {
+        ...s,
+        questionsTotal: q.total,
+        questionsCorrect: q.correct,
+        pct,
+        dateFormatted: new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+      };
+    });
+  }, [simulations]);
+
+  const avgSimPct = simEvolution.length > 0
+    ? Math.round(simEvolution.reduce((a, s) => a + s.pct, 0) / simEvolution.length)
+    : 0;
+
+  const bestSimPct = simEvolution.length > 0
+    ? Math.max(...simEvolution.map(s => s.pct))
+    : 0;
 
   const availableFilterTopics = topics.filter(t => t.subject_id === filterSubjectId);
 
@@ -240,7 +269,6 @@ export default function StatsTab() {
       return { ...t, correct, wrong, total, acc, minutes, sessionCount: tSessions.length };
     }).filter(t => t.sessionCount > 0 || t.total > 0).sort((a, b) => b.total - a.total);
   }, [sessions, topics, filterSubjectId]);
-  const maxSimScore = Math.max(...simByDate.map(s => s.total_score ?? 0), 1000);
 
   const last30Days = useMemo(() => {
     const days: { iso: string; studied: boolean; minutes: number }[] = [];
@@ -589,25 +617,29 @@ export default function StatsTab() {
           <section className="rounded-[22px] border border-slate-200/80 bg-white p-5 shadow-xs dark:border-white/5 dark:bg-[#151826]">
             <SectionHead icon={BarChart3} title="Tempo por tipo de estudo" />
             <div className="flex flex-col gap-3">
-              {typeStats.map(t => (
-                <div key={t.value}>
-                  <div className="mb-1.5 flex items-center justify-between gap-2 text-xs">
-                    <span className="flex items-center gap-2 font-bold text-[#14102A] dark:text-white">
-                      <span>{t.emoji}</span> {t.label}
-                    </span>
-                    <span className="shrink-0 font-display font-bold text-[#645F78] dark:text-[#9D96B8]">
-                      {Math.floor(t.minutes / 60)}h{t.minutes % 60}m · {t.sessions} sessões
-                      {t.flashcards > 0 ? ` · ${t.flashcards} cards` : ''}
-                      {t.questions > 0 ? ` · ${t.acc}%` : ''}
-                    </span>
+              {typeStats.map(t => {
+                const TypeIcon = t.icon;
+                return (
+                  <div key={t.value}>
+                    <div className="mb-1.5 flex items-center justify-between gap-2 text-xs">
+                      <span className="flex items-center gap-1.5 font-bold text-[#14102A] dark:text-white">
+                        <TypeIcon size={14} strokeWidth={2.4} className="text-[#6F00D6] dark:text-[#B379FF]" />
+                        <span>{t.label}</span>
+                      </span>
+                      <span className="shrink-0 font-display font-bold text-[#645F78] dark:text-[#9D96B8]">
+                        {Math.floor(t.minutes / 60)}h{t.minutes % 60}m · {t.sessions} sessões
+                        {t.flashcards > 0 ? ` · ${t.flashcards} cards` : ''}
+                        {t.questions > 0 ? ` · ${t.acc}%` : ''}
+                      </span>
+                    </div>
+                    <Bar
+                      pct={(t.minutes / maxTypeMinutes) * 100}
+                      color={t.value === 'teoria' ? '#00D64B' : t.value === 'questoes' ? '#D68200' : t.value === 'revisao' ? '#6F00D6' : '#3B82F6'}
+                      height={8}
+                    />
                   </div>
-                  <Bar
-                    pct={(t.minutes / maxTypeMinutes) * 100}
-                    color={t.value === 'teoria' ? '#00D64B' : t.value === 'questoes' ? '#D68200' : t.value === 'revisao' ? '#6F00D6' : '#3B82F6'}
-                    height={8}
-                  />
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
@@ -670,47 +702,174 @@ export default function StatsTab() {
         </div>
       </section>
 
-      {/* Evolução dos simulados */}
-      {simByDate.length > 0 && (
+      {/* Evolução dos simulados (% de Aproveitamento Geral) */}
+      {simEvolution.length > 0 && (
         <section className="mb-6 rounded-[22px] border border-slate-200/80 bg-white p-5 shadow-xs dark:border-white/5 dark:bg-[#151826]">
-          <SectionHead icon={TrendingUp} title="Evolução dos simulados" />
-          <div className="relative pt-2">
-            <svg className="h-44 w-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-              <polyline
-                points={simByDate.map((s, i) => {
-                  const x = (i / (simByDate.length - 1 || 1)) * 100;
-                  const y = 100 - ((s.total_score ?? 0) / maxSimScore) * 90 - 5;
-                  return `${x},${y}`;
-                }).join(' ')}
-                fill="none"
-                stroke="#6F00D6"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke"
-              />
-              {simByDate.map((s, i) => {
-                const x = (i / (simByDate.length - 1 || 1)) * 100;
-                const y = 100 - ((s.total_score ?? 0) / maxSimScore) * 90 - 5;
-                return (
-                  <circle
-                    key={s.id}
-                    cx={x}
-                    cy={y}
-                    r="3.5"
-                    fill="#00D64B"
-                    stroke="#FFFFFF"
-                    strokeWidth="1.5"
+          <SectionHead
+            icon={TrendingUp}
+            title="Evolução dos Simulados (% de Aproveitamento)"
+            right={
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-[#008E32] dark:text-[#19E85F]">
+                  Média: {avgSimPct}%
+                </span>
+                <span className="inline-flex items-center rounded-full bg-[#6F00D6]/15 px-2.5 py-0.5 text-xs font-bold text-[#6F00D6] dark:text-[#B379FF]">
+                  Melhor: {bestSimPct}%
+                </span>
+              </div>
+            }
+          />
+
+          <p className="mb-3 text-xs text-[#645F78] dark:text-[#9D96B8]">
+            Acompanhamento percentual do aproveitamento geral em cada prova simulada.
+          </p>
+
+          <div className="mt-4 pt-2 pb-2">
+            <div className="flex gap-2">
+              {/* Eixo Y com porcentagens */}
+              <div className="flex flex-col justify-between py-1 text-right text-[10px] font-bold font-mono text-[#645F78] dark:text-[#9D96B8] h-48 w-8 shrink-0 select-none">
+                <span>100%</span>
+                <span>75%</span>
+                <span>50%</span>
+                <span>25%</span>
+                <span>0%</span>
+              </div>
+
+              {/* Área do Gráfico */}
+              <div className="relative flex-1 h-48 rounded-xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 overflow-visible">
+                {/* Linhas de Grade Horizontais */}
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-2 py-2">
+                  <div className="border-b border-dashed border-slate-200 dark:border-white/10 w-full" />
+                  <div className="border-b border-dashed border-slate-200 dark:border-white/10 w-full" />
+                  <div className="border-b border-dashed border-slate-200 dark:border-white/10 w-full" />
+                  <div className="border-b border-dashed border-slate-200 dark:border-white/10 w-full" />
+                  <div className="border-b border-slate-200/80 dark:border-white/20 w-full" />
+                </div>
+
+                {/* SVG da Curva e Gradiente */}
+                <svg className="absolute inset-0 w-full h-full overflow-hidden" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="simPctGradModern" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#00D64B" stopOpacity="0.28" />
+                      <stop offset="60%" stopColor="#00D64B" stopOpacity="0.08" />
+                      <stop offset="100%" stopColor="#00D64B" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Gradiente sob a linha */}
+                  {simEvolution.length > 1 && (
+                    <polygon
+                      points={`
+                        ${simEvolution.length === 1 ? 50 : 6},100
+                        ${simEvolution.map((s, i) => {
+                          const x = simEvolution.length === 1 ? 50 : 6 + (i / (simEvolution.length - 1)) * 88;
+                          const y = 8 + (1 - s.pct / 100) * 82;
+                          return `${x},${y}`;
+                        }).join(' ')}
+                        ${simEvolution.length === 1 ? 50 : 94},100
+                      `}
+                      fill="url(#simPctGradModern)"
+                    />
+                  )}
+
+                  {/* Linha contínua do gráfico */}
+                  <polyline
+                    points={simEvolution.map((s, i) => {
+                      const x = simEvolution.length === 1 ? 50 : 6 + (i / (simEvolution.length - 1)) * 88;
+                      const y = 8 + (1 - s.pct / 100) * 82;
+                      return `${x},${y}`;
+                    }).join(' ')}
+                    fill="none"
+                    stroke="#00D64B"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     vectorEffect="non-scaling-stroke"
                   />
-                );
-              })}
-            </svg>
-            <div className="mt-3 flex justify-between font-display text-[11px] font-bold text-[#645F78] dark:text-[#9D96B8]">
-              {simByDate.map(s => (
-                <span key={s.id}>{new Date(s.simulation_date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+                </svg>
+
+                {/* Pontos de dados redondos + Badges sobrepostos em HTML (SEM distorção de SVG) */}
+                {simEvolution.map((s, i) => {
+                  const xPct = simEvolution.length === 1 ? 50 : 6 + (i / (simEvolution.length - 1)) * 88;
+                  const yPct = 8 + (1 - s.pct / 100) * 82;
+
+                  return (
+                    <div
+                      key={s.id}
+                      className="group absolute z-10 flex flex-col items-center"
+                      style={{
+                        left: `${xPct}%`,
+                        top: `${yPct}%`,
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    >
+                      {/* Badge com a porcentagem fixa acima do ponto */}
+                      <span className="mb-1 rounded-md border border-emerald-500/30 bg-white dark:bg-[#131024] px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#008E32] dark:text-[#19E85F] shadow-xs select-none">
+                        {s.pct}%
+                      </span>
+
+                      {/* Círculo perfeito com glow */}
+                      <div className="h-3.5 w-3.5 rounded-full border-2 border-white bg-[#00D64B] shadow-[0_0_10px_rgba(0,214,75,0.5)] transition-transform group-hover:scale-125 dark:border-[#131024]" />
+
+                      {/* Tooltip flutuante no hover com informações detalhadas */}
+                      <div className="pointer-events-none absolute bottom-full mb-6 hidden whitespace-nowrap rounded-xl border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-semibold shadow-lg group-hover:flex flex-col items-center dark:border-white/10 dark:bg-[#1a1633] z-30">
+                        <span className="font-bold text-[#14102A] dark:text-white">{s.title}</span>
+                        <span className="text-[10px] text-muted font-mono">
+                          {s.questionsTotal > 0 ? `${s.questionsCorrect}/${s.questionsTotal} acertos (${s.pct}%)` : `${s.pct}%`} · {s.dateFormatted}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Linha com as datas no eixo X com alinhamento correspondente */}
+            <div className="mt-2 pl-10 pr-2 flex justify-between font-display text-[10px] font-bold text-[#645F78] dark:text-[#9D96B8]">
+              {simEvolution.map(s => (
+                <span key={s.id} className="truncate max-w-[60px] text-center">
+                  {s.dateFormatted}
+                </span>
               ))}
             </div>
+          </div>
+
+          <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+            {simEvolution.map(s => {
+              const badgeColor =
+                s.pct >= 75
+                  ? 'bg-emerald-500/15 text-[#008E32] dark:text-[#19E85F]'
+                  : s.pct >= 55
+                  ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                  : 'bg-red-500/15 text-red-600 dark:text-red-400';
+
+              return (
+                <div
+                  key={s.id}
+                  className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 p-3 dark:border-white/5 dark:bg-white/[0.02]"
+                >
+                  <div className="min-w-0 pr-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate text-xs font-bold text-[#14102A] dark:text-white">
+                        {s.title}
+                      </span>
+                      {s.exam_source && (
+                        <span className="shrink-0 rounded bg-slate-200/80 px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#645F78] dark:bg-white/10 dark:text-[#9D96B8]">
+                          {s.exam_source}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-muted">
+                      {s.questionsTotal > 0 ? `${s.questionsCorrect}/${s.questionsTotal} acertos` : 'Simulado'} · {s.dateFormatted}
+                    </p>
+                  </div>
+
+                  <span className={cn('shrink-0 rounded-lg px-2.5 py-1 font-display text-xs font-bold', badgeColor)}>
+                    {s.pct}%
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
