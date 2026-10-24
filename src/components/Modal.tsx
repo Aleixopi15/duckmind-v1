@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../lib/theme';
 
@@ -14,6 +15,12 @@ type ModalProps = {
 };
 
 export default function Modal({ open, onClose, title, headerLeft, children, size = 'md', footer, hideCloseOnBody }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -25,7 +32,7 @@ export default function Modal({ open, onClose, title, headerLeft, children, size
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const sizeClass = {
     sm: 'max-w-sm',
@@ -34,10 +41,10 @@ export default function Modal({ open, onClose, title, headerLeft, children, size
     xl: 'max-w-4xl',
   }[size];
 
-  return (
+  const modalContent = (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto p-4 sm:p-6 animate-fade-in">
       <div
-        className="fixed inset-0 bg-black/45 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-black/60 dark:bg-black/75 backdrop-blur-xs transition-opacity"
         onClick={hideCloseOnBody ? undefined : onClose}
       />
       <div
@@ -76,4 +83,6 @@ export default function Modal({ open, onClose, title, headerLeft, children, size
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

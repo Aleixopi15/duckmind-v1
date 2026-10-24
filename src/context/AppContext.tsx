@@ -42,6 +42,9 @@ type AppState = {
   user: User | null;
   profile: UserProfile | null;
   currentMode: UserMode;
+  streak: number;
+  longestStreak: number;
+  studiedDates: Set<string>;
   setMode: (mode: UserMode) => Promise<void>;
   toggleMode: () => Promise<void>;
 
@@ -100,12 +103,75 @@ type AppState = {
   toggleTopicCompletion: (topicId: string) => Promise<void>;
 };
 
+function computeStreakStats(
+  datesSet: Set<string>,
+  persistedLongest: number = 0
+): { currentStreak: number; longestStreak: number } {
+  const formatLocalDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  if (datesSet.size === 0) {
+    return { currentStreak: 0, longestStreak: persistedLongest };
+  }
+
+  // 1. Current streak calculation
+  let currentStreak = 0;
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+
+  const todayKey = formatLocalDate(cursor);
+  if (!datesSet.has(todayKey)) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  while (datesSet.has(formatLocalDate(cursor))) {
+    currentStreak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  // 2. Longest streak calculation from historical unique dates
+  const sortedDates = Array.from(datesSet).filter(Boolean).sort();
+  let maxConsecutive = 0;
+  let running = 0;
+  let prevDateKey: string | null = null;
+
+  for (const dateKey of sortedDates) {
+    if (!prevDateKey) {
+      running = 1;
+    } else {
+      const prev = new Date(`${prevDateKey}T00:00:00`);
+      const curr = new Date(`${dateKey}T00:00:00`);
+      const diffDays = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays === 1) {
+        running++;
+      } else if (diffDays > 1) {
+        running = 1;
+      }
+    }
+    prevDateKey = dateKey;
+    if (running > maxConsecutive) {
+      maxConsecutive = running;
+    }
+  }
+
+  const longestStreak = Math.max(persistedLongest, maxConsecutive, currentStreak);
+  return { currentStreak, longestStreak };
+}
+
 const AppContext = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [currentMode, setCurrentMode] = useState<UserMode>(() => {
+    const cached = localStorage.getItem('duckmind_current_mode');
+    return cached === 'universitario' || cached === 'vestibular' ? cached : 'vestibular';
+  });
 
   // Vestibular Mode State
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -128,8 +194,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const userRef = useRef<User | null>(null);
   const currentUser = () => userRef.current;
-
-  const currentMode: UserMode = profile?.current_mode ?? 'vestibular';
 
   const fetchSubjects = useCallback(async () => {
     const { data } = await supabase.from('subjects').select('*').order('display_order');
@@ -167,7 +231,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       supabase.from('university_flashcards').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
     ]);
 
-    if (profileRes.data) setProfile(profileRes.data);
+    if (profileRes.data) {
+      const activeMode = (localStorage.getItem('duckmind_current_mode') as UserMode) || profileRes.data.current_mode || 'vestibular';
+      setProfile({ ...profileRes.data, current_mode: activeMode });
+    }
     if (topicsRes.data) setTopics(topicsRes.data);
     if (sessionsRes.data) setSessions(sessionsRes.data);
     if (simulationsRes.data) setSimulations(simulationsRes.data);
@@ -203,83 +270,79 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const vestibularDates = React.useMemo(() => {
+    const set = new Set<string>();
+    sessions.forEach(s => {
+      if (s.studied_at) set.add(s.studied_at.split('T')[0]);
+    });
+    simulations.forEach(sim => {
+      const d = getSimulationDate(sim);
+      if (d) set.add(d);
+    });
+    return set;
+  }, [sessions, simulations]);
+
+  const universityDates = React.useMemo(() => {
+    const set = new Set<string>();
+    universitySessions.forEach(s => {
+      if (s.studied_at) set.add(s.studied_at.split('T')[0]);
+    });
+    return set;
+  }, [universitySessions]);
+
+  const vestStreakInfo = React.useMemo(() => {
+    return computeStreakStats(vestibularDates, profile?.longest_streak ?? 0);
+  }, [vestibularDates, profile?.longest_streak]);
+
+  const uniStreakInfo = React.useMemo(() => {
+    return computeStreakStats(universityDates, profile?.uni_longest_streak ?? 0);
+  }, [universityDates, profile?.uni_longest_streak]);
+
+  const streak = currentMode === 'universitario' ? uniStreakInfo.currentStreak : vestStreakInfo.currentStreak;
+  const longestStreak = currentMode === 'universitario' ? uniStreakInfo.longestStreak : vestStreakInfo.longestStreak;
+  const studiedDates = currentMode === 'universitario' ? universityDates : vestibularDates;
+
   const updateStreak = useCallback(async (targetMode?: UserMode) => {
     const targetUserId = currentUser()?.id;
     if (!targetUserId) return;
-
-    const mode = targetMode ?? (profile?.current_mode ?? 'vestibular');
-
-    const studiedDays = new Set<string>();
+    const mode = targetMode ?? currentMode;
 
     if (mode === 'vestibular') {
-      const [sessionsRes, simulationsRes] = await Promise.all([
-        supabase.from('study_sessions').select('studied_at').eq('user_id', targetUserId),
-        supabase.from('simulations').select('simulation_date, created_at, notes').eq('user_id', targetUserId),
-      ]);
-
-      (sessionsRes.data || []).forEach(s => {
-        if (s.studied_at) studiedDays.add(s.studied_at.split('T')[0]);
-      });
-      (simulationsRes.data || []).forEach(sim => {
-        const d = getSimulationDate(sim as any);
-        if (d) studiedDays.add(d);
-      });
+      const { currentStreak, longestStreak: lStreak } = vestStreakInfo;
+      try {
+        await supabase
+          .from('user_profiles')
+          .update({
+            current_streak: currentStreak,
+            longest_streak: lStreak,
+          })
+          .eq('id', targetUserId);
+      } catch (err) {
+        console.error('Failed to update vestibular streak in supabase', err);
+      }
+      setProfile(prev => (prev ? { ...prev, current_streak: currentStreak, longest_streak: lStreak } : prev));
     } else {
-      const { data: uniSessionsData } = await supabase
-        .from('university_study_sessions')
-        .select('studied_at')
-        .eq('user_id', targetUserId);
-
-      (uniSessionsData || []).forEach(s => {
-        if (s.studied_at) studiedDays.add(s.studied_at.split('T')[0]);
-      });
+      const { currentStreak, longestStreak: lStreak } = uniStreakInfo;
+      try {
+        await supabase
+          .from('user_profiles')
+          .update({
+            uni_current_streak: currentStreak,
+            uni_longest_streak: lStreak,
+          })
+          .eq('id', targetUserId);
+      } catch {
+        // Ignored if uni_current_streak does not exist in schema yet
+      }
+      setProfile(prev => (prev ? { ...prev, uni_current_streak: currentStreak, uni_longest_streak: lStreak } : prev));
     }
-
-    const formatLocalDate = (d: Date) => {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    };
-
-    let streakCount = 0;
-    const cursor = new Date();
-    cursor.setHours(0, 0, 0, 0);
-
-    const todayKey = formatLocalDate(cursor);
-    if (!studiedDays.has(todayKey)) {
-      cursor.setDate(cursor.getDate() - 1);
-    }
-
-    while (studiedDays.has(formatLocalDate(cursor))) {
-      streakCount++;
-      cursor.setDate(cursor.getDate() - 1);
-    }
-
-    const prevLongest = profile?.longest_streak ?? 0;
-    const newLongest = Math.max(prevLongest, streakCount);
-
-    if (profile?.current_streak === streakCount && prevLongest === newLongest) {
-      return;
-    }
-
-    await supabase
-      .from('user_profiles')
-      .update({
-        current_streak: streakCount,
-        longest_streak: newLongest,
-      })
-      .eq('id', targetUserId);
-
-    setProfile(prev => (prev ? { ...prev, current_streak: streakCount, longest_streak: newLongest } : prev));
-  }, [profile?.current_mode, profile?.current_streak, profile?.longest_streak]);
+  }, [currentMode, vestStreakInfo, uniStreakInfo]);
 
   const refreshData = useCallback(async () => {
     const u = currentUser();
     if (!u) return;
     await fetchUserData(u.id);
-    await updateStreak();
-  }, [fetchUserData, updateStreak]);
+  }, [fetchUserData]);
 
   const updateProfile = useCallback(async (updates: ProfileUpdate) => {
     const u = currentUser();
@@ -291,12 +354,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setMode = useCallback(async (mode: UserMode) => {
+    setCurrentMode(mode);
+    localStorage.setItem('duckmind_current_mode', mode);
+    setProfile(prev => (prev ? { ...prev, current_mode: mode } : prev));
     const u = currentUser();
     if (!u) return;
-    setProfile(prev => (prev ? { ...prev, current_mode: mode } : prev));
-    await supabase.from('user_profiles').update({ current_mode: mode }).eq('id', u.id);
-    await updateStreak(mode);
-  }, [updateStreak]);
+    try {
+      await supabase.from('user_profiles').update({ current_mode: mode }).eq('id', u.id);
+    } catch (err) {
+      console.error('Error updating current_mode', err);
+    }
+  }, []);
 
   const toggleMode = useCallback(async () => {
     const nextMode: UserMode = currentMode === 'vestibular' ? 'universitario' : 'vestibular';
@@ -607,7 +675,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
 
       await fetchUserData(authenticatedUser.id);
-      await updateStreak(existing?.current_mode ?? 'vestibular');
       if (active) setLoading(false);
     };
 
@@ -638,7 +705,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       active = false;
       subscription.unsubscribe();
     };
-  }, [fetchSubjects, fetchUserData, updateStreak]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <AppContext.Provider
@@ -647,6 +715,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         user,
         profile,
         currentMode,
+        streak,
+        longestStreak,
+        studiedDates,
         setMode,
         toggleMode,
         subjects,

@@ -9,9 +9,7 @@ type Props = { open: boolean; onClose: () => void };
 const WEEKDAY_LABELS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
 export default function StreakDialog({ open, onClose }: Props) {
-  const { profile, sessions, simulations } = useApp();
-  const streak = profile?.current_streak ?? 0;
-  const longest = profile?.longest_streak ?? 0;
+  const { currentMode, streak, longestStreak, studiedDates } = useApp();
 
   const formatLocalDate = (d: Date) => {
     const y = d.getFullYear();
@@ -19,36 +17,6 @@ export default function StreakDialog({ open, onClose }: Props) {
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   };
-
-  const studiedDates = useMemo(() => {
-    const set = new Set<string>();
-    sessions.forEach(s => {
-      if (s.studied_at) set.add(s.studied_at.split('T')[0]);
-    });
-    simulations.forEach(sim => {
-      const d = sim.simulation_date
-        ? sim.simulation_date.split('T')[0]
-        : (sim.created_at ? sim.created_at.split('T')[0] : null);
-      if (d) set.add(d);
-    });
-    return set;
-  }, [sessions, simulations]);
-
-  const computedStreak = useMemo(() => {
-    if (studiedDates.size === 0) return 0;
-    let count = 0;
-    const today = new Date();
-    const todayKey = formatLocalDate(today);
-    const cursor = new Date(today);
-    if (!studiedDates.has(todayKey)) {
-      cursor.setDate(cursor.getDate() - 1);
-    }
-    while (studiedDates.has(formatLocalDate(cursor))) {
-      count++;
-      cursor.setDate(cursor.getDate() - 1);
-    }
-    return count;
-  }, [studiedDates]);
 
   const calendarWeeks = useMemo(() => {
     const today = new Date();
@@ -87,13 +55,13 @@ export default function StreakDialog({ open, onClose }: Props) {
   const stats = [
     {
       icon: <Flame size={18} strokeWidth={2.4} />,
-      value: computedStreak || streak,
+      value: streak,
       label: 'Dias seguidos',
       className: 'bg-[#00D64B]/10 text-[#008E32] dark:text-[#19E85F] border border-[#00D64B]/20',
     },
     {
       icon: <Trophy size={18} strokeWidth={2.4} />,
-      value: longest,
+      value: longestStreak,
       label: 'Recorde',
       className: 'bg-amber-500/10 text-[#D68200] dark:text-[#FFB84D] border border-amber-500/20',
     },
@@ -125,10 +93,12 @@ export default function StreakDialog({ open, onClose }: Props) {
         </span>
         <div>
           <h2 className="font-display text-xl font-bold leading-tight text-tinta dark:text-texto">
-            Ofensiva de estudos
+            Ofensiva {currentMode === 'universitario' ? 'Universitária' : 'Vestibular'}
           </h2>
           <p className="text-xs font-medium text-muted dark:text-gray-400">
-            Mantenha a chama acesa estudando todos os dias
+            {currentMode === 'universitario'
+              ? 'Ofensiva e recorde calculados exclusivamente a partir dos seus estudos universitários'
+              : 'Ofensiva e recorde calculados a partir dos seus estudos e simulados para o vestibular'}
           </p>
         </div>
       </div>

@@ -13,6 +13,7 @@ export default function ProfileTab() {
     currentMode,
     setMode,
     profile,
+    streak,
     updateProfile,
     sessions,
     simulations,
@@ -254,7 +255,7 @@ export default function ProfileTab() {
                   {currentMode === 'universitario' ? 'Desempenho Universitário' : 'Progresso do Vestibulando'}
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-bold text-[#008E32] dark:text-[#19E85F]">
-                  <Flame size={12} strokeWidth={2.4} /> {profile?.current_streak ?? 0} dias de ofensiva
+                  <Flame size={12} strokeWidth={2.4} /> {streak} dias de ofensiva
                 </span>
               </div>
               <p className="text-xs text-[#645F78] dark:text-[#9D96B8]">

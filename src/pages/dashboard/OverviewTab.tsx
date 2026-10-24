@@ -94,6 +94,8 @@ export default function OverviewTab({ onNavigate, onLogStudy, onOpenStreak }: Pr
   const {
     currentMode,
     profile,
+    streak,
+    longestStreak,
     // Vestibular data
     sessions,
     simulations,
@@ -120,8 +122,6 @@ export default function OverviewTab({ onNavigate, onLogStudy, onOpenStreak }: Pr
     }
   }, [universitySubjects, quickUniSubjectId]);
 
-  const streak = profile?.current_streak ?? 0;
-  const longestStreak = profile?.longest_streak ?? 0;
   const dailyGoal = profile?.goal_daily_minutes ?? 120;
   const weeklyMinutesGoal = profile?.goal_weekly_minutes ?? 600;
   const weeklyQuestionsGoal = profile?.goal_weekly_questions ?? 300;

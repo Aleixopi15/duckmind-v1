@@ -115,7 +115,7 @@ export default function DashboardPage() {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
   const [errorFilterSubjectId, setErrorFilterSubjectId] = useState<string | null>(null);
   const [errorFilterTopicId, setErrorFilterTopicId] = useState<string | null>(null);
-  const { currentMode, profile, user } = useApp();
+  const { currentMode, profile, user, streak } = useApp();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -150,8 +150,6 @@ export default function DashboardPage() {
     await supabase.auth.signOut();
     navigate('/');
   };
-
-  const streak = profile?.current_streak ?? 0;
   const initial = (profile?.display_name ?? 'Pedro').trim().charAt(0).toUpperCase() || 'P';
 
   const handleTimerComplete = (minutes: number) => {

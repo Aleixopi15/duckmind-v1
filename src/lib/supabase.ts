@@ -186,6 +186,8 @@ export type UserProfile = {
   display_name: string;
   current_streak: number;
   longest_streak: number;
+  uni_current_streak?: number;
+  uni_longest_streak?: number;
   last_study_date: string | null;
   total_study_minutes: number;
   avatar_emoji: string;

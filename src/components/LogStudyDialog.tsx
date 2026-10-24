@@ -4,7 +4,7 @@ import Modal from './Modal';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
 import DuckMascot from './DuckMascot';
-import { CheckCircle2, BookOpen, PenLine, RotateCcw, Layers } from 'lucide-react';
+import { CheckCircle2, BookOpen, PenLine, RotateCcw, Layers, X } from 'lucide-react';
 import { cn } from '../lib/theme';
 
 import type { StudyType } from '../lib/supabase';
@@ -101,12 +101,22 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
 
   const filteredTopics = topics.filter(t => t.subject_id === form.subject_id);
 
-  const handleSave = async () => {
+  const [timerId, setTimerId] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleDismissSuccess = () => {
+    if (timerId) clearTimeout(timerId);
+    setSuccess(false);
+    onClose();
+  };
+
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     const totalMins = hmsToMinutes(form.duration_hours, form.duration_minutes, form.duration_seconds);
     if (!form.subject_id) { setError('Selecione a matéria.'); return; }
     if (totalMins <= 0) { setError('Informe um tempo de estudo válido.'); return; }
     if (form.study_type === 'flashcards' && (parseInt(form.flashcards_count) || 0) <= 0) { setError('Informe quantos flashcards foram estudados.'); return; }
-    setError(''); setSaving(true);
+    setError('');
+    setSaving(true);
 
     if (currentMode === 'universitario') {
       const typeMapping = form.study_type === 'flashcards' ? 'revisao' : form.study_type === 'teoria' ? 'estudo' : form.study_type === 'questoes' ? 'exercicios' : 'revisao';
@@ -119,7 +129,8 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
       });
       setSuccess(true);
       setSaving(false);
-      setTimeout(() => { setSuccess(false); onClose(); }, 1400);
+      const tid = setTimeout(handleDismissSuccess, 800);
+      setTimerId(tid);
       return;
     }
 
@@ -148,23 +159,38 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
     setSaving(false);
     await refreshData();
     await updateStreak('vestibular');
-    setTimeout(() => { setSuccess(false); onClose(); }, 1400);
+    const tid = setTimeout(handleDismissSuccess, 800);
+    setTimerId(tid);
   };
 
   const totalMinsDisplay = hmsToMinutes(form.duration_hours, form.duration_minutes, form.duration_seconds);
 
   if (success) {
     return (
-      <Modal open={open} onClose={() => {}} size="sm">
-        <div className="flex flex-col items-center gap-3 py-6 text-center">
-          <DuckMascot size={80} mood="celebrating" animate />
-          <div className="flex items-center gap-2 font-display text-xl font-bold text-tinta dark:text-texto">
-            <CheckCircle2 size={20} strokeWidth={2.8} className="text-[#00D64B] dark:text-[#19E85F]" />
+      <Modal open={open} onClose={handleDismissSuccess} size="sm">
+        <div className="relative flex flex-col items-center gap-3 py-6 text-center">
+          <button
+            onClick={handleDismissSuccess}
+            aria-label="Fechar"
+            className="absolute -top-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-gray-100 hover:text-tinta dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+          >
+            <X size={18} strokeWidth={2.4} />
+          </button>
+          <DuckMascot size={76} mood="celebrating" animate />
+          <div className="flex items-center gap-2 font-display text-lg sm:text-xl font-bold text-tinta dark:text-texto">
+            <CheckCircle2 size={20} strokeWidth={2.8} className="text-[#00D64B] dark:text-[#19E85F] shrink-0" />
             Sessão registrada com sucesso!
           </div>
-          <p className="text-xs text-muted">
+          <p className="text-xs text-muted max-w-xs">
             Tempo e métricas contabilizados no seu histórico de estudos.
           </p>
+          <button
+            onClick={handleDismissSuccess}
+            className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-4 py-1.5 text-xs font-bold text-tinta hover:bg-slate-200 dark:bg-white/10 dark:text-texto dark:hover:bg-white/15 transition-colors"
+          >
+            <X size={13} strokeWidth={2.5} />
+            Fechar agora
+          </button>
         </div>
       </Modal>
     );
