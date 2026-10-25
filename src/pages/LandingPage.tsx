@@ -1,219 +1,445 @@
 import { useNavigate } from 'react-router-dom';
-import DuckMascot from '../components/DuckMascot';
-import Logo from '../components/Logo';
 import ThemeToggle from '../components/ThemeToggle';
-import { Flame, Timer, TrendingUp, ArrowRight, ClipboardList, BookOpen, ShieldCheck, Sparkles } from 'lucide-react';
-
-const features = [
-  {
-    icon: Flame,
-    title: 'Ofensiva diária inteligente',
-    desc: 'Mantenha sua sequência inabalável de estudos com feedback visual e celebração do mascote.',
-    accent: '#00D64B',
-  },
-  {
-    icon: BookOpen,
-    title: 'Domínio total do edital',
-    desc: 'Acompanhe tópicos concluídos, barras de progresso por área de conhecimento e saiba exatamente o que falta.',
-    accent: '#6F00D6',
-  },
-  {
-    icon: Timer,
-    title: 'Cronômetro & Pomodoro',
-    desc: 'Cronometre seus blocos de foco em tempo real com alertas sonoros ou registre estudos concluídos no dia.',
-    accent: '#00D64B',
-  },
-  {
-    icon: ClipboardList,
-    title: 'Simulados ENEM & Áreas',
-    desc: 'Registre acertos gerais ou por área, notas TRI estimadas, tempo de prova e acompanhe sua curva de crescimento.',
-    accent: '#6F00D6',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Estatísticas & Aproveitamento',
-    desc: 'Métricas completas de acertos por disciplina, taxa de acerto por matéria, tempo acumulado e metas semanais.',
-    accent: '#00D64B',
-  },
-  {
-    icon: ShieldCheck,
-    title: '100% Gratuito & Aberto',
-    desc: 'Sem assinaturas, sem paywalls. Todas as ferramentas essenciais para a sua aprovação no vestibular.',
-    accent: '#6F00D6',
-  },
-];
+import {
+  ClipboardCheck,
+  GraduationCap,
+  Clock,
+  BookOpen,
+  BarChart2,
+  Trophy,
+  Check,
+} from 'lucide-react';
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#F8F7FC] text-[#14102A] transition-colors duration-300 dark:bg-[#0F0C1E] dark:text-[#F3F1FF]">
-      {/* Top Navbar */}
-      <nav className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md dark:border-white/5 dark:bg-[#151826]/80">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Logo size="md" />
-          <div className="flex items-center gap-2 sm:gap-3">
+    <div className="min-h-screen bg-[#F8F7FC] text-[#14102A] transition-colors duration-300 dark:bg-[#0B0819] dark:text-[#F3F1FF]">
+      {/* Top Navigation */}
+      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-md dark:border-white/5 dark:bg-[#0B0819]/85">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 sm:px-8">
+          {/* Logo */}
+          <div
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="cursor-pointer select-none font-display text-2xl font-bold tracking-tight text-[#14102A] dark:text-white"
+          >
+            Duck<span className="text-[#6F00D6] dark:text-[#19E85F]">Mind</span>
+          </div>
+
+          {/* Nav Links (Desktop) */}
+          <nav className="hidden items-center gap-8 text-sm font-medium text-[#645F78] md:flex dark:text-[#9D96B8]">
+            <button
+              onClick={() => scrollToSection('modos')}
+              className="transition-colors hover:text-[#14102A] dark:hover:text-white"
+            >
+              Modos
+            </button>
+            <button
+              onClick={() => scrollToSection('recursos')}
+              className="transition-colors hover:text-[#14102A] dark:hover:text-white"
+            >
+              Recursos
+            </button>
+            <button
+              onClick={() => scrollToSection('como-funciona')}
+              className="transition-colors hover:text-[#14102A] dark:hover:text-white"
+            >
+              Como funciona
+            </button>
+          </nav>
+
+          {/* Right Action Buttons */}
+          <div className="flex items-center gap-3">
             <ThemeToggle />
             <button
               onClick={() => navigate('/login')}
-              className="hidden rounded-full px-4 py-2 text-xs font-bold text-[#645F78] transition-colors hover:text-[#14102A] dark:text-[#9D96B8] dark:hover:text-white sm:inline-flex"
+              className="hidden sm:inline-flex text-xs font-bold text-[#645F78] hover:text-[#14102A] px-3 py-2 rounded-full transition-colors dark:text-[#9D96B8] dark:hover:text-white"
             >
               Entrar
             </button>
             <button
               onClick={() => navigate('/signup')}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#00D64B] px-5 py-2 text-xs font-bold text-[#14102A] shadow-xs transition-all hover:bg-[#19E85F] hover:shadow-md active:scale-[0.98]"
+              className="inline-flex items-center justify-center rounded-full bg-[#00D64B] px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-bold text-[#14102A] shadow-xs transition-all hover:bg-[#19E85F] hover:shadow-md active:scale-[0.98]"
             >
-              <span>Começar grátis</span>
-              <ArrowRight size={13} strokeWidth={2.6} />
+              <span className="hidden sm:inline">Começar grátis</span>
+              <span className="sm:hidden">Começar</span>
             </button>
           </div>
         </div>
-      </nav>
+      </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-12 md:py-20 lg:py-24">
-        {/* Ambient lighting */}
-        <div className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-[#6F00D6]/10 blur-3xl dark:bg-[#6F00D6]/15" />
-        <div className="pointer-events-none absolute top-40 right-10 h-72 w-72 rounded-full bg-[#00D64B]/10 blur-3xl" />
-
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 md:grid-cols-2">
-          <div className="animate-fade-in">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#00D64B]/30 bg-[#00D64B]/10 px-3.5 py-1 text-xs font-bold text-[#008E32] dark:text-[#00D64B]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#00D64B] animate-pulse" />
-              <span>DuckMind 2.0 · ENEM 2026 & Vestibulares</span>
+      <section className="relative overflow-hidden pt-12 pb-20 md:pt-20 md:pb-28">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 sm:px-8 lg:grid-cols-12">
+          {/* Left Column */}
+          <div className="lg:col-span-7">
+            {/* Pill */}
+            <div className="mb-6 inline-block rounded-full bg-[#FEF3C7] px-3.5 py-1 text-xs font-bold text-[#92400E] dark:bg-amber-500/15 dark:text-amber-300">
+              Dois modos, um só app
             </div>
 
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.08] tracking-tight text-[#14102A] dark:text-white">
-              Estude com método e{' '}
-              <span className="relative inline-block text-[#6F00D6] dark:text-[#00D64B]">
-                conquiste sua vaga
-              </span>
+            {/* Headline */}
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-[54px] font-bold leading-[1.12] tracking-tight text-[#14102A] dark:text-white">
+              Do vestibular à faculdade,{' '}
+              <span className="hidden sm:inline">sua rotina de estudos num só lugar.</span>
+              <span className="sm:hidden">numa rotina só.</span>
             </h1>
 
-            <p className="mt-5 max-w-lg text-base sm:text-lg font-medium leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
-              Plataforma gamificada para vestibulandos que buscam consistência diária, domínio total do edital e evolução comprovada por métricas reais.
+            {/* Subtitle */}
+            <p className="mt-5 max-w-xl text-base sm:text-lg font-normal leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
+              Troque de modo conforme sua fase: edital e simulados para o ENEM, disciplinas e provas para a graduação.
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            {/* Action Buttons */}
+            <div className="mt-8 flex flex-wrap items-center gap-3.5">
               <button
                 onClick={() => navigate('/signup')}
-                className="inline-flex items-center gap-2 rounded-full bg-[#00D64B] px-7 py-3.5 text-sm font-bold text-[#14102A] shadow-sm transition-all hover:bg-[#19E85F] hover:shadow-md active:scale-[0.98]"
+                className="inline-flex items-center justify-center rounded-full bg-[#00D64B] px-7 py-3.5 text-sm font-bold text-[#14102A] shadow-md shadow-[#00D64B]/20 transition-all hover:bg-[#19E85F] hover:shadow-lg active:scale-[0.98]"
               >
-                <span>Criar conta gratuita</span>
-                <ArrowRight size={16} strokeWidth={2.6} />
+                Começar grátis
               </button>
               <button
-                onClick={() => navigate('/login')}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white px-6 py-3.5 text-sm font-bold text-[#14102A] shadow-xs transition-all hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                onClick={() => scrollToSection('modos')}
+                className="inline-flex items-center justify-center rounded-full border border-slate-200/90 bg-white px-6 py-3.5 text-sm font-bold text-[#14102A] shadow-xs transition-all hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
               >
-                Já tenho conta
+                Conhecer os modos
               </button>
-            </div>
-
-            {/* Quick Proof Counters */}
-            <div className="mt-10 flex flex-wrap gap-3">
-              {[
-                ['10k+', 'Estudantes ativos'],
-                ['98%', 'Aprovação com método'],
-                ['100%', 'Sem pegadinhas ou custo'],
-              ].map(([n, l]) => (
-                <div
-                  key={l}
-                  className="min-w-[120px] rounded-[18px] border border-slate-200/80 bg-white px-4 py-3 shadow-xs dark:border-white/5 dark:bg-[#151826]"
-                >
-                  <div className="font-display text-2xl font-bold text-[#14102A] dark:text-white">{n}</div>
-                  <div className="mt-0.5 text-xs font-semibold text-[#645F78] dark:text-[#9D96B8]">{l}</div>
-                </div>
-              ))}
             </div>
           </div>
 
-          {/* Hero Visual Card / Mascot Showcase */}
-          <div className="relative flex items-center justify-center">
-            {/* Glowing circle backdrop */}
-            <div className="absolute h-72 w-72 sm:h-80 sm:w-80 rounded-full bg-gradient-to-tr from-[#6F00D6]/20 to-[#00D64B]/20 blur-2xl" />
+          {/* Right Column (Hero Graphic with Overlapping Cards) */}
+          <div className="relative flex flex-col items-center justify-center lg:col-span-5">
+            {/* Ambient Background Glows */}
+            <div className="pointer-events-none absolute -top-12 -right-8 h-72 w-72 rounded-full bg-[#00D64B]/20 blur-3xl dark:bg-[#00D64B]/15" />
+            <div className="pointer-events-none absolute -bottom-12 -left-8 h-72 w-72 rounded-full bg-[#6F00D6]/25 blur-3xl dark:bg-[#6F00D6]/20" />
 
-            <div className="relative z-10 flex flex-col items-center">
-              <DuckMascot size={260} mood="celebrating" animate fullBody className="sm:size-[300px]" />
+            <div className="relative z-10 flex w-full max-w-sm flex-col gap-4 md:max-w-md">
+              {/* Card 1: Vestibular */}
+              <div className="rounded-[24px] border border-slate-200/90 bg-white p-5 shadow-xl transition-all duration-300 hover:shadow-2xl dark:border-white/10 dark:bg-[#131124] md:w-[350px]">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-[#008E32] dark:bg-emerald-500/20 dark:text-[#00D64B]">
+                    <ClipboardCheck size={16} strokeWidth={2.4} />
+                  </div>
+                  <span className="font-display text-sm font-bold text-[#14102A] dark:text-white">
+                    Vestibular
+                  </span>
+                </div>
+                <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-[#9D96B8]">
+                  ENEM 2026 · Edital, simulados e redação
+                </div>
 
-              {/* Floating badges */}
-              <div className="absolute -top-2 right-0 sm:right-6 flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/95 px-4 py-2 shadow-md backdrop-blur-md dark:border-white/10 dark:bg-[#151826]/95">
-                <Flame size={16} className="text-[#00D64B]" />
-                <span className="font-display text-xs font-bold text-[#14102A] dark:text-white">15 dias de ofensiva</span>
+                <div className="mt-4 flex items-center gap-5">
+                  {/* Circular progress 77% */}
+                  <div className="relative flex h-16 w-16 shrink-0 items-center justify-center">
+                    <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
+                      <path
+                        className="text-slate-100 dark:text-white/10"
+                        strokeWidth="3.2"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                      <path
+                        className="text-[#00D64B]"
+                        strokeDasharray="77, 100"
+                        strokeWidth="3.2"
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    </svg>
+                    <span className="absolute font-display text-xs font-bold text-[#14102A] dark:text-white">
+                      77%
+                    </span>
+                  </div>
+
+                  {/* Bullet points */}
+                  <div className="flex flex-col gap-1.5 text-xs font-medium text-[#14102A] dark:text-[#E2E0EC]">
+                    <div className="flex items-center gap-2">
+                      <Check size={13} className="text-[#00D64B] shrink-0" strokeWidth={2.6} />
+                      <span>Edital completo por área</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check size={13} className="text-[#00D64B] shrink-0" strokeWidth={2.6} />
+                      <span>Simulados com correção</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check size={13} className="text-[#00D64B] shrink-0" strokeWidth={2.6} />
+                      <span>Banco de redações</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="absolute bottom-4 left-0 sm:left-4 flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/95 px-4 py-2 shadow-md backdrop-blur-md dark:border-white/10 dark:bg-[#151826]/95">
-                <TrendingUp size={16} className="text-[#00D64B]" />
-                <span className="font-display text-xs font-bold text-[#14102A] dark:text-white">+28% de acertos</span>
+              {/* Card 2: Universitário (Overlapping slightly on desktop) */}
+              <div className="rounded-[24px] border border-slate-200/90 bg-white p-5 shadow-xl transition-all duration-300 hover:shadow-2xl dark:border-white/10 dark:bg-[#131124] md:-mt-6 md:ml-12 md:w-[350px]">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-100 text-[#6F00D6] dark:bg-purple-500/20 dark:text-[#B26BFF]">
+                    <GraduationCap size={16} strokeWidth={2.4} />
+                  </div>
+                  <span className="font-display text-sm font-bold text-[#14102A] dark:text-white">
+                    Universitário
+                  </span>
+                </div>
+                <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-[#9D96B8]">
+                  Semestre 2026.1 · Disciplinas e provas
+                </div>
+
+                <div className="mt-4 flex items-center gap-5">
+                  {/* Circular progress 86% */}
+                  <div className="relative flex h-16 w-16 shrink-0 items-center justify-center">
+                    <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
+                      <path
+                        className="text-slate-100 dark:text-white/10"
+                        strokeWidth="3.2"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                      <path
+                        className="text-[#6F00D6] dark:text-[#B26BFF]"
+                        strokeDasharray="86, 100"
+                        strokeWidth="3.2"
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    </svg>
+                    <span className="absolute font-display text-xs font-bold text-[#14102A] dark:text-white">
+                      86%
+                    </span>
+                  </div>
+
+                  {/* Bullet points */}
+                  <div className="flex flex-col gap-1.5 text-xs font-medium text-[#14102A] dark:text-[#E2E0EC]">
+                    <div className="flex items-center gap-2">
+                      <Check size={13} className="text-[#6F00D6] dark:text-[#B26BFF] shrink-0" strokeWidth={2.6} />
+                      <span>Notas e média por disciplina</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check size={13} className="text-[#6F00D6] dark:text-[#B26BFF] shrink-0" strokeWidth={2.6} />
+                      <span>Prazos e entregas</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check size={13} className="text-[#6F00D6] dark:text-[#B26BFF] shrink-0" strokeWidth={2.6} />
+                      <span>Resumos e flashcards</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-24">
+      {/* Section MODOS */}
+      <section id="modos" className="mx-auto max-w-7xl px-6 py-20 sm:px-8">
         <div className="text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6F00D6]/10 px-3.5 py-1 text-xs font-bold text-[#6F00D6] dark:bg-[#6F00D6]/20 dark:text-[#B26BFF]">
-            <Sparkles size={13} />
-            Recursos Completos
+          <span className="font-display text-xs font-bold tracking-widest uppercase text-[#6F00D6] dark:text-[#B26BFF]">
+            Modos
           </span>
-          <h2 className="mt-3 font-display text-3xl sm:text-4xl font-bold tracking-tight text-[#14102A] dark:text-white">
-            Tudo que você precisa para ser aprovado
+          <h2 className="mt-2 font-display text-3xl sm:text-4xl font-bold tracking-tight text-[#14102A] dark:text-white">
+            Um app, duas rotinas
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm sm:text-base font-medium text-[#645F78] dark:text-[#9D96B8]">
-            Do edital esquematizado à análise profunda dos seus simulados: dados visuais claros e motivação diária.
+          <p className="mt-2 text-sm sm:text-base font-normal text-[#645F78] dark:text-[#9D96B8]">
+            Mude de modo quando sua fase mudar — seus dados continuam com você.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map(({ icon: Icon, title, desc, accent }) => (
-            <article
-              key={title}
-              className="group rounded-[24px] border border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-md dark:border-white/5 dark:bg-[#151826] dark:hover:border-white/15"
-            >
-              <div
-                className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl shadow-xs transition-transform group-hover:scale-105"
-                style={{ background: `${accent}18`, color: accent }}
-              >
-                <Icon size={22} strokeWidth={2.4} />
-              </div>
-              <h3 className="font-display text-lg font-bold text-[#14102A] dark:text-white">{title}</h3>
-              <p className="mt-2 text-xs sm:text-sm font-medium leading-relaxed text-[#645F78] dark:text-[#9D96B8]">{desc}</p>
-            </article>
-          ))}
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          {/* Card Modo Vestibular */}
+          <div className="rounded-[28px] border border-slate-200/80 bg-white p-7 sm:p-9 shadow-xs transition-all duration-200 hover:shadow-md dark:border-white/5 dark:bg-[#131124]">
+            <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-[#008E32] dark:bg-emerald-500/20 dark:text-[#00D64B]">
+              <ClipboardCheck size={20} strokeWidth={2.4} />
+            </div>
+            <h3 className="font-display text-lg font-bold text-[#14102A] dark:text-white">
+              Modo Vestibular
+            </h3>
+            <p className="mt-2 text-sm font-normal leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
+              Organize o edital do ENEM por área, registre simulados e acompanhe suas redações por competência.
+            </p>
+          </div>
+
+          {/* Card Modo Universitário */}
+          <div className="rounded-[28px] border border-slate-200/80 bg-white p-7 sm:p-9 shadow-xs transition-all duration-200 hover:shadow-md dark:border-white/5 dark:bg-[#131124]">
+            <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-[#6F00D6] dark:bg-purple-500/20 dark:text-[#B26BFF]">
+              <GraduationCap size={20} strokeWidth={2.4} />
+            </div>
+            <h3 className="font-display text-lg font-bold text-[#14102A] dark:text-white">
+              Modo Universitário
+            </h3>
+            <p className="mt-2 text-sm font-normal leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
+              Acompanhe disciplinas, notas, prazos de entrega e monte resumos e flashcards por matéria.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Call to action section */}
-      <section className="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
-        <div className="relative overflow-hidden rounded-[32px] border border-slate-200/80 bg-gradient-to-br from-[#120F24] via-[#171330] to-[#0D0A1A] p-8 sm:p-12 text-center text-white shadow-xl dark:border-white/10">
-          <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-[#00D64B]/20 blur-3xl" />
-          <div className="pointer-events-none absolute -left-20 -bottom-20 h-72 w-72 rounded-full bg-[#6F00D6]/30 blur-3xl" />
+      {/* Section RECURSOS */}
+      <section id="recursos" className="mx-auto max-w-7xl px-6 py-20 sm:px-8">
+        <div className="text-center">
+          <span className="font-display text-xs font-bold tracking-widest uppercase text-[#6F00D6] dark:text-[#B26BFF]">
+            Recursos
+          </span>
+          <h2 className="mt-2 font-display text-3xl sm:text-4xl font-bold tracking-tight text-[#14102A] dark:text-white">
+            O que os dois modos têm em comum
+          </h2>
+        </div>
 
-          <div className="relative z-10 flex flex-col items-center">
-            <DuckMascot size={90} mood="fire" animate />
-            <h2 className="mt-4 font-display text-3xl sm:text-4xl font-bold tracking-tight text-white">
-              Seu futuro universitário começa hoje.
-            </h2>
-            <p className="mt-3 max-w-lg text-sm sm:text-base font-medium text-[#9D96B8]">
-              Junte-se a milhares de estudantes que abandonaram o caos e organizaram sua preparação com o DuckMind.
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Cronômetro de foco */}
+          <div className="rounded-[24px] border border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-200 hover:shadow-md dark:border-white/5 dark:bg-[#131124]">
+            <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-[#6F00D6] dark:bg-purple-500/20 dark:text-[#B26BFF]">
+              <Clock size={19} strokeWidth={2.3} />
+            </div>
+            <h3 className="font-display text-base font-bold text-[#14102A] dark:text-white">
+              Cronômetro de foco
+            </h3>
+            <p className="mt-2 text-xs sm:text-sm font-normal leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
+              Registre cada sessão de estudo e acompanhe sua meta diária.
             </p>
+          </div>
+
+          {/* Organização completa */}
+          <div className="rounded-[24px] border border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-200 hover:shadow-md dark:border-white/5 dark:bg-[#131124]">
+            <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-[#6F00D6] dark:bg-purple-500/20 dark:text-[#B26BFF]">
+              <BookOpen size={19} strokeWidth={2.3} />
+            </div>
+            <h3 className="font-display text-base font-bold text-[#14102A] dark:text-white">
+              Organização completa
+            </h3>
+            <p className="mt-2 text-xs sm:text-sm font-normal leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
+              Conteúdo por área ou disciplina, com progresso por tópico.
+            </p>
+          </div>
+
+          {/* Metas e progresso */}
+          <div className="rounded-[24px] border border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-200 hover:shadow-md dark:border-white/5 dark:bg-[#131124]">
+            <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-[#6F00D6] dark:bg-purple-500/20 dark:text-[#B26BFF]">
+              <BarChart2 size={19} strokeWidth={2.3} />
+            </div>
+            <h3 className="font-display text-base font-bold text-[#14102A] dark:text-white">
+              Metas e progresso
+            </h3>
+            <p className="mt-2 text-xs sm:text-sm font-normal leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
+              Tempo estudado, questões e aproveitamento, sempre à vista.
+            </p>
+          </div>
+
+          {/* Gamificação */}
+          <div className="rounded-[24px] border border-slate-200/80 bg-white p-6 shadow-xs transition-all duration-200 hover:shadow-md dark:border-white/5 dark:bg-[#131124]">
+            <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-[#6F00D6] dark:bg-purple-500/20 dark:text-[#B26BFF]">
+              <Trophy size={19} strokeWidth={2.3} />
+            </div>
+            <h3 className="font-display text-base font-bold text-[#14102A] dark:text-white">
+              Gamificação
+            </h3>
+            <p className="mt-2 text-xs sm:text-sm font-normal leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
+              Sequências e conquistas que tornam o hábito mais leve.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Section COMO FUNCIONA */}
+      <section id="como-funciona" className="mx-auto max-w-7xl px-6 py-20 sm:px-8">
+        <div className="text-center">
+          <span className="font-display text-xs font-bold tracking-widest uppercase text-[#6F00D6] dark:text-[#B26BFF]">
+            Como funciona
+          </span>
+          <h2 className="mt-2 font-display text-3xl sm:text-4xl font-bold tracking-tight text-[#14102A] dark:text-white">
+            Três passos até sua rotina de estudo
+          </h2>
+        </div>
+
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {/* Step 01 */}
+          <div className="rounded-[28px] border border-slate-200/80 bg-white p-7 sm:p-8 shadow-xs transition-all duration-200 hover:shadow-md dark:border-white/5 dark:bg-[#131124]">
+            <div className="font-display text-2xl font-bold text-[#00D64B]">
+              01
+            </div>
+            <h3 className="mt-2 font-display text-base font-bold text-[#14102A] dark:text-white">
+              Escolha seu modo
+            </h3>
+            <p className="mt-2 text-sm font-normal leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
+              Vestibular ou universitário — você pode trocar quando quiser.
+            </p>
+          </div>
+
+          {/* Step 02 */}
+          <div className="rounded-[28px] border border-slate-200/80 bg-white p-7 sm:p-8 shadow-xs transition-all duration-200 hover:shadow-md dark:border-white/5 dark:bg-[#131124]">
+            <div className="font-display text-2xl font-bold text-[#00D64B]">
+              02
+            </div>
+            <h3 className="mt-2 font-display text-base font-bold text-[#14102A] dark:text-white">
+              Registre cada sessão
+            </h3>
+            <p className="mt-2 text-sm font-normal leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
+              Use o cronômetro e anote questões, notas ou entregas.
+            </p>
+          </div>
+
+          {/* Step 03 */}
+          <div className="rounded-[28px] border border-slate-200/80 bg-white p-7 sm:p-8 shadow-xs transition-all duration-200 hover:shadow-md dark:border-white/5 dark:bg-[#131124]">
+            <div className="font-display text-2xl font-bold text-[#00D64B]">
+              03
+            </div>
+            <h3 className="mt-2 font-display text-base font-bold text-[#14102A] dark:text-white">
+              Acompanhe sua evolução
+            </h3>
+            <p className="mt-2 text-sm font-normal leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
+              Veja estatísticas, sequência de dias e seu progresso.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom CTA Banner */}
+      <section className="mx-auto max-w-7xl px-6 pb-20 sm:px-8">
+        <div className="relative overflow-hidden rounded-[32px] bg-[#6F00D6] p-8 sm:p-12 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* Subtle ambient lighting */}
+          <div className="pointer-events-none absolute -bottom-16 -right-16 h-64 w-64 rounded-full bg-[#9D4EDD]/40 blur-3xl" />
+          <div className="pointer-events-none absolute -top-16 -left-16 h-64 w-64 rounded-full bg-[#8318E8]/30 blur-2xl" />
+
+          <div className="relative z-10 max-w-xl text-center md:text-left">
+            <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white">
+              Pronto para começar?
+            </h2>
+            <p className="mt-2 text-sm sm:text-base font-normal text-white/85">
+              Crie sua conta e escolha entre o modo Vestibular e o Universitário em poucos minutos.
+            </p>
+          </div>
+
+          <div className="relative z-10 shrink-0">
             <button
               onClick={() => navigate('/signup')}
-              className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#00D64B] px-8 py-3.5 text-sm font-bold text-[#14102A] shadow-md transition-all hover:bg-[#19E85F] hover:shadow-lg active:scale-[0.98]"
+              className="inline-flex items-center justify-center rounded-full bg-white px-8 py-3.5 text-sm font-bold text-[#6F00D6] shadow-md transition-all hover:bg-slate-50 hover:shadow-lg active:scale-[0.98]"
             >
-              <span>Começar agora — é 100% gratuito</span>
-              <ArrowRight size={16} strokeWidth={2.6} />
+              Criar minha conta
             </button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200/80 py-8 text-center text-xs font-semibold text-[#645F78] dark:border-white/5 dark:text-[#9D96B8]">
-        © 2026 DuckMind · Feito para vestibulandos rumo à aprovação
+      <footer className="border-t border-slate-200/80 py-10 dark:border-white/5">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 text-xs text-[#645F78] sm:flex-row sm:px-8 dark:text-[#9D96B8]">
+          <div className="font-display text-base font-bold tracking-tight text-[#14102A] dark:text-white">
+            Duck<span className="text-[#6F00D6] dark:text-[#19E85F]">Mind</span>
+          </div>
+          <div>
+            © 2026 DuckMind · para o vestibular e a faculdade
+          </div>
+        </div>
       </footer>
     </div>
   );
