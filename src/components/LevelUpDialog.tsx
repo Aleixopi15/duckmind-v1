@@ -38,53 +38,50 @@ export default function LevelUpDialog({ currentLevel, onOpenAchievements }: Prop
 
   return (
     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 animate-fade-in">
-      <div className="fixed inset-0 bg-tinta/70" onClick={handleClose} />
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={handleClose} />
 
-      <div
-        className="relative w-full max-w-md animate-scale-in overflow-hidden border-[3px] border-tinta bg-papel p-6 text-center dark:border-papel dark:bg-surface-dark-card"
-        style={{ borderRadius: 28, boxShadow: '8px 8px 0 #00D64B' }}
-      >
+      <div className="relative w-full max-w-md animate-scale-in overflow-hidden rounded-[28px] border border-slate-200/80 bg-white p-7 text-center shadow-2xl dark:border-white/10 dark:bg-[#151226]">
         <button
           onClick={handleClose}
           aria-label="Fechar"
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-tinta bg-white text-tinta transition-transform active:translate-x-[2px] active:translate-y-[2px] dark:border-papel dark:bg-transparent dark:text-papel"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
         >
-          <X size={16} strokeWidth={2.8} />
+          <X size={18} strokeWidth={2.4} />
         </button>
 
-        <div className="mb-4 mt-1 inline-flex items-center gap-1.5 rounded-[12px] border-[3px] border-tinta bg-bico px-3 py-1 font-display text-xs font-bold uppercase tracking-wide text-tinta dark:border-papel">
-          <Sparkles size={14} strokeWidth={3} /> Subiu de nível!
+        <div className="mb-4 mt-1 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-3 py-1 font-display text-xs font-bold uppercase tracking-wide text-[#D68200] dark:text-[#FFB84D]">
+          <Sparkles size={14} strokeWidth={2.4} /> Subiu de nível!
         </div>
 
         <div className="my-2 flex justify-center">
           <DuckMascot size={112} level={celebratedLevel.level} mood="celebrating" animate showAccessoryBadge />
         </div>
 
-        <h3 className="mt-3 font-display text-2xl font-bold leading-tight text-tinta dark:text-papel">
+        <h3 className="mt-3 font-display text-2xl font-bold leading-tight text-[#14102A] dark:text-white">
           Nível {celebratedLevel.level}: {celebratedLevel.title}
         </h3>
 
-        <p className="mt-2 px-2 text-sm font-semibold text-muted dark:text-papel/70">
+        <p className="mt-2 px-2 text-sm font-medium text-[#645F78] dark:text-[#9D96B8]">
           {celebratedLevel.description}
         </p>
 
-        <div className="my-4 flex items-center justify-center gap-2 rounded-[16px] border-[3px] border-tinta bg-mente px-3 py-2.5 text-sm font-bold text-papel dark:border-papel">
+        <div className="my-4 flex items-center justify-center gap-2 rounded-2xl bg-[#6F00D6]/15 border border-[#6F00D6]/30 px-3.5 py-2.5 text-xs font-bold text-[#6F00D6] dark:text-[#B26BFF]">
           <span className="text-lg">{celebratedLevel.accessory}</span>
           <span>Novo adereço visual desbloqueado para o Quack!</span>
         </div>
 
-        <div className="mt-5 flex items-center gap-2">
+        <div className="mt-6 flex items-center gap-2.5">
           <button
             onClick={handleClose}
-            className="btn flex-1 bg-white px-4 py-2.5 text-sm dark:border-papel dark:bg-transparent dark:text-papel"
+            className="flex-1 rounded-full border border-slate-200/90 bg-white px-4 py-2.5 text-xs font-bold text-[#645F78] hover:bg-slate-50 hover:text-[#14102A] dark:border-white/10 dark:bg-white/5 dark:text-[#9D96B8] dark:hover:text-white transition-colors"
           >
             Continuar
           </button>
           <button
             onClick={handleView}
-            className="btn flex-1 bg-pato px-4 py-2.5 text-sm text-tinta dark:border-papel"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#00D64B] px-4 py-2.5 text-xs font-bold text-[#14102A] shadow-xs hover:bg-[#19E85F] hover:shadow-md transition-all active:scale-[0.98]"
           >
-            <Trophy size={15} strokeWidth={2.8} /> Conquistas
+            <Trophy size={15} strokeWidth={2.4} /> Conquistas
           </button>
         </div>
       </div>

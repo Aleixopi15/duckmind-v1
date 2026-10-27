@@ -1368,15 +1368,15 @@ export default function SimuladosTab() {
                 <button
                   type="button"
                   onClick={handleAddAllSubjects}
-                  className="rounded-[12px] border-2 border-tinta bg-white dark:bg-transparent dark:border-papel px-2.5 py-1 text-xs font-bold text-tinta dark:text-papel hover:bg-papel shrink-0"
+                  className="rounded-full border border-slate-200/90 bg-white dark:border-white/10 dark:bg-white/5 px-3 py-1 text-xs font-bold text-[#14102A] dark:text-white hover:bg-slate-50 shrink-0 transition-colors"
                 >
-                  <Plus size={12} strokeWidth={3} className="inline mr-1" />
+                  <Plus size={12} strokeWidth={2.4} className="inline mr-1" />
                   Adicionar todas do edital ({subjects.length})
                 </button>
               </div>
 
               {/* Seletor rápido para adicionar matéria */}
-              <div className="flex flex-wrap sm:flex-nowrap gap-2 mb-3 p-2.5 rounded-[16px] border-[3px] border-tinta bg-papel dark:border-papel/40 dark:bg-white/5">
+              <div className="flex flex-wrap sm:flex-nowrap gap-2 mb-3 p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 dark:border-white/10 dark:bg-white/[0.02]">
                 <select
                   value=""
                   onChange={e => {
@@ -1385,7 +1385,7 @@ export default function SimuladosTab() {
                       if (s) handleAddCustomSubject(s.id, s.name);
                     }
                   }}
-                  className="input text-xs font-bold py-1.5 flex-1 min-w-[180px]"
+                  className="input text-xs font-bold py-2 flex-1 min-w-[180px]"
                 >
                   <option value="">+ Selecionar matéria do edital...</option>
                   {subjects.map(sub => (
@@ -1406,12 +1406,12 @@ export default function SimuladosTab() {
                       }
                     }}
                     placeholder="Ou nome personalizado..."
-                    className="input text-xs py-1.5 min-w-[140px] flex-1 sm:flex-initial"
+                    className="input text-xs py-2 min-w-[140px] flex-1 sm:flex-initial"
                   />
                   <button
                     type="button"
                     onClick={() => handleAddCustomSubject()}
-                    className="btn bg-pato text-tinta text-xs px-3 py-1.5 shrink-0 dark:border-papel"
+                    className="inline-flex items-center justify-center rounded-full bg-[#00D64B] px-4 py-2 text-xs font-bold text-[#14102A] shadow-xs hover:bg-[#19E85F] transition-all shrink-0"
                   >
                     Adicionar
                   </button>
@@ -1420,21 +1420,21 @@ export default function SimuladosTab() {
 
               {/* Lista de matérias adicionadas */}
               {form.custom_subjects.length === 0 ? (
-                <div className="p-6 text-center rounded-[16px] border-2 border-dashed border-tinta/30 dark:border-papel/30 bg-white/50 dark:bg-white/[0.02]">
-                  <p className="text-xs font-bold text-muted dark:text-papel/60 mb-2">
+                <div className="p-6 text-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10 bg-slate-50/40 dark:bg-white/[0.01]">
+                  <p className="text-xs font-semibold text-[#645F78] dark:text-[#9D96B8] mb-2">
                     Nenhuma matéria adicionada a este simulado ainda.
                   </p>
                   <button
                     type="button"
                     onClick={handleAddAllSubjects}
-                    className="btn bg-pato text-tinta text-xs px-4 py-2 dark:border-papel"
+                    className="inline-flex items-center justify-center rounded-full bg-[#00D64B] px-4 py-2 text-xs font-bold text-[#14102A] shadow-xs hover:bg-[#19E85F] transition-all"
                   >
                     Adicionar todas as {subjects.length} matérias do edital
                   </button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <div className="hidden sm:grid grid-cols-12 gap-2 px-2 text-[11px] font-extrabold uppercase text-muted dark:text-papel/50">
+                  <div className="hidden sm:grid grid-cols-12 gap-2 px-2 text-[11px] font-bold uppercase text-[#645F78] dark:text-[#9D96B8]">
                     <span className="col-span-5">Matéria</span>
                     <span className="col-span-3 text-center">Total Questões</span>
                     <span className="col-span-3 text-center">Acertos</span>
@@ -1450,11 +1450,11 @@ export default function SimuladosTab() {
                     return (
                       <div
                         key={idx}
-                        className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2.5 rounded-[14px] border-[3px] border-tinta bg-white dark:border-papel/40 dark:bg-surface-dark-card"
+                        className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-3 rounded-xl border border-slate-200/80 bg-white dark:border-white/10 dark:bg-white/[0.03]"
                       >
                         <div className="sm:col-span-5 flex items-center gap-2 min-w-0">
                           <span
-                            className="h-3.5 w-3.5 rounded-full border-2 border-tinta shrink-0"
+                            className="h-3.5 w-3.5 rounded-full shrink-0"
                             style={{ background: matchedSub?.color || '#00D64B' }}
                           />
                           <input
@@ -1466,7 +1466,7 @@ export default function SimuladosTab() {
                         </div>
 
                         <div className="sm:col-span-3 flex items-center justify-between sm:justify-center gap-2">
-                          <span className="text-xs font-bold text-muted sm:hidden">Total:</span>
+                          <span className="text-xs font-bold text-[#645F78] dark:text-[#9D96B8] sm:hidden">Total:</span>
                           <div className="relative w-full max-w-[120px]">
                             <input
                               type="number"
@@ -1481,7 +1481,7 @@ export default function SimuladosTab() {
                         </div>
 
                         <div className="sm:col-span-3 flex items-center justify-between sm:justify-center gap-2">
-                          <span className="text-xs font-bold text-muted sm:hidden">Acertos:</span>
+                          <span className="text-xs font-bold text-[#645F78] dark:text-[#9D96B8] sm:hidden">Acertos:</span>
                           <div className="relative w-full max-w-[120px]">
                             <input
                               type="number"
@@ -1493,7 +1493,7 @@ export default function SimuladosTab() {
                             />
                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted font-bold">✓</span>
                           </div>
-                          <span className={cn('text-xs font-mono font-bold shrink-0 w-11 text-right', pct >= 70 ? 'text-emerald-600 dark:text-pato' : pct >= 50 ? 'text-amber-600' : 'text-red-500')}>
+                          <span className={cn('text-xs font-mono font-bold shrink-0 w-11 text-right', pct >= 70 ? 'text-emerald-600 dark:text-[#00D64B]' : pct >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-500')}>
                             {pct}%
                           </span>
                         </div>
@@ -1503,9 +1503,9 @@ export default function SimuladosTab() {
                             type="button"
                             onClick={() => handleRemoveCustomSubject(idx)}
                             aria-label={`Remover ${cs.subject_name}`}
-                            className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-tinta text-muted hover:bg-bico hover:text-tinta dark:border-papel dark:hover:bg-bico"
+                            className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200/80 text-slate-400 hover:text-rose-600 hover:border-rose-200 dark:border-white/10 dark:hover:text-rose-400 transition-colors"
                           >
-                            <Trash2 size={13} strokeWidth={2.8} />
+                            <Trash2 size={13} strokeWidth={2.4} />
                           </button>
                         </div>
                       </div>
@@ -1513,11 +1513,11 @@ export default function SimuladosTab() {
                   })}
 
                   {/* Barra de totalizador do Simulado Personalizado */}
-                  <div className="mt-1 flex items-center justify-between p-3 rounded-[14px] border-[3px] border-tinta bg-pato text-tinta dark:border-papel">
-                    <span className="text-xs font-extrabold uppercase tracking-wide">
+                  <div className="mt-1 flex items-center justify-between p-3.5 rounded-xl border border-[#00D64B]/30 bg-[#00D64B]/15 text-[#008E32] dark:text-[#19E85F]">
+                    <span className="text-xs font-bold uppercase tracking-wider">
                       Total ({form.custom_subjects.length} {form.custom_subjects.length === 1 ? 'matéria' : 'matérias'})
                     </span>
-                    <span className="font-mono text-sm font-extrabold">
+                    <span className="font-mono text-sm font-bold">
                       {parsedFormStats.totalCorrect} / {parsedFormStats.totalQuestions} questões acertadas ({parsedFormStats.accuracyPct}%)
                     </span>
                   </div>
@@ -1801,7 +1801,7 @@ export default function SimuladosTab() {
           <div className="pt-2 border-t border-slate-100 dark:border-white/5">
             <div className="grid sm:grid-cols-2 gap-3 mb-3">
               <div>
-                <label className="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
+                <label className="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">
                   Dificuldade Percebida
                 </label>
                 <div className="grid grid-cols-4 gap-1.5">
@@ -1816,10 +1816,10 @@ export default function SimuladosTab() {
                       type="button"
                       onClick={() => setForm(prev => ({ ...prev, perceived_difficulty: d.value as any }))}
                       className={cn(
-                        'rounded-[10px] border-2 border-tinta py-1.5 text-xs font-bold transition-transform dark:border-papel',
+                        'rounded-xl border py-2 text-xs font-bold transition-all',
                         form.perceived_difficulty === d.value
-                          ? 'bg-pato text-tinta'
-                          : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                          ? 'border-2 border-[#00D64B] bg-[#00D64B]/15 text-[#008E32] dark:text-[#19E85F] shadow-xs'
+                          : 'border-slate-200/90 bg-white text-[#645F78] hover:border-slate-300 hover:text-[#14102A] dark:border-white/10 dark:bg-white/5 dark:text-[#9D96B8] dark:hover:text-white',
                       )}
                     >
                       {d.label}
@@ -1829,10 +1829,10 @@ export default function SimuladosTab() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
+                <label className="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">
                   Pontos de Atenção / Causas de Erro (Tags)
                 </label>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {ERROR_TAGS.map(tag => {
                     const selected = form.error_reasons.includes(tag);
                     return (
@@ -1841,10 +1841,10 @@ export default function SimuladosTab() {
                         type="button"
                         onClick={() => toggleErrorTag(tag)}
                         className={cn(
-                          'rounded-[10px] border-2 border-tinta px-2 py-0.5 text-[11px] font-bold transition-transform dark:border-papel',
+                          'rounded-lg border px-2.5 py-1 text-xs font-medium transition-all',
                           selected
-                            ? 'bg-bico text-tinta'
-                            : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                            ? 'border-amber-400 bg-amber-500/15 text-[#D68200] dark:border-amber-500/30 dark:text-[#FFB84D] font-bold shadow-xs'
+                            : 'border-slate-200/80 bg-white text-[#645F78] hover:border-slate-300 hover:text-[#14102A] dark:border-white/10 dark:bg-white/5 dark:text-[#9D96B8] dark:hover:text-white',
                         )}
                       >
                         {tag}

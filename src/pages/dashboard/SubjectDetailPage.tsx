@@ -25,8 +25,11 @@ export default function SubjectDetailPage({ subjectId, onBack }: Props) {
   if (!subject) {
     return (
       <div className="animate-fade-in">
-        <button onClick={onBack} className="btn mb-4 bg-white px-4 py-2 text-sm dark:border-papel dark:bg-transparent dark:text-papel">
-          <ArrowLeft size={16} strokeWidth={2.8} /> Voltar
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-2 mb-4 rounded-full border border-slate-200/90 bg-white px-4 py-2 text-xs font-bold text-[#14102A] hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 transition-colors"
+        >
+          <ArrowLeft size={16} strokeWidth={2.4} /> Voltar
         </button>
         <p className="font-semibold text-muted dark:text-papel/60">Matéria não encontrada.</p>
       </div>

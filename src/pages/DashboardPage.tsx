@@ -177,7 +177,7 @@ export default function DashboardPage() {
             type="button"
             aria-label="Fechar menu"
             onClick={() => setDrawerOpen(false)}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-gray-100 dark:hover:bg-white/10 md:hidden"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-gray-100 dark:hover:bg-white/10 lg:hidden"
           >
             <X size={18} strokeWidth={2.4} />
           </button>
@@ -226,16 +226,16 @@ export default function DashboardPage() {
         <div className="absolute -bottom-36 right-[25%] h-[500px] w-[500px] rounded-full bg-[#6F00D6]/8 blur-[140px] dark:bg-[#6F00D6]/20" />
       </div>
 
-      {/* Sidebar desktop: Menu lateral flutuante */}
+      {/* Sidebar desktop: Menu lateral flutuante (ativo em telas grandes/desktops) */}
       <aside
-        className="fixed left-4 top-4 bottom-4 z-40 hidden w-[240px] flex-col rounded-[28px] border border-slate-200/80 bg-white/95 p-5 shadow-2xl backdrop-blur-md dark:border-white/5 dark:bg-[#131024]/90 md:flex"
+        className="fixed left-4 top-4 bottom-4 z-40 hidden w-[240px] flex-col rounded-[28px] border border-slate-200/80 bg-white/95 p-5 shadow-2xl backdrop-blur-md dark:border-white/5 dark:bg-[#131024]/90 lg:flex"
       >
         {sidebarInner}
       </aside>
 
-      {/* Drawer mobile */}
+      {/* Drawer mobile e tablet portrait */}
       {drawerOpen && (
-        <div className="fixed inset-0 z-[900] overscroll-contain animate-fade-in md:hidden">
+        <div className="fixed inset-0 z-[900] overscroll-contain animate-fade-in lg:hidden">
           <button
             type="button"
             aria-label="Fechar menu"
@@ -243,7 +243,7 @@ export default function DashboardPage() {
             onClick={() => setDrawerOpen(false)}
           />
           <aside
-            className="absolute left-0 top-0 z-10 flex h-full w-64 max-w-[85vw] flex-col border-r border-slate-200/80 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-[#0D0A1F]"
+            className="absolute left-0 top-0 z-10 flex h-full w-72 max-w-[85vw] flex-col border-r border-slate-200/80 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-[#0D0A1F]"
           >
             {sidebarInner}
           </aside>
@@ -251,16 +251,24 @@ export default function DashboardPage() {
       )}
 
       {/* Área principal integrada */}
-      <div className="relative z-10 flex min-h-screen min-w-0 max-w-full flex-col overflow-x-hidden pb-28 md:ml-[264px] md:pb-8">
+      <div className="relative z-10 flex min-h-screen min-w-0 max-w-full flex-col overflow-x-hidden pb-28 lg:ml-[264px] lg:pb-8">
         {/* Cabeçalho sem limitações/separadores rígidos: Totalmente integrado ao fundo */}
-        <header className="flex h-[72px] shrink-0 items-center justify-between gap-3 px-4 pt-3 pb-2 md:px-8 md:pt-6 md:pb-4 transition-colors">
-          {/* Mobile: Apenas Logo DuckMind à esquerda */}
-          <div className="flex min-w-0 items-center gap-2 md:hidden">
+        <header className="flex h-[72px] shrink-0 items-center justify-between gap-3 px-4 pt-3 pb-2 sm:px-6 md:px-8 md:pt-6 md:pb-4 transition-colors">
+          {/* Mobile & Tablet Portrait: Hamburger + Logo DuckMind */}
+          <div className="flex min-w-0 items-center gap-2.5 lg:hidden">
+            <button
+              type="button"
+              aria-label="Abrir menu de navegação"
+              onClick={() => setDrawerOpen(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-200/60 dark:bg-white/10 text-muted hover:text-tinta dark:text-gray-300 dark:hover:text-white transition-colors"
+            >
+              <Menu size={20} strokeWidth={2.4} />
+            </button>
             <Logo size="md" />
           </div>
 
           {/* Desktop: Trilha / Breadcrumb Adaptado ao Modo */}
-          <div className="hidden min-w-0 items-center gap-2 md:flex">
+          <div className="hidden min-w-0 items-center gap-2 lg:flex">
             <span
               className={cn(
                 'rounded-full px-3.5 py-1 font-display text-xs font-bold',
@@ -382,10 +390,10 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      {/* Menu flutuante na parte inferior da tela (Mobile) */}
+      {/* Menu flutuante na parte inferior da tela (Mobile e Tablet Portrait) */}
       <nav
         aria-label="Navegação móvel"
-        className="fixed bottom-4 inset-x-4 max-w-[420px] mx-auto z-40 flex h-[66px] items-center justify-around rounded-[32px] bg-white/90 backdrop-blur-xl border border-slate-200/80 shadow-[0_12px_36px_rgba(20,16,42,0.18)] dark:border-white/10 dark:bg-[#14102A]/90 dark:shadow-[0_12px_36px_rgba(0,0,0,0.5)] px-2 md:hidden"
+        className="fixed bottom-4 inset-x-4 max-w-[440px] sm:max-w-[480px] mx-auto z-40 flex h-[66px] items-center justify-around rounded-[32px] bg-white/90 backdrop-blur-xl border border-slate-200/80 shadow-[0_12px_36px_rgba(20,16,42,0.18)] dark:border-white/10 dark:bg-[#14102A]/90 dark:shadow-[0_12px_36px_rgba(0,0,0,0.5)] px-2 lg:hidden"
       >
         {/* 1: Início */}
         <button

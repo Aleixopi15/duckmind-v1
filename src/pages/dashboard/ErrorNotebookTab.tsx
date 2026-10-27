@@ -519,9 +519,9 @@ export default function ErrorNotebookTab({ filterSubjectId, filterTopicId, onCle
           onClick={() => { setFullscreenImage(null); setZoomLevel(1); }}
         >
           <div className="absolute inset-x-4 top-4 z-10 flex items-center justify-between" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-2 rounded-[14px] border-[3px] border-papel bg-tinta px-3.5 py-1.5 font-display text-xs font-bold text-papel">
+            <div className="flex items-center gap-2 rounded-full border border-white/20 bg-black/60 backdrop-blur-md px-4 py-1.5 font-display text-xs font-bold text-white">
               <span>Visualizador</span>
-              <span className="text-papel/40">|</span>
+              <span className="text-white/40">|</span>
               <span>{Math.round(zoomLevel * 100)}%</span>
             </div>
 
@@ -535,17 +535,17 @@ export default function ErrorNotebookTab({ filterSubjectId, filterTopicId, onCle
                   key={label}
                   onClick={action}
                   aria-label={label}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-papel bg-tinta text-papel transition-transform active:translate-x-[2px] active:translate-y-[2px]"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-md transition-all hover:bg-black/80 active:scale-95"
                 >
-                  <Icon size={18} strokeWidth={2.8} />
+                  <Icon size={18} strokeWidth={2.4} />
                 </button>
               ))}
               <button
                 onClick={() => { setFullscreenImage(null); setZoomLevel(1); }}
                 aria-label="Fechar visualização"
-                className="flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-papel bg-bico text-tinta"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md hover:bg-white/30 transition-all active:scale-95"
               >
-                <X size={20} strokeWidth={2.8} />
+                <X size={20} strokeWidth={2.4} />
               </button>
             </div>
           </div>
@@ -554,13 +554,13 @@ export default function ErrorNotebookTab({ filterSubjectId, filterTopicId, onCle
             <img
               src={fullscreenImage}
               alt="Questão ampliada"
-              className="max-h-[85vh] max-w-[90vw] cursor-zoom-in rounded-[16px] border-[3px] border-papel object-contain transition-transform duration-150"
+              className="max-h-[85vh] max-w-[90vw] cursor-zoom-in rounded-2xl border border-white/10 shadow-2xl object-contain transition-transform duration-150"
               style={{ transform: `scale(${zoomLevel})` }}
               onClick={() => setZoomLevel(z => (z === 1 ? 1.75 : 1))}
             />
           </div>
 
-          <p className="absolute bottom-4 rounded-full border-[3px] border-papel bg-tinta px-4 py-1.5 text-xs font-bold text-papel">
+          <p className="absolute bottom-4 rounded-full border border-white/15 bg-black/60 backdrop-blur-md px-4 py-1.5 text-xs font-medium text-white/90">
             Clique na imagem para alternar zoom · clique fora para fechar
           </p>
         </div>

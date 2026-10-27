@@ -598,13 +598,13 @@ export default function BancoRepertorios() {
           <button
             onClick={() => setOnlyFavorites(prev => !prev)}
             className={cn(
-              'flex items-center gap-1.5 rounded-[14px] border-[3px] border-tinta px-3 py-1 text-sm font-bold transition-transform dark:border-papel',
+              'flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-xs font-bold transition-all',
               onlyFavorites
-                ? 'bg-bico text-tinta'
-                : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                ? 'border-amber-300 bg-amber-500/15 text-[#D68200] dark:border-amber-500/30 dark:text-[#FFB84D]'
+                : 'border-slate-200/80 bg-white text-[#645F78] hover:text-[#14102A] hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-[#9D96B8] dark:hover:text-white',
             )}
           >
-            <Star size={13} strokeWidth={3} className={onlyFavorites ? 'fill-tinta' : ''} />
+            <Star size={13} strokeWidth={2.4} className={onlyFavorites ? 'fill-amber-500' : ''} />
             Favoritos ({favorites.length})
           </button>
 
@@ -612,13 +612,13 @@ export default function BancoRepertorios() {
             <button
               onClick={() => setOnlyCustom(prev => !prev)}
               className={cn(
-                'flex items-center gap-1.5 rounded-[14px] border-[3px] border-tinta px-3 py-1 text-sm font-bold transition-transform dark:border-papel',
+                'flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-xs font-bold transition-all',
                 onlyCustom
-                  ? 'bg-pato text-tinta'
-                  : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                  ? 'border-[#00D64B]/40 bg-[#00D64B]/15 text-[#008E32] dark:border-[#00D64B]/30 dark:text-[#19E85F]'
+                  : 'border-slate-200/80 bg-white text-[#645F78] hover:text-[#14102A] hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-[#9D96B8] dark:hover:text-white',
               )}
             >
-              <Bookmark size={13} strokeWidth={3} />
+              <Bookmark size={13} strokeWidth={2.4} />
               Meus ({customList.length})
             </button>
           )}
@@ -628,13 +628,13 @@ export default function BancoRepertorios() {
       {/* List of Repertórios */}
       {filteredRepertorios.length === 0 ? (
         <div className="card p-10 text-center">
-          <span className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[20px] border-[3px] border-tinta bg-pato text-tinta dark:border-papel">
-            <BookOpen size={28} strokeWidth={2.6} />
+          <span className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#00D64B]/15 text-[#008E32] dark:text-[#19E85F]">
+            <BookOpen size={28} strokeWidth={2.4} />
           </span>
-          <h3 className="mb-1 font-display text-xl font-bold text-tinta dark:text-papel">
+          <h3 className="mb-1 font-display text-xl font-bold text-[#14102A] dark:text-white">
             Nenhum repertório encontrado
           </h3>
-          <p className="mx-auto mb-5 max-w-md text-sm font-semibold text-muted dark:text-papel/60">
+          <p className="mx-auto mb-5 max-w-md text-sm font-medium text-[#645F78] dark:text-[#9D96B8]">
             Tente mudar os filtros de eixo temático, limpar a busca ou cadastrar seu próprio repertório.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2">
@@ -647,13 +647,16 @@ export default function BancoRepertorios() {
                   setOnlyFavorites(false);
                   setOnlyCustom(false);
                 }}
-                className="btn bg-white px-3.5 py-2 text-sm dark:border-papel dark:bg-transparent dark:text-papel"
+                className="rounded-full border border-slate-200/80 bg-white px-4 py-2 text-xs font-bold text-[#645F78] hover:text-[#14102A] dark:border-white/10 dark:bg-white/5 dark:text-[#9D96B8] dark:hover:text-white"
               >
                 Limpar filtros
               </button>
             )}
-            <button onClick={openNewModal} className="btn bg-pato px-4 py-2 text-sm text-tinta dark:border-papel">
-              <Plus size={15} strokeWidth={3} /> Cadastrar repertório
+            <button
+              onClick={openNewModal}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#00D64B] px-5 py-2 text-xs font-bold text-[#14102A] shadow-xs hover:bg-[#19E85F] transition-all"
+            >
+              <Plus size={15} strokeWidth={2.6} /> Cadastrar repertório
             </button>
           </div>
         </div>
@@ -677,35 +680,37 @@ export default function BancoRepertorios() {
                   <div className="mb-2.5 flex items-start justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span
-                        className="chip shrink-0 border-2 text-tinta dark:border-papel"
+                        className="chip shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold text-white shadow-xs border-none"
                         style={{ backgroundColor: axisConfig.cor }}
                       >
-                        <AxisIcon size={11} strokeWidth={3} />
+                        <AxisIcon size={11} strokeWidth={2.4} />
                         {axisConfig.label}
                       </span>
 
-                      <span className={cn('chip shrink-0 border-2 text-[11px] dark:border-papel', tipoConfig.corBadge)}>
+                      <span className={cn('chip shrink-0 rounded-full border border-slate-200/80 dark:border-white/10 px-2.5 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300', tipoConfig.corBadge)}>
                         {tipoConfig.label}
                       </span>
 
                       {item.isCustom && (
-                        <span className="chip shrink-0 border-2 bg-white text-[10px] uppercase text-tinta dark:border-papel dark:bg-transparent dark:text-papel">
+                        <span className="chip shrink-0 rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#6F00D6] dark:border-purple-500/20 dark:bg-purple-500/10 dark:text-purple-300">
                           Criado por você
                         </span>
                       )}
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-1">
+                    <div className="flex shrink-0 items-center gap-1.5">
                       <button
                         onClick={e => toggleFavorite(item.id, e)}
                         aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar'}
                         className={cn(
-                          'flex h-8 w-8 items-center justify-center rounded-full border-2 border-tinta transition-colors dark:border-papel',
-                          isFav ? 'bg-bico text-tinta' : 'bg-white text-tinta hover:bg-bico dark:bg-transparent dark:text-papel',
+                          'flex h-8 w-8 items-center justify-center rounded-full border transition-all',
+                          isFav
+                            ? 'border-amber-300 bg-amber-500/15 text-[#D68200] dark:text-[#FFB84D]'
+                            : 'border-slate-200/80 bg-white text-slate-400 hover:text-amber-500 hover:border-amber-200 dark:border-white/10 dark:bg-white/5 dark:text-slate-500 dark:hover:text-amber-400',
                         )}
                         title={isFav ? 'Remover dos favoritos' : 'Favoritar'}
                       >
-                        <Star size={15} strokeWidth={2.8} className={isFav ? 'fill-tinta' : ''} />
+                        <Star size={15} strokeWidth={2.4} className={isFav ? 'fill-amber-500 text-amber-500' : ''} />
                       </button>
 
                       {item.isCustom && (
@@ -713,18 +718,18 @@ export default function BancoRepertorios() {
                           <button
                             onClick={e => openEditModal(item, e)}
                             aria-label="Editar repertório"
-                            className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-tinta bg-white text-tinta hover:bg-pato dark:border-papel dark:bg-transparent dark:text-papel"
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/80 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#14102A] dark:border-white/10 dark:bg-white/5 dark:text-slate-400 dark:hover:text-white transition-all"
                             title="Editar"
                           >
-                            <Pencil size={13} strokeWidth={2.8} />
+                            <Pencil size={13} strokeWidth={2.4} />
                           </button>
                           <button
                             onClick={e => handleDelete(item.id, e)}
                             aria-label="Excluir repertório"
-                            className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-tinta bg-white text-tinta hover:bg-bico dark:border-papel dark:bg-transparent dark:text-papel"
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/80 bg-white text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:border-white/10 dark:bg-white/5 dark:text-slate-400 dark:hover:text-rose-400 transition-all"
                             title="Excluir"
                           >
-                            <Trash2 size={13} strokeWidth={2.8} />
+                            <Trash2 size={13} strokeWidth={2.4} />
                           </button>
                         </>
                       )}
@@ -732,10 +737,10 @@ export default function BancoRepertorios() {
                   </div>
 
                   {/* Título e autor */}
-                  <h4 className="mb-0.5 line-clamp-1 font-display text-xl font-bold leading-tight text-tinta dark:text-papel">
+                  <h4 className="mb-0.5 line-clamp-1 font-display text-xl font-bold leading-tight text-[#14102A] dark:text-white">
                     {item.tituloConceito}
                   </h4>
-                  <div className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-muted dark:text-papel/60">
+                  <div className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-[#645F78] dark:text-[#9D96B8]">
                     <span>{item.autorOuObra}</span>
                     {item.anoOuOrigem && (
                       <>
@@ -745,23 +750,23 @@ export default function BancoRepertorios() {
                     )}
                   </div>
 
-                  <p className="mb-3 line-clamp-3 text-sm font-semibold leading-relaxed text-muted dark:text-papel/70">
+                  <p className="mb-3 line-clamp-3 text-sm font-medium leading-relaxed text-[#645F78] dark:text-[#9D96B8]">
                     {item.conceito}
                   </p>
 
                   {item.citacao && (
-                    <div className="mb-3 flex items-start gap-2 rounded-[14px] border-2 border-tinta/20 bg-papel p-2.5 text-sm font-semibold italic text-tinta dark:border-papel/25 dark:bg-transparent dark:text-papel/80">
-                      <Quote size={13} strokeWidth={3} className="mt-0.5 shrink-0 opacity-60" />
+                    <div className="mb-3 flex items-start gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 p-2.5 text-sm font-medium italic text-slate-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300">
+                      <Quote size={13} strokeWidth={2.4} className="mt-0.5 shrink-0 opacity-50" />
                       <span className="line-clamp-2">“{item.citacao}”</span>
                     </div>
                   )}
 
-                  <div className="mb-3 rounded-[14px] border-2 border-tinta bg-pato/25 p-2.5 dark:border-papel/40">
-                    <div className="mb-1 flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wide text-tinta dark:text-papel">
-                      <Lightbulb size={12} strokeWidth={3} />
+                  <div className="mb-3 rounded-xl border border-emerald-200/80 bg-emerald-50/70 p-2.5 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+                    <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+                      <Lightbulb size={12} strokeWidth={2.4} />
                       Aplicação no ENEM (C2 / C3)
                     </div>
-                    <p className="line-clamp-2 text-sm font-semibold leading-relaxed text-tinta/90 dark:text-papel/70">
+                    <p className="line-clamp-2 text-xs sm:text-sm font-medium leading-relaxed text-emerald-950 dark:text-emerald-200">
                       {item.comoUsar}
                     </p>
                   </div>
@@ -770,39 +775,39 @@ export default function BancoRepertorios() {
                 {/* Rodapé */}
                 <div>
                   {item.palavrasChave.length > 0 && (
-                    <div className="mb-3 flex flex-wrap items-center gap-1">
+                    <div className="mb-3 flex flex-wrap items-center gap-1.5">
                       {item.palavrasChave.slice(0, 3).map((tag, i) => (
                         <span
                           key={i}
-                          className="rounded-[8px] border-2 border-tinta/25 px-1.5 py-0.5 text-[11px] font-bold text-muted dark:border-papel/25 dark:text-papel/50"
+                          className="rounded-lg border border-slate-200/60 bg-slate-100/60 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-400"
                         >
                           #{tag}
                         </span>
                       ))}
                       {item.palavrasChave.length > 3 && (
-                        <span className="text-[11px] font-bold text-muted dark:text-papel/40">
+                        <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
                           +{item.palavrasChave.length - 3}
                         </span>
                       )}
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between gap-2 border-t-[3px] border-tinta/15 pt-2 dark:border-papel/15">
+                  <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-3 dark:border-white/5">
                     <button
                       onClick={e => copyToClipboard(item, e)}
                       className={cn(
-                        'flex items-center gap-1.5 rounded-[14px] border-[3px] border-tinta px-3 py-1.5 text-xs font-bold transition-transform dark:border-papel',
+                        'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-bold transition-all',
                         isCopied
-                          ? 'bg-pato text-tinta'
-                          : 'bg-white text-tinta hover:-translate-y-px dark:bg-transparent dark:text-papel',
+                          ? 'border-[#00D64B] bg-[#00D64B] text-[#14102A]'
+                          : 'border-slate-200/90 bg-white text-[#14102A] hover:bg-slate-50 hover:border-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10',
                       )}
                       title="Copiar citação formatada para redação"
                     >
-                      {isCopied ? <Check size={13} strokeWidth={3} /> : <Copy size={13} strokeWidth={3} />}
+                      {isCopied ? <Check size={13} strokeWidth={2.4} /> : <Copy size={13} strokeWidth={2.4} />}
                       {isCopied ? 'Copiado!' : 'Copiar p/ redação'}
                     </button>
 
-                    <span className="text-xs font-bold text-tinta group-hover:underline dark:text-papel">
+                    <span className="text-xs font-bold text-[#6F00D6] group-hover:underline dark:text-[#B26BFF]">
                       Ver detalhes
                     </span>
                   </div>
@@ -843,18 +848,18 @@ export default function BancoRepertorios() {
                       setDetailItem(null);
                       openEditModal(it);
                     }}
-                    className="btn bg-white px-3 py-2 text-sm dark:border-papel dark:bg-transparent dark:text-papel"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3.5 py-2 text-xs font-bold text-[#14102A] hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 transition-colors"
                   >
-                    <Pencil size={13} /> Editar
+                    <Pencil size={13} strokeWidth={2.4} /> Editar
                   </button>
                 )}
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => copyToClipboard(detailItem)}
-                  className="btn bg-pato px-4 py-2 text-sm text-tinta dark:border-papel"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#00D64B] px-5 py-2 text-xs font-bold text-[#14102A] shadow-xs hover:bg-[#19E85F] transition-all"
                 >
-                  {copiedId === detailItem.id ? <Check size={14} /> : <Copy size={14} />}
+                  {copiedId === detailItem.id ? <Check size={14} strokeWidth={2.4} /> : <Copy size={14} strokeWidth={2.4} />}
                   {copiedId === detailItem.id ? 'Copiado!' : 'Copiar p/ Redação'}
                 </button>
               </div>
@@ -865,19 +870,19 @@ export default function BancoRepertorios() {
             {/* Cabeçalho */}
             <div className="flex flex-wrap items-center gap-2">
               <span
-                className="chip border-2 text-tinta dark:border-papel"
+                className="chip rounded-full px-2.5 py-0.5 text-xs font-bold text-white shadow-xs border-none"
                 style={{ backgroundColor: EIXOS_CONFIG[detailItem.eixo].cor }}
               >
                 {React.createElement(AXIS_ICONS[detailItem.eixo], { size: 12 })}
                 {EIXOS_CONFIG[detailItem.eixo].label}
               </span>
 
-              <span className={cn('chip border-2 dark:border-papel', TIPOS_CONFIG[detailItem.tipo].corBadge)}>
+              <span className={cn('chip rounded-full border border-slate-200/80 dark:border-white/10 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-300', TIPOS_CONFIG[detailItem.tipo].corBadge)}>
                 {TIPOS_CONFIG[detailItem.tipo].label}
               </span>
 
               {detailItem.anoOuOrigem && (
-                <span className="text-sm font-bold text-muted dark:text-papel/50">
+                <span className="text-sm font-semibold text-[#645F78] dark:text-[#9D96B8]">
                   {detailItem.anoOuOrigem}
                 </span>
               )}
@@ -885,20 +890,20 @@ export default function BancoRepertorios() {
 
             {/* Autor */}
             <div>
-              <div className="text-[11px] font-extrabold uppercase tracking-wide text-muted dark:text-papel/40">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
                 Autor ou obra
               </div>
-              <div className="font-display text-xl font-bold text-tinta dark:text-papel">
+              <div className="font-display text-xl font-bold text-[#14102A] dark:text-white">
                 {detailItem.autorOuObra}
               </div>
             </div>
 
             {/* Conceito */}
             <div>
-              <div className="mb-1 text-[11px] font-extrabold uppercase tracking-wide text-muted dark:text-papel/40">
+              <div className="mb-1 text-[11px] font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
                 Explicação do conceito
               </div>
-              <div className="rounded-[16px] border-[3px] border-tinta bg-papel p-3.5 text-sm font-semibold leading-relaxed text-tinta dark:border-papel/40 dark:bg-transparent dark:text-papel/80">
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 text-sm font-medium leading-relaxed text-[#14102A] dark:border-white/10 dark:bg-white/[0.03] dark:text-white">
                 {detailItem.conceito}
               </div>
             </div>
@@ -906,10 +911,10 @@ export default function BancoRepertorios() {
             {/* Citação */}
             {detailItem.citacao && (
               <div>
-                <div className="mb-1 flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wide text-muted dark:text-papel/40">
-                  <Quote size={13} strokeWidth={3} /> Citação marcante
+                <div className="mb-1 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
+                  <Quote size={13} strokeWidth={2.4} /> Citação marcante
                 </div>
-                <div className="rounded-[16px] border-[3px] border-tinta bg-bico/25 p-3.5 text-sm font-semibold italic leading-relaxed text-tinta dark:border-papel/40 dark:bg-transparent dark:text-papel/80">
+                <div className="rounded-2xl border border-amber-200/70 bg-amber-50/60 p-3.5 text-sm font-medium italic leading-relaxed text-amber-950 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
                   “{detailItem.citacao}”
                 </div>
               </div>
@@ -917,11 +922,11 @@ export default function BancoRepertorios() {
 
             {/* Aplicação */}
             <div>
-              <div className="mb-1 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-tinta dark:text-papel">
-                <Lightbulb size={14} strokeWidth={3} />
+              <div className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+                <Lightbulb size={14} strokeWidth={2.4} />
                 Como aplicar na redação (C2 & C3)
               </div>
-              <div className="rounded-[16px] border-[3px] border-tinta bg-pato/25 p-4 text-sm font-semibold leading-relaxed text-tinta dark:border-papel/40 dark:bg-transparent dark:text-papel/80">
+              <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/70 p-4 text-sm font-medium leading-relaxed text-emerald-950 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200">
                 {detailItem.comoUsar}
               </div>
             </div>
@@ -929,14 +934,14 @@ export default function BancoRepertorios() {
             {/* Palavras-chave */}
             {detailItem.palavrasChave.length > 0 && (
               <div>
-                <div className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted dark:text-papel/40">
+                <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#645F78] dark:text-[#9D96B8]">
                   Palavras-chave e temas relacionados
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {detailItem.palavrasChave.map((tag, i) => (
                     <span
                       key={i}
-                      className="rounded-[10px] border-2 border-tinta/25 px-2.5 py-0.5 text-sm font-bold text-muted dark:border-papel/25 dark:text-papel/60"
+                      className="rounded-lg border border-slate-200/60 bg-slate-100/60 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-400"
                     >
                       #{tag}
                     </span>
@@ -955,18 +960,18 @@ export default function BancoRepertorios() {
         title={editingId ? 'Editar Repertório' : 'Adicionar Novo Repertório'}
         size="lg"
         footer={
-          <div className="flex items-center justify-end gap-2 w-full">
+          <div className="flex items-center justify-end gap-2.5 w-full">
             <button
               type="button"
               onClick={() => setModalOpen(false)}
-              className="btn bg-white px-3.5 py-2 text-sm dark:border-papel dark:bg-transparent dark:text-papel"
+              className="rounded-full px-5 py-2.5 text-xs font-bold text-[#645F78] hover:text-[#14102A] dark:text-[#9D96B8] dark:hover:text-white transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               form="repertorio-form"
-              className="btn bg-pato px-4 py-2 text-sm text-tinta dark:border-papel"
+              className="inline-flex items-center justify-center rounded-full bg-[#00D64B] px-6 py-2.5 text-xs font-bold text-[#14102A] shadow-xs hover:bg-[#19E85F] hover:shadow-md transition-all active:scale-[0.98]"
             >
               {editingId ? 'Salvar Alterações' : 'Adicionar ao Banco'}
             </button>
@@ -975,7 +980,7 @@ export default function BancoRepertorios() {
       >
         <form id="repertorio-form" onSubmit={handleSave} className="space-y-4">
           {formError && (
-            <div className="rounded-[14px] border-[3px] border-tinta bg-bico p-3 text-sm font-bold text-tinta dark:border-papel">
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
               {formError}
             </div>
           )}
