@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react';
 import Modal from '../../components/Modal';
-import { supabase } from '../../lib/supabase';
+import { supabase, type StudyType, type StudySession, type Simulation } from '../../lib/supabase';
 import { useApp } from '../../context/AppContext';
 import { formatDuration, hmsToMinutes, minutesToHMS, studyTypeLabel, StudyTypeIcon, STUDY_TYPES } from '../../components/LogStudyDialog';
 import SubjectIcon from '../../components/SubjectIcon';
 import { cn } from '../../lib/theme';
-import type { StudySession, StudyType, Simulation } from '../../lib/supabase';
 import { Search, Edit2, Trash2, History, Filter, FileText } from 'lucide-react';
 import { getSimulationQuestions, getSubjectSimulationQuestions, getSimulationDuration, parseSimulationData, getSimulationDate, formatISODateSafe } from '../../lib/simulationUtils';
+import { parseDateToLocalYMD, createSafeStudyTimestamp, formatLocalDateBR, getLocalDateString } from '../../lib/dateUtils';
 
 type EditForm = {
   id: string; subject_id: string; topic_id: string; study_type: StudyType;
@@ -131,7 +131,7 @@ export default function ActivityTab() {
       id: s.id, subject_id: s.subject_id, topic_id: s.topic_id ?? '', study_type: s.study_type ?? 'teoria',
       duration_hours: hms.h, duration_minutes: hms.m, duration_seconds: hms.s,
       questions_correct: String(s.questions_correct), questions_wrong: String(s.questions_wrong),
-      flashcards_count: String(s.flashcards_count ?? 0), notes: s.notes, studied_at: s.studied_at.split('T')[0],
+      flashcards_count: String(s.flashcards_count ?? 0), notes: s.notes, studied_at: parseDateToLocalYMD(s.studied_at),
     });
     setEditOpen(true);
   };
@@ -140,6 +140,7 @@ export default function ActivityTab() {
     if (!editForm) return;
     setError(''); setSaving(true);
     const totalMins = hmsToMinutes(editForm.duration_hours, editForm.duration_minutes, editForm.duration_seconds);
+    const safeTimestamp = createSafeStudyTimestamp(editForm.studied_at);
     const { error: err } = await supabase.from('study_sessions').update({
       subject_id: editForm.subject_id, topic_id: editForm.topic_id || null,
       duration_minutes: totalMins,
@@ -147,7 +148,7 @@ export default function ActivityTab() {
       questions_correct: editForm.study_type === 'flashcards' ? 0 : parseInt(editForm.questions_correct) || 0,
       questions_wrong: editForm.study_type === 'flashcards' ? 0 : parseInt(editForm.questions_wrong) || 0,
       flashcards_count: editForm.study_type === 'flashcards' ? parseInt(editForm.flashcards_count) || 0 : 0,
-      notes: editForm.notes, studied_at: `${editForm.studied_at}T12:00:00`,
+      notes: editForm.notes, studied_at: safeTimestamp,
     }).eq('id', editForm.id);
     if (err) setError('Erro ao atualizar sessão.');
     else { setEditOpen(false); setEditForm(null); await refreshData(); }
@@ -324,7 +325,7 @@ export default function ActivityTab() {
 
                   <div className="flex shrink-0 flex-col items-end gap-1.5">
                     <span className="whitespace-nowrap font-display text-xs font-bold text-[#645F78] dark:text-[#9D96B8]">
-                      {formatISODateSafe(s.studied_at)}
+                      {formatLocalDateBR(s.studied_at)}
                     </span>
                     <div className="flex gap-1 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
                       <button
@@ -623,7 +624,7 @@ export default function ActivityTab() {
                 id="edit-data"
                 type="date"
                 value={editForm.studied_at}
-                max={new Date().toISOString().split('T')[0]}
+                max={getLocalDateString()}
                 onChange={e => setEditForm(f => ({ ...f!, studied_at: e.target.value }))}
                 className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3.5 py-2.5 text-xs font-medium text-[#14102A] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00D64B]"
               />

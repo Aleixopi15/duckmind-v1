@@ -12,8 +12,13 @@ import {
   Trash2,
   CircleDashed,
   AlertTriangle,
+  History,
+  Archive,
+  RotateCcw,
+  Search,
 } from 'lucide-react';
 import type { UniversityTask, UniversityTaskPriority, UniversityTaskStatus } from '../../../lib/supabase';
+import { formatLocalDateBR, getLocalDateString } from '../../../lib/dateUtils';
 
 const COLUMNS: {
   id: UniversityTaskStatus;
@@ -40,6 +45,14 @@ export default function PrazosEEntregasTab() {
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historySearch, setHistorySearch] = useState('');
+  const [historySubjectId, setHistorySubjectId] = useState('all');
+  const [retentionDays, setRetentionDays] = useState<number>(() => {
+    const saved = localStorage.getItem('duckmind_university_task_retention');
+    return saved !== null ? Number(saved) : 3; // 3 dias por padrão
+  });
+
   const [editingTask, setEditingTask] = useState<UniversityTask | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<UniversityTask | null>(null);
 
@@ -52,6 +65,22 @@ export default function PrazosEEntregasTab() {
   const [dueDate, setDueDate] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const handleSetRetentionDays = (days: number) => {
+    setRetentionDays(days);
+    localStorage.setItem('duckmind_university_task_retention', String(days));
+  };
+
+  const isTaskArchived = (task: UniversityTask, daysThreshold: number): boolean => {
+    if (task.status !== 'done') return false;
+    if (daysThreshold === 0) return false; // 0 = sempre manter visível
+    const doneTimeStr = task.delivered_at || task.created_at;
+    if (!doneTimeStr) return false;
+    const doneTime = new Date(doneTimeStr).getTime();
+    if (isNaN(doneTime)) return false;
+    const diffDays = (Date.now() - doneTime) / (1000 * 60 * 60 * 24);
+    return diffDays >= daysThreshold;
+  };
+
   const openNew = (defaultStatus: UniversityTaskStatus = 'todo') => {
     setEditingTask(null);
     setSubjectId(universitySubjects[0]?.id ?? '');
@@ -59,7 +88,8 @@ export default function PrazosEEntregasTab() {
     setDescription('');
     setPriority('medium');
     setStatus(defaultStatus);
-    setDueDate(new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0]);
+    const d = new Date(Date.now() + 86400000 * 3);
+    setDueDate(getLocalDateString(d));
     setModalOpen(true);
   };
 
@@ -106,9 +136,25 @@ export default function PrazosEEntregasTab() {
     await updateUniversityTask(task.id, { status: nextStatus });
   };
 
-  const filteredTasks = universityTasks.filter(t => {
+  // Separação de tarefas ativas vs arquivadas por antiguidade
+  const allDoneTasks = universityTasks.filter(t => t.status === 'done');
+  const archivedDoneTasks = allDoneTasks.filter(t => isTaskArchived(t, retentionDays));
+  const activeTasks = universityTasks.filter(t => !isTaskArchived(t, retentionDays));
+
+  const filteredTasks = activeTasks.filter(t => {
     if (selectedSubjectId !== 'all' && t.subject_id !== selectedSubjectId) return false;
     if (selectedPriority !== 'all' && t.priority !== selectedPriority) return false;
+    return true;
+  });
+
+  const filteredHistoryTasks = allDoneTasks.filter(t => {
+    if (historySubjectId !== 'all' && t.subject_id !== historySubjectId) return false;
+    if (historySearch.trim()) {
+      const q = historySearch.toLowerCase();
+      const matchTitle = t.title.toLowerCase().includes(q);
+      const matchDesc = (t.description || '').toLowerCase().includes(q);
+      return matchTitle || matchDesc;
+    }
     return true;
   });
 
@@ -154,7 +200,7 @@ export default function PrazosEEntregasTab() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* Alternador Kanban / Lista */}
           <div className="flex items-center rounded-full bg-slate-100 p-1 dark:bg-white/5 border border-slate-200/80 dark:border-white/5">
             <button
@@ -180,6 +226,21 @@ export default function PrazosEEntregasTab() {
               Lista
             </button>
           </div>
+
+          {/* Botão de Histórico */}
+          <button
+            onClick={() => setHistoryOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3.5 py-2 text-xs font-bold text-[#14102A] shadow-xs transition-all hover:bg-slate-50 dark:border-white/10 dark:bg-[#131024] dark:text-white dark:hover:bg-white/5"
+            title="Ver histórico de trabalhos concluídos"
+          >
+            <History size={15} className="text-[#6F00D6] dark:text-[#B379FF]" />
+            <span>Histórico</span>
+            {allDoneTasks.length > 0 && (
+              <span className="ml-0.5 rounded-full bg-[#6F00D6]/10 px-1.5 py-0.2 text-[10px] font-extrabold text-[#6F00D6] dark:bg-[#6F00D6]/30 dark:text-[#B379FF]">
+                {allDoneTasks.length}
+              </span>
+            )}
+          </button>
 
           <button
             onClick={() => openNew('todo')}
@@ -355,6 +416,25 @@ export default function PrazosEEntregasTab() {
                       );
                     })
                   )}
+
+                  {/* Banner de itens arquivados na coluna Concluído */}
+                  {col.id === 'done' && archivedDoneTasks.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setHistoryOpen(true)}
+                      className="w-full flex items-center justify-between p-2.5 rounded-2xl border border-dashed border-[#6F00D6]/30 bg-[#6F00D6]/5 hover:bg-[#6F00D6]/10 text-left transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Archive size={14} className="text-[#6F00D6] dark:text-[#B379FF]" />
+                        <span className="text-[11px] font-bold text-[#14102A] dark:text-white">
+                          {archivedDoneTasks.length} {archivedDoneTasks.length === 1 ? 'concluído arquivado' : 'concluídos arquivados'}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-[#6F00D6] dark:text-[#B379FF]">
+                        Ver histórico &rarr;
+                      </span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Botão de adicionar direto na coluna */}
@@ -370,13 +450,32 @@ export default function PrazosEEntregasTab() {
         </div>
       ) : (
         /* Visualização em LISTA */
-        <div className="rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-xs dark:border-white/5 dark:bg-[#131024]">
-          <div className="divide-y divide-slate-100 dark:divide-white/5">
-            {filteredTasks.length === 0 ? (
-              <div className="py-8 text-center text-xs text-muted">
-                Nenhum prazo correspondente aos filtros.
+        <div className="space-y-3">
+          {archivedDoneTasks.length > 0 && (
+            <div className="flex items-center justify-between p-3 rounded-2xl border border-dashed border-[#6F00D6]/30 bg-[#6F00D6]/5 px-4">
+              <div className="flex items-center gap-2">
+                <Archive size={15} className="text-[#6F00D6] dark:text-[#B379FF]" />
+                <span className="text-xs font-bold text-[#14102A] dark:text-white">
+                  {archivedDoneTasks.length} {archivedDoneTasks.length === 1 ? 'trabalho concluído arquivado' : 'trabalhos concluídos arquivados'}
+                </span>
               </div>
-            ) : (
+              <button
+                type="button"
+                onClick={() => setHistoryOpen(true)}
+                className="text-xs font-bold text-[#6F00D6] dark:text-[#B379FF] hover:underline"
+              >
+                Abrir Histórico &rarr;
+              </button>
+            </div>
+          )}
+
+          <div className="rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-xs dark:border-white/5 dark:bg-[#131024]">
+            <div className="divide-y divide-slate-100 dark:divide-white/5">
+              {filteredTasks.length === 0 ? (
+                <div className="py-8 text-center text-xs text-muted">
+                  Nenhum prazo correspondente aos filtros.
+                </div>
+              ) : (
               filteredTasks.map(task => {
                 const subject = universitySubjects.find(s => s.id === task.subject_id);
                 const due = getDaysDiff(task.due_date);
@@ -436,7 +535,8 @@ export default function PrazosEEntregasTab() {
             )}
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Modal Nova / Editar Tarefa */}
       <Modal
@@ -597,6 +697,137 @@ export default function PrazosEEntregasTab() {
           </div>
         </Modal>
       )}
+
+      {/* Modal Histórico de Entregas Concluídas */}
+      <Modal
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        title="Histórico de Trabalhos e Entregas Concluídas"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
+            <div>
+              <span className="text-xs font-bold text-[#14102A] dark:text-white block">
+                Limpeza automática do painel
+              </span>
+              <span className="text-[11px] text-muted block">
+                Ocultar trabalhos entregues da tela principal após:
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {[
+                { label: '24h', days: 1 },
+                { label: '3 dias', days: 3 },
+                { label: '7 dias', days: 7 },
+                { label: 'Nunca', days: 0 },
+              ].map(opt => (
+                <button
+                  key={opt.days}
+                  type="button"
+                  onClick={() => handleSetRetentionDays(opt.days)}
+                  className={cn(
+                    'px-2.5 py-1 rounded-full text-xs font-bold transition-all',
+                    retentionDays === opt.days
+                      ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                      : 'bg-white dark:bg-white/10 text-muted hover:text-tinta dark:hover:text-white'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Filtros do Histórico */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+              <input
+                type="text"
+                value={historySearch}
+                onChange={e => setHistorySearch(e.target.value)}
+                placeholder="Buscar no histórico por título ou instruções..."
+                className="w-full rounded-xl border border-slate-200/80 bg-white pl-9 pr-4 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/10 dark:bg-[#131024] dark:text-white"
+              />
+            </div>
+            <select
+              value={historySubjectId}
+              onChange={e => setHistorySubjectId(e.target.value)}
+              className="rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs font-bold text-[#14102A] focus:outline-none dark:border-white/10 dark:bg-[#131024] dark:text-white"
+            >
+              <option value="all">Todas as Disciplinas</option>
+              {universitySubjects.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Lista de trabalhos no histórico */}
+          <div className="max-h-[50vh] overflow-y-auto space-y-2.5 pr-1">
+            {filteredHistoryTasks.length === 0 ? (
+              <div className="py-12 text-center text-xs text-muted">
+                Nenhum trabalho concluído encontrado no histórico.
+              </div>
+            ) : (
+              filteredHistoryTasks.map(task => {
+                const subject = universitySubjects.find(s => s.id === task.subject_id);
+                return (
+                  <div
+                    key={task.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl border border-slate-200/70 bg-white dark:border-white/5 dark:bg-[#131024]"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-2xs"
+                          style={{ background: subject?.color || '#6F00D6' }}
+                        >
+                          {subject?.name || 'Disciplina'}
+                        </span>
+                        <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold uppercase', priorityColor(task.priority))}>
+                          {priorityLabel(task.priority)}
+                        </span>
+                        {task.delivered_at && (
+                          <span className="text-[10px] text-muted">
+                            Entregue em {formatLocalDateBR(task.delivered_at)}
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="font-display text-sm font-bold text-[#14102A] dark:text-white line-through opacity-85">
+                        {task.title}
+                      </h4>
+                      {task.description && (
+                        <p className="mt-0.5 text-xs text-muted line-clamp-2">
+                          {task.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => updateUniversityTask(task.id, { status: 'todo' })}
+                        title="Reabrir trabalho no quadro"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#14102A] dark:bg-white/10 dark:hover:bg-white/15 dark:text-white text-xs font-bold transition-colors"
+                      >
+                        <RotateCcw size={13} /> Reabrir
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTaskToDelete(task)}
+                        title="Excluir permanentemente"
+                        className="flex h-8 w-8 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

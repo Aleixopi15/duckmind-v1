@@ -15,8 +15,12 @@ import {
   Kanban as KanbanIcon,
   List as ListIcon,
   AlertTriangle,
+  History,
+  RotateCcw,
+  Search,
 } from 'lucide-react';
 import type { VestibularTask, VestibularTaskPriority, VestibularTaskStatus } from '../../lib/supabase';
+import { formatLocalDateBR, getLocalDateString } from '../../lib/dateUtils';
 
 const COLUMNS: {
   id: VestibularTaskStatus;
@@ -62,6 +66,14 @@ export default function VestibularTarefasTab() {
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historySearch, setHistorySearch] = useState('');
+  const [historySubjectId, setHistorySubjectId] = useState('all');
+  const [retentionDays, setRetentionDays] = useState<number>(() => {
+    const saved = localStorage.getItem('duckmind_vestibular_task_retention');
+    return saved !== null ? Number(saved) : 3; // 3 dias por padrão
+  });
+
   const [editingTask, setEditingTask] = useState<VestibularTask | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<VestibularTask | null>(null);
 
@@ -75,6 +87,22 @@ export default function VestibularTarefasTab() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const handleSetRetentionDays = (days: number) => {
+    setRetentionDays(days);
+    localStorage.setItem('duckmind_vestibular_task_retention', String(days));
+  };
+
+  const isTaskArchived = (task: VestibularTask, daysThreshold: number): boolean => {
+    if (task.status !== 'done') return false;
+    if (daysThreshold === 0) return false; // 0 = sempre manter visível
+    const doneTimeStr = task.delivered_at || task.created_at;
+    if (!doneTimeStr) return false;
+    const doneTime = new Date(doneTimeStr).getTime();
+    if (isNaN(doneTime)) return false;
+    const diffDays = (Date.now() - doneTime) / (1000 * 60 * 60 * 24);
+    return diffDays >= daysThreshold;
+  };
+
   const openNew = (defaultStatus: VestibularTaskStatus = 'todo') => {
     setEditingTask(null);
     setSubjectId(subjects[0]?.id ?? '');
@@ -82,7 +110,8 @@ export default function VestibularTarefasTab() {
     setDescription('');
     setPriority('medium');
     setStatus(defaultStatus);
-    setDueDate(new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0]);
+    const d = new Date(Date.now() + 86400000 * 3);
+    setDueDate(getLocalDateString(d));
     setModalOpen(true);
   };
 
@@ -137,9 +166,29 @@ export default function VestibularTarefasTab() {
     await updateVestibularTask(task.id, { status: nextStatus });
   };
 
-  const filteredTasks = vestibularTasks.filter(t => {
+  // Separação de tarefas ativas vs arquivadas por antiguidade
+  const allDoneTasks = vestibularTasks.filter(t => t.status === 'done');
+  const archivedDoneTasks = allDoneTasks.filter(t => isTaskArchived(t, retentionDays));
+  const activeTasks = vestibularTasks.filter(t => !isTaskArchived(t, retentionDays));
+
+  const filteredTasks = activeTasks.filter(t => {
     if (selectedSubjectId !== 'all' && t.subject_id !== selectedSubjectId) return false;
     if (selectedPriority !== 'all' && t.priority !== selectedPriority) return false;
+    return true;
+  });
+
+  // Tarefas para o modal de histórico
+  const filteredHistoryTasks = allDoneTasks.filter(t => {
+    if (historySubjectId !== 'all' && t.subject_id !== historySubjectId) return false;
+    if (historySearch.trim()) {
+      const q = historySearch.toLowerCase();
+      const subject = subjects.find(s => s.id === t.subject_id);
+      return (
+        t.title.toLowerCase().includes(q) ||
+        (t.description && t.description.toLowerCase().includes(q)) ||
+        (subject && subject.name.toLowerCase().includes(q))
+      );
+    }
     return true;
   });
 
@@ -198,12 +247,28 @@ export default function VestibularTarefasTab() {
           </p>
         </div>
 
-        <button
-          onClick={() => openNew('todo')}
-          className="inline-flex items-center gap-2 rounded-2xl bg-[#00D64B] px-4 py-2.5 text-xs font-bold text-[#14102A] shadow-xs transition-all hover:bg-[#19E85F] active:scale-[0.98] dark:text-[#0B0819]"
-        >
-          <Plus size={16} strokeWidth={2.6} /> Nova Tarefa
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setHistoryOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs font-bold text-[#14102A] shadow-xs transition-all hover:bg-slate-50 dark:border-white/10 dark:bg-[#131024] dark:text-white"
+          >
+            <History size={16} strokeWidth={2.2} className="text-[#6F00D6] dark:text-[#9B3DFF]" />
+            <span>Histórico</span>
+            {allDoneTasks.length > 0 && (
+              <span className="rounded-full bg-purple-500/10 text-[#6F00D6] dark:text-[#9B3DFF] px-2 py-0.5 text-[10px] font-bold">
+                {allDoneTasks.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => openNew('todo')}
+            className="inline-flex items-center gap-2 rounded-2xl bg-[#00D64B] px-4 py-2.5 text-xs font-bold text-[#14102A] shadow-xs transition-all hover:bg-[#19E85F] active:scale-[0.98] dark:text-[#0B0819]"
+          >
+            <Plus size={16} strokeWidth={2.6} /> Nova Tarefa
+          </button>
+        </div>
       </div>
 
       {/* Métricas Rápidas */}
@@ -437,6 +502,21 @@ export default function VestibularTarefasTab() {
                   )}
                 </div>
 
+                {col.id === 'done' && archivedDoneTasks.length > 0 && (
+                  <div className="mt-2.5 rounded-2xl border border-purple-500/20 bg-purple-500/5 p-3 text-center dark:border-purple-500/20 dark:bg-purple-500/10">
+                    <p className="text-[11px] font-semibold text-[#6F00D6] dark:text-[#B379FF]">
+                      {archivedDoneTasks.length} {archivedDoneTasks.length === 1 ? 'tarefa arquivada' : 'tarefas arquivadas'} (+{retentionDays}d)
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setHistoryOpen(true)}
+                      className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#6F00D6] hover:underline dark:text-[#B379FF]"
+                    >
+                      <History size={12} /> Ver histórico completo
+                    </button>
+                  </div>
+                )}
+
                 <button
                   onClick={() => openNew(col.id)}
                   className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2 text-xs font-bold text-muted transition-all hover:border-[#00D64B] hover:text-[#008E32] dark:border-white/10 dark:hover:border-[#19E85F] dark:hover:text-[#19E85F]"
@@ -449,7 +529,22 @@ export default function VestibularTarefasTab() {
         </div>
       ) : (
         /* Visualização LISTA */
-        <div className="overflow-hidden rounded-[22px] border border-slate-200/80 bg-white shadow-xs dark:border-white/5 dark:bg-[#131024]">
+        <div className="space-y-3">
+          {archivedDoneTasks.length > 0 && (
+            <div className="flex items-center justify-between rounded-2xl border border-purple-500/20 bg-purple-500/5 px-4 py-2.5 text-xs font-semibold text-[#6F00D6] dark:text-[#B379FF]">
+              <span>
+                {archivedDoneTasks.length} {archivedDoneTasks.length === 1 ? 'tarefa concluída arquivada' : 'tarefas concluídas arquivadas'} (+{retentionDays} dias).
+              </span>
+              <button
+                type="button"
+                onClick={() => setHistoryOpen(true)}
+                className="font-bold underline hover:opacity-80"
+              >
+                Abrir histórico
+              </button>
+            </div>
+          )}
+          <div className="overflow-hidden rounded-[22px] border border-slate-200/80 bg-white shadow-xs dark:border-white/5 dark:bg-[#131024]">
           {filteredTasks.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted">Nenhuma tarefa encontrada com os filtros selecionados.</div>
           ) : (
@@ -544,6 +639,7 @@ export default function VestibularTarefasTab() {
               })}
             </div>
           )}
+        </div>
         </div>
       )}
 
@@ -701,6 +797,141 @@ export default function VestibularTarefasTab() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal Histórico de Tarefas Concluídas */}
+      <Modal
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        title="Histórico de Tarefas Concluídas"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
+            <div>
+              <span className="text-xs font-bold text-[#14102A] dark:text-white block">
+                Limpeza automática do painel
+              </span>
+              <span className="text-[11px] text-muted block">
+                Ocultar tarefas concluídas da tela principal após:
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {[
+                { label: '24h', days: 1 },
+                { label: '3 dias', days: 3 },
+                { label: '7 dias', days: 7 },
+                { label: 'Nunca', days: 0 },
+              ].map(opt => (
+                <button
+                  key={opt.days}
+                  type="button"
+                  onClick={() => handleSetRetentionDays(opt.days)}
+                  className={cn(
+                    'px-2.5 py-1 rounded-full text-xs font-bold transition-all',
+                    retentionDays === opt.days
+                      ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                      : 'bg-white dark:bg-white/10 text-muted hover:text-tinta dark:hover:text-white'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Filtros do Histórico */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+              <input
+                type="text"
+                value={historySearch}
+                onChange={e => setHistorySearch(e.target.value)}
+                placeholder="Buscar no histórico por título ou descrição..."
+                className="w-full rounded-xl border border-slate-200/80 bg-white pl-9 pr-4 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/10 dark:bg-[#131024] dark:text-white"
+              />
+            </div>
+            <select
+              value={historySubjectId}
+              onChange={e => setHistorySubjectId(e.target.value)}
+              className="rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs font-bold text-[#14102A] focus:outline-none dark:border-white/10 dark:bg-[#131024] dark:text-white"
+            >
+              <option value="all">Todas as Matérias</option>
+              {subjects.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Lista de tarefas no histórico */}
+          <div className="max-h-[50vh] overflow-y-auto space-y-2.5 pr-1">
+            {filteredHistoryTasks.length === 0 ? (
+              <div className="py-12 text-center text-xs text-muted">
+                Nenhuma tarefa concluída encontrada no histórico.
+              </div>
+            ) : (
+              filteredHistoryTasks.map(task => {
+                const subject = subjects.find(s => s.id === task.subject_id);
+                return (
+                  <div
+                    key={task.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl border border-slate-200/70 bg-white dark:border-white/5 dark:bg-[#131024]"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                          style={{
+                            backgroundColor: subject ? `${subject.color}15` : '#6F00D615',
+                            color: subject ? subject.color : '#6F00D6',
+                          }}
+                        >
+                          <SubjectIcon name={subject?.name} size={12} />
+                          <span>{subject?.name || 'Matéria'}</span>
+                        </span>
+                        <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold uppercase', priorityColor(task.priority))}>
+                          {priorityLabel(task.priority)}
+                        </span>
+                        {task.delivered_at && (
+                          <span className="text-[10px] text-muted">
+                            Concluída em {formatLocalDateBR(task.delivered_at)}
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="font-display text-sm font-bold text-[#14102A] dark:text-white line-through opacity-85">
+                        {task.title}
+                      </h4>
+                      {task.description && (
+                        <p className="mt-0.5 text-xs text-muted line-clamp-2">
+                          {task.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => updateVestibularTask(task.id, { status: 'todo' })}
+                        title="Reabrir tarefa no quadro"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#14102A] dark:bg-white/10 dark:hover:bg-white/15 dark:text-white text-xs font-bold transition-colors"
+                      >
+                        <RotateCcw size={13} /> Reabrir
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTaskToDelete(task)}
+                        title="Excluir permanentemente"
+                        className="flex h-8 w-8 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
       </Modal>
     </div>
   );

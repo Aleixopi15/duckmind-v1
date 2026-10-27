@@ -14,6 +14,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { getSimulationQuestions, getSimulationDuration, getSimulationDate, formatISODateSafe } from '../../lib/simulationUtils';
+import { getLocalDateString, parseDateToLocalYMD, createSafeStudyTimestamp } from '../../lib/dateUtils';
 
 type Props = {
   onNavigate: (tab: string) => void;
@@ -142,10 +143,10 @@ export default function OverviewTab({ onNavigate, onLogStudy, onOpenStreak }: Pr
   })();
 
   // =================== VESTIBULAR METRICS ===================
-  const weekSessions = sessions.filter(s => s.studied_at.split('T')[0] >= weekStart);
+  const weekSessions = sessions.filter(s => parseDateToLocalYMD(s.studied_at) >= weekStart);
   const weekSessionMinutes = weekSessions.reduce((acc, s) => acc + s.duration_minutes, 0);
 
-  const weekSims = simulations.filter(s => getSimulationDate(s) >= weekStart);
+  const weekSims = simulations.filter(s => parseDateToLocalYMD(getSimulationDate(s)) >= weekStart);
   const weekSimMinutes = weekSims.reduce((acc, s) => acc + getSimulationDuration(s), 0);
   const weekMinutes = weekSessionMinutes + weekSimMinutes;
 
@@ -156,12 +157,12 @@ export default function OverviewTab({ onNavigate, onLogStudy, onOpenStreak }: Pr
   const weekMinutesPct = weeklyMinutesGoal > 0 ? Math.min(100, Math.round((weekMinutes / weeklyMinutesGoal) * 100)) : 0;
   const weekQuestionsPct = weeklyQuestionsGoal > 0 ? Math.min(100, Math.round((weekQuestions / weeklyQuestionsGoal) * 100)) : 0;
 
-  const today = formatLocalDate(new Date());
+  const today = getLocalDateString();
   const todaySessionMinutes = sessions
-    .filter(s => s.studied_at.split('T')[0] === today)
+    .filter(s => parseDateToLocalYMD(s.studied_at) === today)
     .reduce((acc, s) => acc + s.duration_minutes, 0);
   const todaySimMinutes = simulations
-    .filter(s => getSimulationDate(s) === today)
+    .filter(s => parseDateToLocalYMD(getSimulationDate(s)) === today)
     .reduce((acc, s) => acc + getSimulationDuration(s), 0);
   const todayMinutes = todaySessionMinutes + todaySimMinutes;
 
@@ -211,11 +212,11 @@ export default function OverviewTab({ onNavigate, onLogStudy, onOpenStreak }: Pr
   const totalEditalProgress = totalEditalTopics > 0 ? Math.round((totalCompletedEditalTopics / totalEditalTopics) * 100) : 0;
 
   // =================== UNIVERSITY METRICS ===================
-  const weekUniSessions = universitySessions.filter(s => s.studied_at.split('T')[0] >= weekStart);
+  const weekUniSessions = universitySessions.filter(s => parseDateToLocalYMD(s.studied_at) >= weekStart);
   const weekUniMinutes = weekUniSessions.reduce((acc, s) => acc + s.duration_minutes, 0);
 
   const todayUniMinutes = universitySessions
-    .filter(s => s.studied_at.split('T')[0] === today)
+    .filter(s => parseDateToLocalYMD(s.studied_at) === today)
     .reduce((acc, s) => acc + s.duration_minutes, 0);
   const uniGoalProgress = dailyGoal > 0 ? Math.min(100, Math.round((todayUniMinutes / dailyGoal) * 100)) : 0;
 
@@ -272,6 +273,7 @@ export default function OverviewTab({ onNavigate, onLogStudy, onOpenStreak }: Pr
           duration_minutes: mins,
           notes: 'Registrado via cronômetro rápido',
           session_type: 'estudo',
+          studied_at: createSafeStudyTimestamp(getLocalDateString()),
         });
       } else {
         onLogStudy(mins);

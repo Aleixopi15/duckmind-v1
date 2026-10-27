@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { cn } from '../../lib/theme';
 import type { Simulation, SimulationType, SimulationTargetArea } from '../../lib/supabase';
 import { parseSimulationData, type SimulationMeta, type SimulationSubjectBreakdown } from '../../lib/simulationUtils';
+import { getLocalDateString, formatLocalDateBR } from '../../lib/dateUtils';
 import type { ElementType } from 'react';
 import {
   Plus,
@@ -104,6 +105,54 @@ export const ENEM_AREAS: EnemAreaConfig[] = [
   },
 ];
 
+/**
+ * Retorna a cor da barra de porcentagem dos simulados de acordo com o aproveitamento:
+ * - >= 80%: Verde (#00D64B)
+ * - 65% a 79%: Amarelo (#EAB308)
+ * - 50% a 64%: Laranja (#F97316)
+ * - < 50%: Vermelho (#EF4444)
+ */
+export function getSimPercentageColor(pct: number) {
+  if (pct >= 80) {
+    return {
+      hex: '#00D64B',
+      text: 'text-[#008E32] dark:text-[#19E85F]',
+      bg: 'bg-[#00D64B]',
+      lightBg: 'bg-[#00D64B]/15',
+      border: 'border-[#00D64B]/30',
+      label: 'Excelente',
+    };
+  }
+  if (pct >= 65) {
+    return {
+      hex: '#EAB308',
+      text: 'text-amber-500 dark:text-amber-400',
+      bg: 'bg-amber-400',
+      lightBg: 'bg-amber-400/15',
+      border: 'border-amber-400/30',
+      label: 'Bom',
+    };
+  }
+  if (pct >= 50) {
+    return {
+      hex: '#F97316',
+      text: 'text-orange-500 dark:text-orange-400',
+      bg: 'bg-orange-500',
+      lightBg: 'bg-orange-500/15',
+      border: 'border-orange-500/30',
+      label: 'Regular',
+    };
+  }
+  return {
+    hex: '#EF4444',
+    text: 'text-red-500 dark:text-red-400',
+    bg: 'bg-red-500',
+    lightBg: 'bg-red-500/15',
+    border: 'border-red-500/30',
+    label: 'Atenção',
+  };
+}
+
 const SIM_TYPE_DETAILS: Record<SimulationType, { label: string; desc: string; officialTime: number; badgeColor: string; icon: ElementType }> = {
   completo: {
     label: 'ENEM Completo',
@@ -201,7 +250,7 @@ interface FormState {
 const emptyForm: FormState = {
   id: '',
   title: '',
-  simulation_date: new Date().toISOString().split('T')[0],
+  simulation_date: getLocalDateString(),
   simulation_type: 'completo',
   target_area: 'languages',
   duration_hours: '',
@@ -871,7 +920,7 @@ export default function SimuladosTab() {
                     <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium text-[#645F78] dark:text-[#9D96B8]">
                       <span className="flex items-center gap-1">
                         <Calendar size={13} strokeWidth={2.4} />
-                        {new Date(s.simulation_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                        {formatLocalDateBR(s.simulation_date)}
                       </span>
 
                       {durationTotal !== null && durationTotal > 0 && (
@@ -883,10 +932,16 @@ export default function SimuladosTab() {
                       )}
 
                       {correctQ !== null && totalQ > 0 && (
-                        <span className="flex items-center gap-1 font-bold text-[#008E32] dark:text-[#19E85F]">
-                          <CheckCircle2 size={13} strokeWidth={2.4} />
-                          {correctQ}/{totalQ} acertos ({Math.round((correctQ / totalQ) * 100)}%)
-                        </span>
+                        (() => {
+                          const accPct = Math.round((correctQ / totalQ) * 100);
+                          const colorCfg = getSimPercentageColor(accPct);
+                          return (
+                            <span className={cn('flex items-center gap-1 font-bold', colorCfg.text)}>
+                              <CheckCircle2 size={13} strokeWidth={2.4} />
+                              {correctQ}/{totalQ} acertos ({accPct}%)
+                            </span>
+                          );
+                        })()
                       )}
                     </div>
                   </div>
@@ -931,6 +986,35 @@ export default function SimuladosTab() {
                   </div>
                 </div>
 
+                {/* Barra Geral de Aproveitamento do Simulado */}
+                {totalQ > 0 && correctQ !== null && (
+                  (() => {
+                    const accPct = Math.round((correctQ / totalQ) * 100);
+                    const colorCfg = getSimPercentageColor(accPct);
+                    return (
+                      <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-white/5">
+                        <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+                          <span className="text-[#645F78] dark:text-[#9D96B8]">
+                            Aproveitamento Geral do Simulado
+                          </span>
+                          <span className={cn('font-display font-bold', colorCfg.text)}>
+                            {accPct}% · {colorCfg.label}
+                          </span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${accPct}%`,
+                              background: colorCfg.hex,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()
+                )}
+
                 {/* Subject Bars Breakdown */}
                 {simType === 'personalizado' && meta.subjects_breakdown && meta.subjects_breakdown.length > 0 ? (
                   <div className="mt-4 border-t border-slate-100 pt-3.5 dark:border-white/5">
@@ -939,14 +1023,21 @@ export default function SimuladosTab() {
                         Matérias do Simulado ({meta.subjects_breakdown.length})
                       </span>
                       {totalQ > 0 && correctQ !== null && (
-                        <span className="rounded-full bg-[#00D64B]/15 px-2.5 py-0.5 text-xs font-bold text-[#008E32] dark:text-[#19E85F]">
-                          {correctQ}/{totalQ} ({Math.round((correctQ / totalQ) * 100)}%)
-                        </span>
+                        (() => {
+                          const accPct = Math.round((correctQ / totalQ) * 100);
+                          const colorCfg = getSimPercentageColor(accPct);
+                          return (
+                            <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-bold', colorCfg.lightBg, colorCfg.text)}>
+                              {correctQ}/{totalQ} ({accPct}%)
+                            </span>
+                          );
+                        })()
                       )}
                     </div>
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                       {meta.subjects_breakdown.map((sb, sbIdx) => {
                         const sbPct = sb.questions_total > 0 ? Math.round((sb.questions_correct / sb.questions_total) * 100) : 0;
+                        const sbColor = getSimPercentageColor(sbPct);
                         return (
                           <div
                             key={sbIdx}
@@ -959,7 +1050,7 @@ export default function SimuladosTab() {
                               <span className="font-bold text-[#14102A] dark:text-white">
                                 {sb.questions_correct}/{sb.questions_total}
                               </span>
-                              <span className={cn('font-bold', sbPct >= 70 ? 'text-[#008E32] dark:text-[#19E85F]' : sbPct >= 50 ? 'text-[#D68200] dark:text-[#FFB84D]' : 'text-rose-500')}>
+                              <span className={cn('font-bold', sbColor.text)}>
                                 {sbPct}%
                               </span>
                             </div>
@@ -968,7 +1059,7 @@ export default function SimuladosTab() {
                                 className="h-full rounded-full transition-all duration-300"
                                 style={{
                                   width: `${sbPct}%`,
-                                  background: sbPct >= 70 ? '#00D64B' : sbPct >= 50 ? '#D68200' : '#EF4444'
+                                  background: sbColor.hex
                                 }}
                               />
                             </div>
@@ -986,6 +1077,7 @@ export default function SimuladosTab() {
                       const maxVal = isEssay ? 1000 : 45;
                       const pct = val !== null && val !== undefined ? Math.min(100, (val / maxVal) * 100) : 0;
                       const areaTriVal = meta.area_tri?.[a.key];
+                      const areaColorCfg = getSimPercentageColor(Math.round(pct));
 
                       const AreaIcon = a.icon;
 
@@ -1017,10 +1109,10 @@ export default function SimuladosTab() {
                             <div className="w-24 sm:w-28">
                               <div className="mb-1 flex justify-between text-[11px] font-bold text-[#645F78] dark:text-[#9D96B8]">
                                 <span>Aprov.</span>
-                                <span>{Math.round(pct)}%</span>
+                                <span className={cn('font-bold', areaColorCfg.text)}>{Math.round(pct)}%</span>
                               </div>
                               <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
-                                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, background: a.color }} />
+                                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, background: areaColorCfg.hex }} />
                               </div>
                             </div>
                           </div>
@@ -1054,6 +1146,7 @@ export default function SimuladosTab() {
                       const maxVal = isEssay ? 1000 : 45;
                       const pct = val !== null && val !== undefined ? Math.min(100, (val / maxVal) * 100) : 0;
                       const areaTriVal = meta.area_tri?.[a.key];
+                      const areaColorCfg = getSimPercentageColor(Math.round(pct));
 
                       return (
                         <div
@@ -1082,7 +1175,7 @@ export default function SimuladosTab() {
                             <div className="mt-0.5 font-display text-[11px] font-bold text-[#6F00D6] dark:text-[#B379FF]">TRI: {areaTriVal}</div>
                           )}
                           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
-                            <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, background: a.color }} />
+                            <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, background: areaColorCfg.hex }} />
                           </div>
                         </div>
                       );
@@ -1263,8 +1356,8 @@ export default function SimuladosTab() {
               <div className="flex gap-1.5 mt-1.5">
                 <button
                   type="button"
-                  onClick={() => setForm(prev => ({ ...prev, simulation_date: new Date().toISOString().split('T')[0] }))}
-                  className="text-[0.65rem] px-2 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300"
+                  onClick={() => setForm(prev => ({ ...prev, simulation_date: getLocalDateString() }))}
+                  className="text-[0.65rem] px-2 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
                 >
                   Hoje
                 </button>
@@ -1273,9 +1366,9 @@ export default function SimuladosTab() {
                   onClick={() => {
                     const d = new Date();
                     d.setDate(d.getDate() - 1);
-                    setForm(prev => ({ ...prev, simulation_date: d.toISOString().split('T')[0] }));
+                    setForm(prev => ({ ...prev, simulation_date: getLocalDateString(d) }));
                   }}
-                  className="text-[0.65rem] px-2 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300"
+                  className="text-[0.65rem] px-2 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
                 >
                   Ontem
                 </button>
@@ -1937,7 +2030,7 @@ export default function SimuladosTab() {
                 <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5">
                   <div className="text-[0.65rem] text-slate-500 dark:text-slate-400 font-semibold uppercase">Data</div>
                   <div className="font-bold font-mono text-xs mt-0.5">
-                    {new Date(selectedDetail.simulation_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                    {formatLocalDateBR(selectedDetail.simulation_date)}
                   </div>
                 </div>
                 <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5">
@@ -1971,16 +2064,17 @@ export default function SimuladosTab() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {meta.subjects_breakdown.map((sb, sbIdx) => {
                       const sbPct = sb.questions_total > 0 ? Math.round((sb.questions_correct / sb.questions_total) * 100) : 0;
+                      const sbColor = getSimPercentageColor(sbPct);
                       return (
-                        <div key={sbIdx} className="p-2.5 rounded-lg border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                        <div key={sbIdx} className="p-2.5 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-bold text-xs text-tinta dark:text-papel truncate">{sb.subject_name}</span>
-                            <span className="font-mono text-xs font-bold text-tinta dark:text-papel shrink-0 ml-2">
+                            <span className={cn('font-mono text-xs font-bold shrink-0 ml-2', sbColor.text)}>
                               {sb.questions_correct}/{sb.questions_total} ({sbPct}%)
                             </span>
                           </div>
-                          <div className="track w-full" style={{ height: 8 }}>
-                            <div style={{ width: `${sbPct}%`, background: sbPct >= 70 ? '#00D64B' : sbPct >= 50 ? '#D68200' : '#EF4444' }} />
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
+                            <div className="h-full rounded-full transition-all duration-300" style={{ width: `${sbPct}%`, background: sbColor.hex }} />
                           </div>
                         </div>
                       );
@@ -1995,27 +2089,38 @@ export default function SimuladosTab() {
                       const val = selectedDetail[`score_${a.key}` as keyof Simulation] as number | null;
                       if (val === null || val === undefined) return null;
                       const isEssay = a.key === 'essay';
+                      const maxVal = isEssay ? 1000 : 45;
+                      const pct = Math.min(100, Math.round((val / maxVal) * 100));
+                      const areaColorCfg = getSimPercentageColor(pct);
                       const areaTriVal = meta.area_tri?.[a.key];
 
                       const AreaRowIcon = a.icon;
 
                       return (
-                        <div key={a.key} className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-white/5">
-                          <div className="flex items-center gap-2">
-                            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300">
-                              <AreaRowIcon size={13} strokeWidth={2.4} />
-                            </span>
-                            <span className="font-semibold text-xs">{a.label}</span>
-                          </div>
-                          <div className="flex items-center gap-2 font-mono">
-                            <span className="font-bold text-sm">
-                              {val} {isEssay ? 'pts' : 'acertos / 45'}
-                            </span>
-                            {areaTriVal !== undefined && (
-                              <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 font-semibold">
-                                TRI: {areaTriVal}
+                        <div key={a.key} className="flex flex-col gap-1.5 p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300">
+                                <AreaRowIcon size={13} strokeWidth={2.4} />
                               </span>
-                            )}
+                              <span className="font-semibold text-xs">{a.label}</span>
+                            </div>
+                            <div className="flex items-center gap-2 font-mono">
+                              <span className="font-bold text-xs sm:text-sm">
+                                {val} {isEssay ? 'pts' : 'acertos / 45'}
+                              </span>
+                              <span className={cn('text-xs font-bold px-1.5 py-0.5 rounded-full', areaColorCfg.lightBg, areaColorCfg.text)}>
+                                {pct}%
+                              </span>
+                              {areaTriVal !== undefined && (
+                                <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 font-semibold">
+                                  TRI: {areaTriVal}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
+                            <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, background: areaColorCfg.hex }} />
                           </div>
                         </div>
                       );

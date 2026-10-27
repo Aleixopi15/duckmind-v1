@@ -8,6 +8,7 @@ import { CheckCircle2, BookOpen, PenLine, RotateCcw, Layers, X } from 'lucide-re
 import { cn } from '../lib/theme';
 
 import type { StudyType } from '../lib/supabase';
+import { getLocalDateString, createSafeStudyTimestamp } from '../lib/dateUtils';
 
 type SessionForm = {
   subject_id: string;
@@ -23,13 +24,19 @@ type SessionForm = {
   notes: string;
 };
 
-const emptyForm: SessionForm = {
-  subject_id: '', topic_id: '',
-  study_type: 'teoria', flashcards_count: '',
-  studied_at: new Date().toISOString().split('T')[0],
-  duration_hours: '', duration_minutes: '', duration_seconds: '',
-  questions_correct: '', questions_wrong: '', notes: '',
-};
+const getInitialForm = (): SessionForm => ({
+  subject_id: '',
+  topic_id: '',
+  study_type: 'teoria',
+  flashcards_count: '',
+  studied_at: getLocalDateString(),
+  duration_hours: '',
+  duration_minutes: '',
+  duration_seconds: '',
+  questions_correct: '',
+  questions_wrong: '',
+  notes: '',
+});
 
 export const STUDY_TYPES: { value: StudyType; label: string; icon: ElementType }[] = [
   { value: 'teoria', label: 'Teoria', icon: BookOpen },
@@ -85,7 +92,7 @@ type Props = { open: boolean; onClose: () => void; initialMinutes?: number };
 
 export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Props) {
   const { currentMode, subjects, topics, universitySubjects, addUniversitySession, refreshData, updateStreak, user } = useApp();
-  const [form, setForm] = useState<SessionForm>(emptyForm);
+  const [form, setForm] = useState<SessionForm>(getInitialForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -95,7 +102,7 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
       const hms = minutesToHMS(initialMinutes);
       setForm(f => ({ ...f, duration_hours: hms.h, duration_minutes: hms.m, duration_seconds: hms.s }));
     } else if (open) {
-      setForm(emptyForm); setError('');
+      setForm(getInitialForm()); setError('');
     }
   }, [open, initialMinutes]);
 
@@ -118,6 +125,8 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
     setError('');
     setSaving(true);
 
+    const safeTimestamp = createSafeStudyTimestamp(form.studied_at);
+
     if (currentMode === 'universitario') {
       const typeMapping = form.study_type === 'flashcards' ? 'revisao' : form.study_type === 'teoria' ? 'estudo' : form.study_type === 'questoes' ? 'exercicios' : 'revisao';
       await addUniversitySession({
@@ -125,7 +134,7 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
         duration_minutes: totalMins,
         notes: form.notes.trim(),
         session_type: typeMapping,
-        studied_at: `${form.studied_at}T12:00:00`,
+        studied_at: safeTimestamp,
       });
       setSuccess(true);
       setSaving(false);
@@ -147,7 +156,7 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
       questions_wrong: qWrong,
       flashcards_count: form.study_type === 'flashcards' ? (parseInt(form.flashcards_count) || 0) : 0,
       notes: form.notes.trim() || null,
-      studied_at: `${form.studied_at}T12:00:00`,
+      studied_at: safeTimestamp,
     };
 
     const { error: insertErr } = await supabase.from('study_sessions').insert(payload);
@@ -267,7 +276,7 @@ export default function LogStudyDialog({ open, onClose, initialMinutes = 0 }: Pr
               id="log-data"
               type="date"
               value={form.studied_at}
-              max={new Date().toISOString().split('T')[0]}
+              max={getLocalDateString()}
               onChange={e => setForm(f => ({ ...f, studied_at: e.target.value }))}
               className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm font-medium text-[#14102A] focus:outline-none focus:ring-2 focus:ring-[#00D64B] dark:border-white/5 dark:bg-[#1C182E] dark:text-white"
             />

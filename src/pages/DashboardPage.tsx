@@ -115,7 +115,7 @@ export default function DashboardPage() {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
   const [errorFilterSubjectId, setErrorFilterSubjectId] = useState<string | null>(null);
   const [errorFilterTopicId, setErrorFilterTopicId] = useState<string | null>(null);
-  const { currentMode, profile, user, streak } = useApp();
+  const { currentMode, profile, user, streak, setMode } = useApp();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -233,20 +233,160 @@ export default function DashboardPage() {
         {sidebarInner}
       </aside>
 
-      {/* Drawer mobile e tablet portrait */}
+      {/* Menu Bottom Sheet Mobile e Tablet Portrait (sobe de baixo com drag handle) */}
       {drawerOpen && (
-        <div className="fixed inset-0 z-[900] overscroll-contain animate-fade-in lg:hidden">
+        <div className="fixed inset-0 z-[900] flex flex-col justify-end overflow-hidden lg:hidden">
+          {/* Backdrop escurecido com blur suave */}
           <button
             type="button"
             aria-label="Fechar menu"
-            className="absolute inset-0 h-full w-full cursor-default bg-black/50 backdrop-blur-xs"
+            className="absolute inset-0 h-full w-full cursor-default bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in"
             onClick={() => setDrawerOpen(false)}
           />
-          <aside
-            className="absolute left-0 top-0 z-10 flex h-full w-72 max-w-[85vw] flex-col border-r border-slate-200/80 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-[#0D0A1F]"
-          >
-            {sidebarInner}
-          </aside>
+
+          {/* Painel que sobe da parte inferior */}
+          <div className="relative z-10 flex max-h-[88vh] w-full flex-col rounded-t-[32px] border-t border-slate-200/80 bg-white/98 p-5 pb-8 shadow-[0_-12px_48px_rgba(20,16,42,0.35)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#120F26]/98 animate-slide-up">
+            {/* Pílula superior para puxar/fechar */}
+            <div className="mx-auto -mt-1.5 mb-3.5 h-1.5 w-12 rounded-full bg-slate-300 dark:bg-white/20" />
+
+            {/* Top bar do Bottom Sheet: Logo + Mascote e Botão Fechar */}
+            <div className="flex shrink-0 items-center justify-between pb-3.5 border-b border-slate-100 dark:border-white/5">
+              <div className="flex items-center gap-2.5">
+                <Logo size="md" showMascot />
+              </div>
+              <button
+                type="button"
+                aria-label="Fechar menu"
+                onClick={() => setDrawerOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-muted hover:bg-slate-200 hover:text-tinta dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/15 dark:hover:text-white transition-colors"
+              >
+                <X size={18} strokeWidth={2.4} />
+              </button>
+            </div>
+
+            {/* Alternador rápido de Modo (Vestibular vs Universitário) */}
+            <div className="mt-3.5 mb-4 p-1.5 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setMode('vestibular')}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all',
+                  currentMode === 'vestibular'
+                    ? 'bg-[#00D64B] text-[#14102A] shadow-xs'
+                    : 'text-muted hover:text-tinta dark:hover:text-white'
+                )}
+              >
+                <span>Modo Vestibular</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('universitario')}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all',
+                  currentMode === 'universitario'
+                    ? 'bg-[#6F00D6] text-white shadow-xs'
+                    : 'text-muted hover:text-tinta dark:hover:text-white'
+                )}
+              >
+                <span>Modo Universitário</span>
+              </button>
+            </div>
+
+            {/* Grade de Ícones touch-friendly para navegação rápida */}
+            <div className="overflow-y-auto no-scrollbar pr-0.5 space-y-4">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted px-1 mb-2 block">
+                  {currentMode === 'vestibular' ? 'Navegação Vestibular' : 'Navegação Universitária'}
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  {currentTabs.map(t => {
+                    const Icon = t.icon;
+                    const isActive = activeTab === t.id && !selectedSubjectId;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => go(t.id)}
+                        className={cn(
+                          'flex items-center gap-3 p-3 rounded-2xl border text-left transition-all active:scale-98',
+                          isActive
+                            ? 'border-[#00D64B]/50 bg-[#00D64B]/10 text-[#008E32] dark:border-[#19E85F]/50 dark:bg-[#19E85F]/15 dark:text-[#19E85F] font-bold shadow-xs'
+                            : 'border-slate-200/70 bg-slate-50/70 text-[#14102A] hover:bg-slate-100 hover:border-slate-300 dark:border-white/5 dark:bg-white/[0.03] dark:text-[#F3F1FF] dark:hover:bg-white/[0.07]'
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
+                            isActive
+                              ? 'bg-[#00D64B] text-[#14102A]'
+                              : 'bg-white dark:bg-white/10 text-muted shadow-2xs'
+                          )}
+                        >
+                          <Icon size={18} strokeWidth={isActive ? 2.6 : 2} />
+                        </div>
+                        <span className="text-xs font-bold truncate leading-tight">
+                          {t.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Seção Conta e Preferências */}
+              <div className="border-t border-slate-100 dark:border-white/5 pt-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted px-1 mb-2 block">
+                  Conta & Configurações
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  {BOTTOM_TABS.map(t => {
+                    const Icon = t.icon;
+                    const isActive = activeTab === t.id && !selectedSubjectId;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => go(t.id)}
+                        className={cn(
+                          'flex items-center gap-3 p-3 rounded-2xl border text-left transition-all active:scale-98',
+                          isActive
+                            ? 'border-[#6F00D6]/40 bg-[#6F00D6]/10 text-[#6F00D6] dark:border-[#9B3DFF]/40 dark:bg-[#9B3DFF]/15 dark:text-[#9B3DFF] font-bold shadow-xs'
+                            : 'border-slate-200/70 bg-slate-50/70 text-[#14102A] hover:bg-slate-100 dark:border-white/5 dark:bg-white/[0.03] dark:text-[#F3F1FF] dark:hover:bg-white/[0.07]'
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
+                            isActive
+                              ? 'bg-[#6F00D6] text-white'
+                              : 'bg-white dark:bg-white/10 text-muted shadow-2xs'
+                          )}
+                        >
+                          <Icon size={18} strokeWidth={isActive ? 2.6 : 2} />
+                        </div>
+                        <span className="text-xs font-bold truncate">
+                          {t.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Linha inferior: Tema escuro e Botão Sair */}
+                <div className="mt-3 flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-100/70 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-[#14102A] dark:text-white">Modo escuro</span>
+                    <ThemeToggle size={16} />
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                  >
+                    <LogOut size={14} strokeWidth={2.2} />
+                    <span>Sair</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

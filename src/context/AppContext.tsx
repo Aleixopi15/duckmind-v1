@@ -22,6 +22,7 @@ import type {
 import { INITIAL_TOPIC_TEMPLATES } from '../lib/mockData';
 import { createInitialUniversityData } from '../lib/universityMockData';
 import { getSimulationDate } from '../lib/simulationUtils';
+import { getLocalDateString, parseDateToLocalYMD, createSafeStudyTimestamp } from '../lib/dateUtils';
 
 type ProfileUpdate = Partial<
   Pick<
@@ -273,11 +274,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const vestibularDates = React.useMemo(() => {
     const set = new Set<string>();
     sessions.forEach(s => {
-      if (s.studied_at) set.add(s.studied_at.split('T')[0]);
+      const ymd = parseDateToLocalYMD(s.studied_at);
+      if (ymd) set.add(ymd);
     });
     simulations.forEach(sim => {
       const d = getSimulationDate(sim);
-      if (d) set.add(d);
+      const ymd = parseDateToLocalYMD(d);
+      if (ymd) set.add(ymd);
     });
     return set;
   }, [sessions, simulations]);
@@ -285,7 +288,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const universityDates = React.useMemo(() => {
     const set = new Set<string>();
     universitySessions.forEach(s => {
-      if (s.studied_at) set.add(s.studied_at.split('T')[0]);
+      const ymd = parseDateToLocalYMD(s.studied_at);
+      if (ymd) set.add(ymd);
     });
     return set;
   }, [universitySessions]);
@@ -539,7 +543,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       duration_minutes: data.duration_minutes,
       notes: data.notes || '',
       session_type: data.session_type || 'estudo',
-      studied_at: data.studied_at || new Date().toISOString(),
+      studied_at: data.studied_at || createSafeStudyTimestamp(getLocalDateString()),
     };
 
     const { data: inserted, error } = await supabase

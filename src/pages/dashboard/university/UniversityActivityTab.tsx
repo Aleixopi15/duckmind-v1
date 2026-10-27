@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import type { ElementType } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { cn } from '../../../lib/theme';
+import { formatLocalDateBR } from '../../../lib/dateUtils';
 import Modal from '../../../components/Modal';
 import DuckMascot from '../../../components/DuckMascot';
 import SubjectIcon from '../../../components/SubjectIcon';
@@ -115,16 +116,7 @@ export default function UniversityActivityTab() {
   };
 
   const formatSessionDate = (isoStr: string) => {
-    try {
-      const d = new Date(isoStr);
-      return d.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      });
-    } catch {
-      return isoStr;
-    }
+    return formatLocalDateBR(isoStr);
   };
 
   return (
